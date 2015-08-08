@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/Database" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>

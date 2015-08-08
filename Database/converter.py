@@ -1,0 +1,429 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import xml.etree.ElementTree as ET
+import qgis
+from qgis.core import *
+from qgis.gui import *
+from PyQt4.QtCore import *
+from PyQt4 import QtGui
+import os
+import sys
+import ntpath
+import codecs
+
+
+
+
+
+names_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
+'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
+'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
+'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD']
+#=======================================
+list_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
+'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
+'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
+'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD']
+#-------------------------------------------
+list_of_psk = ['PSK','PSK_P0','PSK_V','PSK_P', 
+'KVAL_P','ORP','KRAJ','KATUZE_KOD','KAT_PAR_KOD','SLT','LT',
+'TER_TYP','PRIB_VZD','HOSP_ZP','DAN','PSK_TEXT','CISLO_TEL'] 
+list_of_bzl = ['BZL','ORP','KRAJ','KATUZE_KOD','BZL_P0',
+'BZL_V','BZL_P','KVAL_P','KAT_PAR_KOD',
+'BZL_VYUZ','BZL_DRUH','CISLO_TEL']
+list_of_jp = ['JP','JP_PUPFL','ORP','KRAJ','KATUZE_KOD',
+'JP_P0','JP_V','JP_P','KVAL_P','KAT_PAR_KOD',
+'JP_VYUZ','JP_DRUH','CISLO_TEL'] 
+list_of_kto = [ 'TEXT', 'TXT_STYL', 'TXT_UHEL', 'L_' ]
+list_of_kpo = [ 'PLO_DRUH', 'PLO_ZNACKA', 'PLO_BARVA', 'L_']
+list_of_klo = [ 'LIN_DRUH', 'LIN_ZNACKA', 'LIN_BARVA', 'L_']
+list_of_kbo = [ 'BOD_DRUH', 'BOD_ZNACKA', 'BOD_UHELZN', 'BOD_BARVA', 'L_']
+
+
+pt = QgsFeature()#premenna pre jedne geom. objekt
+"""
+class UnicodeWriter:
+    def __init__(self,f,dialect=csv.excel,encoding="utf-8", **kwds):
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect = dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        data = self.encoder.encode(data)
+        self.stream.write(data)
+        self.queue.truncate(0)
+
+"""
+
+
+#Vytvorenie nazvu vrstiev z adresy
+def path_leaf(path):
+    head, tail = ntpath.split(path)
+    return tail or ntpath.basename(head)
+
+
+#spracovanie parametrov pre LHC
+def save_LHC(attributes):
+    list_of_att = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
+            'LHP_TAX','LHP_Z_OD','LHP_Z_DO','LHP_Z_LIC','LHP_Z_TAX',
+            'KU_DATUM','LHP_NEZDAR','TEZ_PROC','NOR_PAS','ETAT_TO',
+            'LHC_PN_PRO','ETAT_TV','ETAT_TVYB','LHC_IND','LHC_MAX',
+            'ETAT','MVYCH_DO40']
+    atts = []
+    for attribute in list_of_att:
+        atts.append(attributes.get(attribute))
+
+    for att in atts:
+        #print att
+        pass
+
+#Vytvori list QgsPoint (pre ML, MP)
+def create_points(lines):
+    points = []
+    for point in lines.findall('B'):
+        np =  point.get('S')
+        number1 = np[:np.find("$")]
+        number2 = np[np.find("$")+1:]
+        points.append(QgsPoint(float(number1),float(number2)))
+    return points
+
+
+#spracuje MP, druhy parameter je vrsta, d ktorej zapisujeme
+def create_from_MP(MP, layer,atts):
+    for polygon in MP.findall('P'):
+        for lines in polygon.findall('L'):
+            points = create_points(lines)
+            pt.setGeometry(QgsGeometry.fromPolygon([points]))
+            pt.setAttributes(atts)
+            layer.addFeatures([pt])
+            #Poly_layer.updateExtents()
+
+
+#obodba pre create_from MP
+def create_from_ML(ML, layer, atts):
+    for lines in ML.findall('L'):
+        points = create_points(lines)
+        pt.setGeometry(QgsGeometry.fromPolyline(points))
+        pt.setAttributes(atts)
+        layer.addFeatures([pt])
+        #Poly_layer.updateExtents()
+
+def create_attributes(OBJ, list_for_obj):
+    atts = []
+    for att in list_for_obj:
+        atts.append(OBJ.get(att).replace("\"","\\\'"))
+    return atts
+
+    
+
+
+
+#Volana funkcia adresa vstupneho suboru, adresu preicinku kams a bude ukladat
+def convert_to_shp(pretty_name,folder_name):
+    
+    """
+    pp=QgsApplication([], True)
+    qgis_prefix = os.getenv("QGISHOME")
+    QgsApplication.setPrefixPath(qgis_prefix,True)
+    QgsApplication.initQgis()
+    """
+
+
+    try:
+        #iny nazov, podla vstupneho suboru
+        por_file = codecs.open(folder_name+'/por_file.csv','w',encoding='utf-8')
+        por_file.write(",".join(names_of_por)+'\n')
+    except:
+        return 1
+
+    #-------------------------------------------#
+    #Priprava vrstiev#
+    global PSK_layer
+    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
+    if not PSK_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+
+
+    global KPO_layer
+    KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'KPO', "memory")
+    if not KPO_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+    
+    
+    global JP_layer
+    JP_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Ine plochy', "memory")
+    if not JP_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+
+
+    global BZL_layer
+    BZL_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Bezlesie', "memory")
+    if not BZL_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+
+    global KLO_layer
+    KLO_layer = QgsVectorLayer("MultiLineString?crs=EPSG:4326", 'KLO', "memory")
+    if not KLO_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+
+    global KBO_layer
+    KBO_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", 'Body', "memory")
+    if not KBO_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+
+
+    global KTO_layer
+    KTO_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", 'KTO', "memory")
+    if not KTO_layer.isValid():
+            print "neplatna vrstva"
+            return 1
+#-----------------------------#
+#priprava vrstiev cast druha - V "" v QgsField je nazov v tabulke atributov -
+            #feel free to change that
+   
+
+    QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
+    global psk_poly
+    psk_poly = PSK_layer.dataProvider()
+    psk_poly.addAttributes([
+                            QgsField("PSK" , QVariant.String),
+                            QgsField("PSK_P0" , QVariant.Double),
+                            QgsField("PSK_V" , QVariant.Double),
+                            QgsField("PSK_P" , QVariant.Double),
+                            QgsField("KVAL_P" , QVariant.Int),
+                            QgsField("ORP" , QVariant.Int),
+                            QgsField("KRAJ" , QVariant.String),
+                            QgsField("KATUZE_KOD" , QVariant.Int),
+                            QgsField("KAT_PAR_KOD" , QVariant.Int),
+                            QgsField("SLT" , QVariant.String),
+                            QgsField("LT" , QVariant.String),
+                            QgsField("TER_TYP" , QVariant.Int),
+                            QgsField("PRIB_VZD" , QVariant.Int),
+                            QgsField("HOSP_ZP" , QVariant.Int),
+                            QgsField("DAN" , QVariant.String),
+                            QgsField("PSK_TEXT" , QVariant.String),
+                            QgsField("CISLO_TEL" , QVariant.Int),
+                            ])
+    PSK_layer.updateFields()
+
+
+    QgsMapLayerRegistry.instance().addMapLayer(KPO_layer)
+    global kpo_poly
+    kpo_poly = KPO_layer.dataProvider()
+    kpo_poly.addAttributes([
+                            QgsField("PLO_DRUH" , QVariant.Int),
+                            QgsField("PLO_ZNACKA" , QVariant.Int),
+                            QgsField("PLO_BARVA" , QVariant.Int),
+                            QgsField("L_" , QVariant.String)
+                            ])
+    KPO_layer.updateFields()
+
+  
+
+
+    QgsMapLayerRegistry.instance().addMapLayer(JP_layer)
+    global jp_poly
+    jp_poly = JP_layer.dataProvider()
+    jp_poly.addAttributes([
+                            QgsField("JP" , QVariant.Int),
+                            QgsField("JP_PUPFL" , QVariant.String),
+                            QgsField("ORP" , QVariant.Int),
+                            QgsField("KRAJ" , QVariant.String),
+                            QgsField("KATUZE_KOD" , QVariant.Int),
+                            QgsField("JP_PO" , QVariant.Double),
+                            QgsField("JP_V" , QVariant.Double),
+                            QgsField("JP_P" , QVariant.Double),
+                            QgsField("KVAL_P" , QVariant.Int),
+                            QgsField("KAT_PAR_KOD" , QVariant.Int),
+                            QgsField("JP_VYUZ" , QVariant.String),
+                            QgsField("JP_DRUH" , QVariant.String),
+                            QgsField("CISLO_TEL" , QVariant.Int),
+                            ])
+    JP_layer.updateFields()
+
+
+    QgsMapLayerRegistry.instance().addMapLayer(BZL_layer)
+    global bzl_poly
+    bzl_poly = BZL_layer.dataProvider()
+    bzl_poly.addAttributes([
+                            QgsField("BZL" , QVariant.Int),
+                            QgsField("ORP" , QVariant.Int),
+                            QgsField("KRAJ" , QVariant.String),
+                            QgsField("KATUZE_KOD" , QVariant.Int),
+                            QgsField("BZL_PO" , QVariant.Double),
+                            QgsField("BZL_V" , QVariant.Double),
+                            QgsField("BZL_P" , QVariant.Double),
+                            QgsField("KVAL_P" , QVariant.Int),
+                            QgsField("KAT_PAR_KOD" , QVariant.Int),
+                            QgsField("BZL_VYUZ" , QVariant.String),
+                            QgsField("BZL_DRUH" , QVariant.String),
+                            QgsField("CISLO_TEL" , QVariant.Int),
+                            ])
+    BZL_layer.updateFields()
+
+
+    QgsMapLayerRegistry.instance().addMapLayer(KLO_layer)
+    global klo_line
+    klo_line = KLO_layer.dataProvider()
+    klo_line.addAttributes([
+                            QgsField("LIN_DRUH" , QVariant.Int),
+                            QgsField("LIN_ZNACKA" , QVariant.Int),
+                            QgsField("LIN_BARVA" , QVariant.Int),
+                            QgsField("L_" , QVariant.String),
+                            ])
+    KLO_layer.updateFields()
+
+
+    QgsMapLayerRegistry.instance().addMapLayer(KBO_layer)
+    global kbo_line
+    kbo_line = KBO_layer.dataProvider()
+    kbo_line.addAttributes([
+                            QgsField("BOD_DRUH" , QVariant.Int),
+                            QgsField("BOD_ZNACKA" , QVariant.Int),
+                            QgsField("BOD_UHELZN" , QVariant.Double),
+                            QgsField("BOD_BARVA" , QVariant.Int),
+                            QgsField("L_" , QVariant.String),
+                            ])
+    KBO_layer.updateFields()
+
+
+    QgsMapLayerRegistry.instance().addMapLayer(KTO_layer)
+    global kto_line
+    kto_line = KTO_layer.dataProvider()
+    kto_line.addAttributes([
+                            QgsField("text" , QVariant.String),
+                            QgsField("TXT_STYL", QVariant.Int),
+                            QgsField("TXT_UHEL", QVariant.Double),
+                            QgsField("L_",QVariant.String)
+                            ])
+    KTO_layer.updateFields()
+
+#---------------------------------#
+
+#parser pre xml subor
+
+    tree = ET.parse(pretty_name)
+    root = tree.getroot()
+
+    atts = [] #von!
+
+
+    for child in root:
+        save_LHC(child.attrib)
+        #for HS,OU1,OU2,MZD
+        
+        
+        for KBO in child.findall('KBO'):
+            atts = create_attributes(KBO, list_of_kbo)
+            for BOD_obraz in KBO.findall('BOD_OBRAZ'):
+                for MB in BOD_obraz.findall('MB'):
+                    for point in MB.findall('B'):
+                        np =  point.get('S')
+                        number1 = np[:np.find("$")]
+                        number2 = np[np.find("$")+1:]
+                        pt.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
+                        pt.setAttributes(atts)
+                        kbo_line.addFeatures([pt])
+
+
+
+        for KTO in child.findall('KTO'):
+            atts = create_attributes(KTO,list_of_kto)
+            for TXT_obraz in KTO.findall('TXT_OBRAZ'):
+                for B in TXT_obraz.findall('B'):
+                    np= B.get('S')
+                    number1 = np[:np.find("$")]
+                    number2 = np[np.find("$")+1:]
+                    pt.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
+                    pt.setAttributes(atts)
+                    kto_line.addFeatures([pt])
+
+
+
+        for KPO in child.findall('KPO'):
+            atts = create_attributes(KPO, list_of_kpo)
+            for KPO_obraz in KPO.findall('PLO_OBRAZ'):
+                for MP in KPO_obraz.findall('MP'):
+                    create_from_MP(MP,kpo_poly,atts)
+
+
+        for KLO in child.findall('KLO'):
+            atts = create_attributes(KLO, list_of_klo)
+            for KLO_obraz in KLO.findall('LIN_OBRAZ'):
+                for ML in KLO_obraz.findall('ML'):
+                    create_from_ML(ML,klo_line,atts)
+
+
+        for oddiel in child.findall('ODD'):
+            #print oddiel.get('ODD')
+            for diel in oddiel.findall('DIL'):
+                #print diel.get('DIL')
+                for porast in diel.findall('POR'):
+                    atts = create_attributes(porast,list_of_por)
+                    to_write = "\",\"".join(atts)
+                    por_file.write("\""+to_write+'\"\n')
+                    #print porast.get('POR')
+                    #for kategoria in porast.findall('KAT'):
+                    for bezlesie in porast.findall('BZL'):
+                        atts = create_attributes(bezlesie, list_of_bzl)
+                        for bzl_obraz in bezlesie.findall('BZL_OBRAZ'):
+                            for MP in bzl_obraz.findall('MP'):
+                                create_from_MP(MP,bzl_poly,atts)
+
+                    for jine in porast.findall('JP'):
+                        atts = create_attributes(jine, list_of_jp)
+                        for jp_obraz in jine.findall('JP_OBRAZ'):
+                            for MP in jp_obraz.findall('MP'):
+                                create_from_MP(MP,jp_poly,atts)
+
+
+                    for psk in porast.findall('PSK'):
+                        atts = create_attributes(psk, list_of_psk)
+                        for psk_obraz in psk.findall('PSK_OBRAZ'):
+                            for MP in psk_obraz.findall('MP'):
+                                create_from_MP(MP,psk_poly,atts)
+                        for etaz in porast.findall('ETZ'):
+                            pass
+                            #+parameter ze ktory porast...
+
+    
+    #qgis.utils.iface.mapCanvas().refresh()
+    #PSK_layer.commitChanges()
+    PSK_layer.updateExtents()
+    canvas = qgis.utils.iface.mapCanvas()
+    canvas.setExtent(PSK_layer.extent())
+    qgis.utils.iface.mapCanvas().refresh()
+
+
+    file_name = path_leaf(pretty_name)
+    file_name = file_name[:file_name.find('xml')-1]
+    new_address = folder_name + '/' + file_name
+#odseknut este .xml
+    por_file.close()
+#close files mainly csv    
+#ukladanie
+    """
+    error = QgsVectorFileWriter.writeAsVectorFormat(PSK_layer,
+        new_address, "CP1250", None,"ESRI Shapefile")
+    if error == QgsVectorFileWriter.NoError:
+        print "subor bol vytvoreny"
+    else:
+        print "subor sa nepodarilo vytvori"
+    """
+    
+
+    return
+if __name__ == '__main__':
+    convert_to_shp("name")
