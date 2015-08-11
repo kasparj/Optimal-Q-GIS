@@ -16,10 +16,10 @@ import codecs
 
 
 
-names_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
-'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
-'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
-'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD']
+#names_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
+#'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
+#'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
+#'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD','MY_ID']
 #=======================================
 list_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
 'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
@@ -117,7 +117,11 @@ def create_from_ML(ML, layer, atts):
 def create_attributes(OBJ, list_for_obj):
     atts = []
     for att in list_for_obj:
-        atts.append(OBJ.get(att).replace("\"","\\\'"))
+        new_item = OBJ.get(att)
+        if new_item:
+            atts.append(new_item.replace("\"","\\\'"))
+        else:
+            atts.append("")
     return atts
 
     
@@ -134,14 +138,14 @@ def convert_to_shp(pretty_name,folder_name):
     QgsApplication.initQgis()
     """
 
-
+    """
     try:
         #iny nazov, podla vstupneho suboru
         por_file = codecs.open(folder_name+'/por_file.csv','w',encoding='utf-8')
         por_file.write(",".join(names_of_por)+'\n')
     except:
         return 1
-
+    """
     #-------------------------------------------#
     #Priprava vrstiev#
     global PSK_layer
@@ -198,6 +202,26 @@ def convert_to_shp(pretty_name,folder_name):
     global psk_poly
     psk_poly = PSK_layer.dataProvider()
     psk_poly.addAttributes([
+                            QgsField("ODD" , QVariant.String),
+                            QgsField("DIL" , QVariant.String),
+
+                            QgsField("POR" , QVariant.String),
+                            QgsField("SDR_POR" , QVariant.String),
+                            QgsField("MAJ_KOD" , QVariant.String),
+                            QgsField("MAJ_NAZ" , QVariant.String),
+                            QgsField("MAJ_DRUH" , QVariant.String),
+                            QgsField("ORG_UROVEN" , QVariant.String),
+                            QgsField("PAS_OHR" , QVariant.String),
+                            QgsField("LES_OBL" , QVariant.String),
+                            QgsField("LES_PODOBL" , QVariant.String),
+                            QgsField("ZVL_STATUT" , QVariant.String),
+                            QgsField("OLH_LIC" , QVariant.String),
+                            QgsField("OLH" , QVariant.String),
+                            QgsField("POR_TEXT" , QVariant.String),
+                            QgsField("HIST_LHC" , QVariant.String),
+                            QgsField("HIST_LHPOD" , QVariant.String),
+                            QgsField("HIST_ROZD" , QVariant.String),
+
                             QgsField("PSK" , QVariant.String),
                             QgsField("PSK_P0" , QVariant.Double),
                             QgsField("PSK_V" , QVariant.Double),
@@ -215,6 +239,8 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("DAN" , QVariant.String),
                             QgsField("PSK_TEXT" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
+
+                            QgsField("MY_ID" , QVariant.Int),
                             ])
     PSK_layer.updateFields()
 
@@ -237,6 +263,26 @@ def convert_to_shp(pretty_name,folder_name):
     global jp_poly
     jp_poly = JP_layer.dataProvider()
     jp_poly.addAttributes([
+                            QgsField("ODD" , QVariant.String),
+                            QgsField("DIL" , QVariant.String),
+
+                            QgsField("POR" , QVariant.String),
+                            QgsField("SDR_POR" , QVariant.String),
+                            QgsField("MAJ_KOD" , QVariant.String),
+                            QgsField("MAJ_NAZ" , QVariant.String),
+                            QgsField("MAJ_DRUH" , QVariant.String),
+                            QgsField("ORG_UROVEN" , QVariant.String),
+                            QgsField("PAS_OHR" , QVariant.String),
+                            QgsField("LES_OBL" , QVariant.String),
+                            QgsField("LES_PODOBL" , QVariant.String),
+                            QgsField("ZVL_STATUT" , QVariant.String),
+                            QgsField("OLH_LIC" , QVariant.String),
+                            QgsField("OLH" , QVariant.String),
+                            QgsField("POR_TEXT" , QVariant.String),
+                            QgsField("HIST_LHC" , QVariant.String),
+                            QgsField("HIST_LHPOD" , QVariant.String),
+                            QgsField("HIST_ROZD" , QVariant.String),
+
                             QgsField("JP" , QVariant.Int),
                             QgsField("JP_PUPFL" , QVariant.String),
                             QgsField("ORP" , QVariant.Int),
@@ -250,6 +296,8 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("JP_VYUZ" , QVariant.String),
                             QgsField("JP_DRUH" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
+
+                            QgsField("MY_ID" , QVariant.Int),
                             ])
     JP_layer.updateFields()
 
@@ -258,6 +306,26 @@ def convert_to_shp(pretty_name,folder_name):
     global bzl_poly
     bzl_poly = BZL_layer.dataProvider()
     bzl_poly.addAttributes([
+                            QgsField("ODD" , QVariant.String),
+                            QgsField("DIL" , QVariant.String),
+
+                            QgsField("POR" , QVariant.String),
+                            QgsField("SDR_POR" , QVariant.String),
+                            QgsField("MAJ_KOD" , QVariant.String),
+                            QgsField("MAJ_NAZ" , QVariant.String),
+                            QgsField("MAJ_DRUH" , QVariant.String),
+                            QgsField("ORG_UROVEN" , QVariant.String),
+                            QgsField("PAS_OHR" , QVariant.String),
+                            QgsField("LES_OBL" , QVariant.String),
+                            QgsField("LES_PODOBL" , QVariant.String),
+                            QgsField("ZVL_STATUT" , QVariant.String),
+                            QgsField("OLH_LIC" , QVariant.String),
+                            QgsField("OLH" , QVariant.String),
+                            QgsField("POR_TEXT" , QVariant.String),
+                            QgsField("HIST_LHC" , QVariant.String),
+                            QgsField("HIST_LHPOD" , QVariant.String),
+                            QgsField("HIST_ROZD" , QVariant.String),
+
                             QgsField("BZL" , QVariant.Int),
                             QgsField("ORP" , QVariant.Int),
                             QgsField("KRAJ" , QVariant.String),
@@ -270,6 +338,8 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("BZL_VYUZ" , QVariant.String),
                             QgsField("BZL_DRUH" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
+
+                            QgsField("MY_ID" , QVariant.Int),
                             ])
     BZL_layer.updateFields()
 
@@ -312,12 +382,19 @@ def convert_to_shp(pretty_name,folder_name):
 
 #---------------------------------#
 
+
+    por_numb = 0
+
+
+
+
 #parser pre xml subor
 
     tree = ET.parse(pretty_name)
     root = tree.getroot()
 
-    atts = [] #von!
+    #atts = [] #von!
+    ID_LIST = 0
 
 
     for child in root:
@@ -367,32 +444,68 @@ def convert_to_shp(pretty_name,folder_name):
 
 
         for oddiel in child.findall('ODD'):
-            #print oddiel.get('ODD')
+            odd_att =  oddiel.get('ODD')
             for diel in oddiel.findall('DIL'):
-                #print diel.get('DIL')
+                dil_att =  diel.get('DIL')
                 for porast in diel.findall('POR'):
-                    atts = create_attributes(porast,list_of_por)
-                    to_write = "\",\"".join(atts)
-                    por_file.write("\""+to_write+'\"\n')
+                    por_atts = create_attributes(porast,list_of_por)
+                    #atts.append(str(por_numb))
+                    #to_write = "\",\"".join(atts)
+                    #por_file.write("\""+to_write+'\"\n')
                     #print porast.get('POR')
                     #for kategoria in porast.findall('KAT'):
                     for bezlesie in porast.findall('BZL'):
-                        atts = create_attributes(bezlesie, list_of_bzl)
+                        bzl_atts = create_attributes(bezlesie, list_of_bzl)
+#from this
+                        atts = [odd_att]
+                        atts.append(dil_att)
+                        for item in por_atts:
+                            atts.append(item)
+                        for item in bzl_atts:
+                            atts.append(item)
+#to this
                         for bzl_obraz in bezlesie.findall('BZL_OBRAZ'):
                             for MP in bzl_obraz.findall('MP'):
+                                my_id = ID_LIST
+                                ID_LIST += 1
+                                atts.append(my_id)
                                 create_from_MP(MP,bzl_poly,atts)
 
                     for jine in porast.findall('JP'):
-                        atts = create_attributes(jine, list_of_jp)
+                        jp_atts = create_attributes(jine, list_of_jp)
+#from this
+                        atts = [odd_att]
+                        atts.append(dil_att)
+                        for item in por_atts:
+                            atts.append(item)
+                        for item in jp_atts:
+                            atts.append(item)
+#to this
                         for jp_obraz in jine.findall('JP_OBRAZ'):
                             for MP in jp_obraz.findall('MP'):
+                                my_id = ID_LIST
+                                ID_LIST += 1
+                                atts.append(my_id)
                                 create_from_MP(MP,jp_poly,atts)
 
-
+                    #na porastoch dat join
                     for psk in porast.findall('PSK'):
-                        atts = create_attributes(psk, list_of_psk)
+                        psk_atts = create_attributes(psk, list_of_psk)
+                        
+#from this
+                        atts = [odd_att]
+                        atts.append(dil_att)
+                        for item in por_atts:
+                            atts.append(item)
+                        for item in psk_atts:
+                            atts.append(item)
+#to this
+
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):
+                                my_id = ID_LIST
+                                ID_LIST += 1
+                                atts.append(my_id)
                                 create_from_MP(MP,psk_poly,atts)
                         for etaz in porast.findall('ETZ'):
                             pass
@@ -411,7 +524,18 @@ def convert_to_shp(pretty_name,folder_name):
     file_name = file_name[:file_name.find('xml')-1]
     new_address = folder_name + '/' + file_name
 #odseknut este .xml
-    por_file.close()
+    #por_file.close()
+    #por_csv = QgsVectorLayer(folder_name+'/por_file.csv',"Porast","delimitedtext")
+
+    #QgsMapLayerRegistry.instance().addMapLayer(por_csv)
+    #caps = por_csv.dataProvider().capabilities()
+
+    #joinObject = QgsVectorJoinInfo()
+    #joinObject.joinLayerId = por_csv.id()
+    #joinObject.joinFieldName = 'MY_ID'
+    #joinObject.targetFieldName = 'POR_NUMB'
+    #PSK_layer.addJoin(joinObject)
+
 #close files mainly csv    
 #ukladanie
     """
