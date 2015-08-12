@@ -391,6 +391,8 @@ def convert_to_shp(pretty_name,folder_name):
 #parser pre xml subor
 
     tree = ET.parse(pretty_name)
+    if not tree:
+        return 2
     root = tree.getroot()
 
     #atts = [] #von!
@@ -404,7 +406,10 @@ def convert_to_shp(pretty_name,folder_name):
         
         for KBO in child.findall('KBO'):
             atts = create_attributes(KBO, list_of_kbo)
+            if not KBO.findall('BOD_OBRAZ'):
+                return 3
             for BOD_obraz in KBO.findall('BOD_OBRAZ'):
+
                 for MB in BOD_obraz.findall('MB'):
                     for point in MB.findall('B'):
                         np =  point.get('S')
@@ -418,6 +423,8 @@ def convert_to_shp(pretty_name,folder_name):
 
         for KTO in child.findall('KTO'):
             atts = create_attributes(KTO,list_of_kto)
+            if not KTO.findall('TXT_OBRAZ'):
+                return 3
             for TXT_obraz in KTO.findall('TXT_OBRAZ'):
                 for B in TXT_obraz.findall('B'):
                     np= B.get('S')
@@ -430,6 +437,8 @@ def convert_to_shp(pretty_name,folder_name):
 
 
         for KPO in child.findall('KPO'):
+            if not KPO.findall('PLO_OBRAZ'):
+                return 3
             atts = create_attributes(KPO, list_of_kpo)
             for KPO_obraz in KPO.findall('PLO_OBRAZ'):
                 for MP in KPO_obraz.findall('MP'):
@@ -438,6 +447,8 @@ def convert_to_shp(pretty_name,folder_name):
 
         for KLO in child.findall('KLO'):
             atts = create_attributes(KLO, list_of_klo)
+            if not KLO.findall('LIN_OBRAZ'):
+                return 3
             for KLO_obraz in KLO.findall('LIN_OBRAZ'):
                 for ML in KLO_obraz.findall('ML'):
                     create_from_ML(ML,klo_line,atts)
@@ -455,6 +466,8 @@ def convert_to_shp(pretty_name,folder_name):
                     #print porast.get('POR')
                     #for kategoria in porast.findall('KAT'):
                     for bezlesie in porast.findall('BZL'):
+                        if not bezlesie.findall('BZL_OBRAZ'):
+                            return 3
                         bzl_atts = create_attributes(bezlesie, list_of_bzl)
 #from this
                         atts = [odd_att]
@@ -473,6 +486,8 @@ def convert_to_shp(pretty_name,folder_name):
 
                     for jine in porast.findall('JP'):
                         jp_atts = create_attributes(jine, list_of_jp)
+                        if not jine.findall('JP_OBRAZ'):
+                            return 3
 #from this
                         atts = [odd_att]
                         atts.append(dil_att)
@@ -491,6 +506,8 @@ def convert_to_shp(pretty_name,folder_name):
                     #na porastoch dat join
                     for psk in porast.findall('PSK'):
                         psk_atts = create_attributes(psk, list_of_psk)
+                        if not psk.findall('PSK_OBRAZ'):
+                            return 3
                         
 #from this
                         atts = [odd_att]
@@ -548,6 +565,6 @@ def convert_to_shp(pretty_name,folder_name):
     """
     
 
-    return
+    return 0
 if __name__ == '__main__':
     convert_to_shp("name")

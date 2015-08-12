@@ -216,9 +216,21 @@ class Database:
         # See if OK was pressed
         if result:
             if pretty_name != "" and pretty_folder != "":        
-                convert_to_shp(pretty_name,pretty_folder)
-                QMessageBox.information(self.iface.mainWindow(),"Vysledok",
+                res = convert_to_shp(pretty_name,pretty_folder)
+                if res == 0:
+                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
                     "Uspesne doslo")
+                elif res == 2:
+                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
+                    "Nepodarilo sa otvorit subor")
+                elif res == 3:
+                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
+                    "Subor neobsahuje topograficke udaje")
+                else:
+                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
+                    "Ina chyba")
+
+                    
                 #podla return napise vysledok...
             else:
                 QMessageBox.information(self.iface.mainWindow(),"Vysledok",
