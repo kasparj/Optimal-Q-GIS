@@ -13,19 +13,46 @@ import ntpath
 import codecs
 
 
+#------------------------------------------------------------------------
+#globalne premenne
+#------------------------------------------------------------------------
+
+
+pt = QgsFeature()#premenna pre jedne geom. objekt
+
+#Tieto listy nemenit, to su zoznamy pre parsovanie dat
+#menit iba ak sa zmeni standard, na poradi nezalezi
+#ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
 
 
 
-#names_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
-#'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
-#'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
-#'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD','MY_ID']
-#=======================================
+
+
+
+
+names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI', 
+'OBN_DOBA','POC_OBNOVY','MZD','VEK','ZAKM','HOSP_TV', 
+'M_TEZ_PROC','ODVOZ_TEZ','M_Z_ZASOBY','PRO_P','PRO_NAL', 
+'PRO_POC','TV_P','TV_NAL','TV_POC','TO_P','TO_NAL','TO_DUVOD', 
+'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUMB'] 
+#------------------------------------------------------
+
+
+list_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
+'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
+'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
+'DR_ZAS_HA','DR_ZAS_CEL','DR_CBP','DR_CPP',
+'DR_PMP','HMOT','HK','IMISE','DR_KVAL','PROC_SOUS',
+'DR_TV','DR_TO','DR_TVYB']
+list_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI', 
+'OBN_DOBA','POC_OBNOVY','MZD','VEK','ZAKM','HOSP_TV', 
+'M_TEZ_PROC','ODVOZ_TEZ','M_Z_ZASOBY','PRO_P','PRO_NAL', 
+'PRO_POC','TV_P','TV_NAL','TV_POC','TO_P','TO_NAL','TO_DUVOD', 
+'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P'] 
 list_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
 'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
 'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
 'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD']
-#-------------------------------------------
 list_of_psk = ['PSK','PSK_P0','PSK_V','PSK_P', 
 'KVAL_P','ORP','KRAJ','KATUZE_KOD','KAT_PAR_KOD','SLT','LT',
 'TER_TYP','PRIB_VZD','HOSP_ZP','DAN','PSK_TEXT','CISLO_TEL'] 
@@ -39,51 +66,28 @@ list_of_kto = [ 'TEXT', 'TXT_STYL', 'TXT_UHEL', 'L_' ]
 list_of_kpo = [ 'PLO_DRUH', 'PLO_ZNACKA', 'PLO_BARVA', 'L_']
 list_of_klo = [ 'LIN_DRUH', 'LIN_ZNACKA', 'LIN_BARVA', 'L_']
 list_of_kbo = [ 'BOD_DRUH', 'BOD_ZNACKA', 'BOD_UHELZN', 'BOD_BARVA', 'L_']
+list_of_lhc = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
+'LHP_TAX','LHP_Z_OD','LHP_Z_DO','LHP_Z_LIC','LHP_Z_TAX',
+'KU_DATUM','LHP_NEZDAR','TEZ_PROC','NOR_PAS','ETAT_TO',
+'LHC_PN_PRO','ETAT_TV','ETAT_TVYB','LHC_IND','LHC_MAX',
+'ETAT','MVYCH_DO40']
 
 
-pt = QgsFeature()#premenna pre jedne geom. objekt
-"""
-class UnicodeWriter:
-    def __init__(self,f,dialect=csv.excel,encoding="utf-8", **kwds):
-        self.queue = cStringIO.StringIO()
-        self.writer = csv.writer(self.queue, dialect = dialect, **kwds)
-        self.stream = f
-        self.encoder = codecs.getincrementalencoder(encoding)()
+#------------------------------------------------------------------------
+#funkcie
+#------------------------------------------------------------------------
 
 
-    def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
-        data = self.queue.getvalue()
-        data = data.decode("utf-8")
-        data = self.encoder.encode(data)
-        self.stream.write(data)
-        self.queue.truncate(0)
-
-"""
-
-
-#Vytvorenie nazvu vrstiev z adresy
+#Vytvorenie cesty z cesty k suboru
+#path = /home/user/Optimal/map.xml
+#return = /home/user/Optimal
 def path_leaf(path):
     head, tail = ntpath.split(path)
     return tail or ntpath.basename(head)
 
 
-#spracovanie parametrov pre LHC
-def save_LHC(attributes):
-    list_of_att = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
-            'LHP_TAX','LHP_Z_OD','LHP_Z_DO','LHP_Z_LIC','LHP_Z_TAX',
-            'KU_DATUM','LHP_NEZDAR','TEZ_PROC','NOR_PAS','ETAT_TO',
-            'LHC_PN_PRO','ETAT_TV','ETAT_TVYB','LHC_IND','LHC_MAX',
-            'ETAT','MVYCH_DO40']
-    atts = []
-    for attribute in list_of_att:
-        atts.append(attributes.get(attribute))
-
-    for att in atts:
-        #print att
-        pass
-
-#Vytvori list QgsPoint (pre ML, MP)
+#Vytvori list z <L>, z kazdeho bodu <B> urobi QgsPoint
+#vrati list vsetkych bodov v <L> = lines
 def create_points(lines):
     points = []
     for point in lines.findall('B'):
@@ -94,7 +98,8 @@ def create_points(lines):
     return points
 
 
-#spracuje MP, druhy parameter je vrsta, d ktorej zapisujeme
+#MP = objekt <MP>, layer = vrstva do ktorej chceme pridat objekt,
+    #atts = list vsetkych atributov, ktore chceme k danemu objektu priradit
 def create_from_MP(MP, layer,atts):
     for polygon in MP.findall('P'):
         for lines in polygon.findall('L'):
@@ -105,7 +110,7 @@ def create_from_MP(MP, layer,atts):
             #Poly_layer.updateExtents()
 
 
-#obodba pre create_from MP
+#obodba pre create_from MP, ale pracuje s ML objektom
 def create_from_ML(ML, layer, atts):
     for lines in ML.findall('L'):
         points = create_points(lines)
@@ -114,6 +119,9 @@ def create_from_ML(ML, layer, atts):
         layer.addFeatures([pt])
         #Poly_layer.updateExtents()
 
+
+#OBJ je objekt, ktory obsahuje atributy, ktorych zoznam je v list_for_obj
+#e.g. objekt je <ODD> tak k nemu dam list_of_odd
 def create_attributes(OBJ, list_for_obj):
     atts = []
     for att in list_for_obj:
@@ -124,80 +132,86 @@ def create_attributes(OBJ, list_for_obj):
             atts.append("")
     return atts
 
-    
 
-
-
-#Volana funkcia adresa vstupneho suboru, adresu preicinku kams a bude ukladat
+#Tuto funkciu volat externe!
+#pretty_name = adresa vstupneho suboru
+#folder_name = adresa, kam sa bude ukladat vysledok
 def convert_to_shp(pretty_name,folder_name):
+    #praca s CSV - este to asi pouzijem 
     
-    """
-    pp=QgsApplication([], True)
-    qgis_prefix = os.getenv("QGISHOME")
-    QgsApplication.setPrefixPath(qgis_prefix,True)
-    QgsApplication.initQgis()
-    """
-
-    """
     try:
         #iny nazov, podla vstupneho suboru
-        por_file = codecs.open(folder_name+'/por_file.csv','w',encoding='utf-8')
-        por_file.write(",".join(names_of_por)+'\n')
+        etz_file = codecs.open(folder_name+'/etz_file.csv','w',encoding='utf-8')
+        etz_file.write(",".join(names_of_etz)+'\n')
     except:
         return 1
-    """
-    #-------------------------------------------#
-    #Priprava vrstiev#
+   
+    
+    try:
+        string = ""
+        #iny nazov, podla vstupneho suboru
+        etz_csvt = codecs.open(folder_name+'/etz_file.csvt','w',encoding='utf-8')
+        #etz_file.write(",".join(names_of_etz)+'\n')
+        for name in names_of_etz:
+            string += "\"String\","
+        etz_csvt.write(string)
+        etz_csvt.close()
+    except:
+        return 1
+    
+
+#------------------------------------------------------------------------
+#priprava vrstiev
+#------------------------------------------------------------------------
+#format:
+#Multi[Polygon/LineString/Point] - podla typu geometrie ?crs=EPSG:4326 - typ ukladania
+#Nazov vrsty, ktory je zobrazny v QGIS
+#memory - pracujeme s mamory provider-om
     global PSK_layer
     PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
     if not PSK_layer.isValid():
-            print "neplatna vrstva"
             return 1
 
 
     global KPO_layer
     KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'KPO', "memory")
     if not KPO_layer.isValid():
-            print "neplatna vrstva"
             return 1
     
     
     global JP_layer
     JP_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Ine plochy', "memory")
     if not JP_layer.isValid():
-            print "neplatna vrstva"
             return 1
 
 
     global BZL_layer
     BZL_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Bezlesie', "memory")
     if not BZL_layer.isValid():
-            print "neplatna vrstva"
             return 1
 
     global KLO_layer
     KLO_layer = QgsVectorLayer("MultiLineString?crs=EPSG:4326", 'KLO', "memory")
     if not KLO_layer.isValid():
-            print "neplatna vrstva"
             return 1
 
     global KBO_layer
     KBO_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", 'Body', "memory")
     if not KBO_layer.isValid():
-            print "neplatna vrstva"
             return 1
 
 
     global KTO_layer
     KTO_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", 'KTO', "memory")
     if not KTO_layer.isValid():
-            print "neplatna vrstva"
             return 1
-#-----------------------------#
-#priprava vrstiev cast druha - V "" v QgsField je nazov v tabulke atributov -
-            #feel free to change that
-   
 
+#priprava vstiev, cast durha
+#format jedneho parametra :
+    #QgsField(
+    #"nazov stlpca v tabulke - moze sa menit lubovolne, ale nie poradie"
+    #typ parametra QVariant.[String/Int/Double] - pomenit tak, aby odpovedalo
+    #NEMENIT POSLEDNY PARAMTERE - XXXX-NUMB!
     QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
     global psk_poly
     psk_poly = PSK_layer.dataProvider()
@@ -240,7 +254,7 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("PSK_TEXT" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
 
-                            QgsField("MY_ID" , QVariant.Int),
+                            QgsField("PSK_NUM" , QVariant.Int),
                             ])
     PSK_layer.updateFields()
 
@@ -255,8 +269,6 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("L_" , QVariant.String)
                             ])
     KPO_layer.updateFields()
-
-  
 
 
     QgsMapLayerRegistry.instance().addMapLayer(JP_layer)
@@ -296,8 +308,6 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("JP_VYUZ" , QVariant.String),
                             QgsField("JP_DRUH" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
-
-                            QgsField("MY_ID" , QVariant.Int),
                             ])
     JP_layer.updateFields()
 
@@ -338,8 +348,6 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("BZL_VYUZ" , QVariant.String),
                             QgsField("BZL_DRUH" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
-
-                            QgsField("MY_ID" , QVariant.Int),
                             ])
     BZL_layer.updateFields()
 
@@ -380,27 +388,20 @@ def convert_to_shp(pretty_name,folder_name):
                             ])
     KTO_layer.updateFields()
 
-#---------------------------------#
 
-
-    por_numb = 0
-
-
-
-
-#parser pre xml subor
+#------------------------------------------------------------------------
+#parser xml + samotne ukladanie
+#------------------------------------------------------------------------
 
     tree = ET.parse(pretty_name)
     if not tree:
         return 2
     root = tree.getroot()
 
-    #atts = [] #von!
     ID_LIST = 0
 
-
     for child in root:
-        save_LHC(child.attrib)
+        #save_LHC(child.attrib)
         #for HS,OU1,OU2,MZD
         
         
@@ -460,11 +461,6 @@ def convert_to_shp(pretty_name,folder_name):
                 dil_att =  diel.get('DIL')
                 for porast in diel.findall('POR'):
                     por_atts = create_attributes(porast,list_of_por)
-                    #atts.append(str(por_numb))
-                    #to_write = "\",\"".join(atts)
-                    #por_file.write("\""+to_write+'\"\n')
-                    #print porast.get('POR')
-                    #for kategoria in porast.findall('KAT'):
                     for bezlesie in porast.findall('BZL'):
                         if not bezlesie.findall('BZL_OBRAZ'):
                             return 3
@@ -479,9 +475,9 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for bzl_obraz in bezlesie.findall('BZL_OBRAZ'):
                             for MP in bzl_obraz.findall('MP'):
-                                my_id = ID_LIST
-                                ID_LIST += 1
-                                atts.append(my_id)
+                                #my_id = ID_LIST
+                                #ID_LIST += 1
+                                #atts.append(my_id)
                                 create_from_MP(MP,bzl_poly,atts)
 
                     for jine in porast.findall('JP'):
@@ -498,13 +494,16 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for jp_obraz in jine.findall('JP_OBRAZ'):
                             for MP in jp_obraz.findall('MP'):
-                                my_id = ID_LIST
-                                ID_LIST += 1
-                                atts.append(my_id)
+                                #my_id = ID_LIST
+                                #ID_LIST += 1
+                                #atts.append(my_id)
                                 create_from_MP(MP,jp_poly,atts)
 
                     #na porastoch dat join
                     for psk in porast.findall('PSK'):
+                        my_id = ID_LIST
+                        ID_LIST += 1
+
                         psk_atts = create_attributes(psk, list_of_psk)
                         if not psk.findall('PSK_OBRAZ'):
                             return 3
@@ -520,13 +519,17 @@ def convert_to_shp(pretty_name,folder_name):
 
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):
-                                my_id = ID_LIST
-                                ID_LIST += 1
                                 atts.append(my_id)
                                 create_from_MP(MP,psk_poly,atts)
-                        for etaz in porast.findall('ETZ'):
-                            pass
-                            #+parameter ze ktory porast...
+
+                        for etaz in psk.findall('ETZ'):
+                            etz_atts = create_attributes(etaz,list_of_etz)
+                            etz_atts.append(str(my_id))
+                            
+                            to_write = "\",\"".join(etz_atts)
+                            etz_file.write("\""+to_write+'\"\n')
+                            
+                    #for kategoria in porast.findall('KAT'):
 
     
     #qgis.utils.iface.mapCanvas().refresh()
@@ -541,11 +544,16 @@ def convert_to_shp(pretty_name,folder_name):
     file_name = file_name[:file_name.find('xml')-1]
     new_address = folder_name + '/' + file_name
 #odseknut este .xml
-    #por_file.close()
-    #por_csv = QgsVectorLayer(folder_name+'/por_file.csv',"Porast","delimitedtext")
+    etz_file.close()
+    
 
-    #QgsMapLayerRegistry.instance().addMapLayer(por_csv)
-    #caps = por_csv.dataProvider().capabilities()
+    
+    etz_csv = QgsVectorLayer(folder_name+'/etz_file.csv',"Porast","delimitedtext")
+
+    QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
+    caps = etz_csv.dataProvider().capabilities()
+
+    
 
     #joinObject = QgsVectorJoinInfo()
     #joinObject.joinLayerId = por_csv.id()

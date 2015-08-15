@@ -20,17 +20,37 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+
+#!!!!!!
+#pyrcc4 -o resources_rc.py resources.qrc
+
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
-# Initialize Qt resources from file resources.py
+from PyQt4.QtGui import QTableWidgetItem 
+from PyQt4.QtCore import SIGNAL,QPyNullVariant
+from PyQt4 import QtGui, QtCore
+from qgis.utils import iface
+from qgis.core import QgsFeatureRequest
 import resources_rc
-# Import the code for the dialog
 from database_dialog import DatabaseDialog
+from show_atts import ShowAtts
 import os.path
 from converter import convert_to_shp
+import sys 
 
+from qgis.core import *
+from qgis.gui import *
+from PyQt4.QtCore import *
 pretty_name = ""
 pretty_folder = ""
+
+data = {'col1':['1','2','3'], 'col2':['4','5','6']}
+
+
+#class mynewWindow(QtGui.QMainWindow):
+#    def __init__(self):
+#        QtGui.QMainWindow.__init__(self, None, QtCore.Qt.WindowStaysOnTopHint)
+
 
 class Database:
     """QGIS Plugin Implementation."""
@@ -63,6 +83,10 @@ class Database:
 
         # Create the dialog (after translation) and keep reference
         self.dlg = DatabaseDialog()
+        
+        #----------------------------------
+        self.shower = ShowAtts()
+        self.shower.refresh.clicked.connect(self.show_atts)       
 
         # Declare instance attributes
         self.actions = []
@@ -80,6 +104,7 @@ class Database:
         
         
 
+        
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -172,13 +197,21 @@ class Database:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/Database/icon.png'
+        icon_path = ':/plugins/Database/icon_convert.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Convert format'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
+        icon_path = ':/plugins/Database/icon_tables.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Show attributes'),
+            callback=self.show_atts,
+            parent=self.iface.mainWindow())
+        self.handler = None
+        self.selected_layer = None
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -190,6 +223,56 @@ class Database:
         # remove the toolbar
         del self.toolbar
 
+    
+    
+    def show_atts(self):
+       
+        lyr = iface.activeLayer()
+
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                etz_csv = layer
+#kontorla ci naslo vsetky co treba
+#kontorla ci je aj vybrata feature
+        if not lyr:
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+            "Ziadna vybrana vrstva")
+        else: 
+            fields = lyr.pendingFields()
+            features = lyr.selectedFeatures()
+            if features != []:
+
+                field_names = [field.name() for field in fields]
+                features_list = [feature.attributes() for feature in features]
+            
+            
+                etaz_numb = features_list[0][-1]
+            else:
+                etaz_numb = -1
+                field_names = []
+                features_list = []
+            #request = QgsFeatureRequest().setFilterExpression(u'"PSK_NUMB" =\
+                    #str(etaz_numb)') 
+            expr = QgsExpression("PSK_NUMB ="+ str(etaz_numb))
+                     
+            #selected = etz_csv.getFeatures(request)
+            selected = etz_csv.getFeatures(QgsFeatureRequest(expr))
+            #for ft in selected:
+            #    print ft
+            fields_etz = etz_csv.pendingFields()
+            field_names_etz = [field.name() for field in fields_etz]
+            features_list_etz = [feature.attributes() for feature in selected]
+            print features_list_etz 
+            
+            self.shower.show()
+            self.shower.set_data(field_names, features_list,self.shower.tableWidget)
+            self.shower.set_data(field_names_etz,
+                    features_list_etz,self.shower.etaz)
+        #result = self.shower.exec_()
+
+    
     def select_output_folder(self):
         global pretty_folder
         pretty_folder = QFileDialog.getExistingDirectory(self.dlg, "Vyberte\
@@ -235,3 +318,7 @@ class Database:
             else:
                 QMessageBox.information(self.iface.mainWindow(),"Vysledok",
                     "Navybrane umiestnenia")
+                #new_window = My_App()
+        #new_window.show
+
+

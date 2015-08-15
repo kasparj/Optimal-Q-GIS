@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/plugins/Database" >
-        <file>icon.png</file>
+        <file>icon_convert.png</file>
+    </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icon_tables.png</file>
     </qresource>
 </RCC>
