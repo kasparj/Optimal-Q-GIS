@@ -548,7 +548,7 @@ def convert_to_shp(pretty_name,folder_name):
     
 
     
-    etz_csv = QgsVectorLayer("file://"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
+    etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
 
     QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
     caps = etz_csv.dataProvider().capabilities()
