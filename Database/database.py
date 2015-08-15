@@ -226,24 +226,17 @@ class Database:
     
     
     def show_atts(self):
-       
+        #vybrana vrstva
         lyr = iface.activeLayer()
 
 
+        #Vyberieme si potrebne vrsty podla mena - pozor na zmeny!
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
-
-        if not etz_csv:
-
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-            "Pripojte vrstvu etz_file ako Porast")
-
-            layerMap = QgsMapLayerRegistry.instance().mapLayers()
-            for name, layer in layerMap.iteritems():
-                if layer.name() == "Porast":
-                    etz_csv = layer
+            elif layer.name() == "Dreviny":
+                drv_csv = layer
 
 #kontorla ci naslo vsetky co treba
 #kontorla ci je aj vybrata feature
@@ -251,36 +244,60 @@ class Database:
             QMessageBox.information(self.iface.mainWindow(),"Chyba",
             "Ziadna vybrana vrstva")
         else: 
-            fields = lyr.pendingFields()
-            features = lyr.selectedFeatures()
+            fields = lyr.pendingFields()#vyberieme vsetky mena atributov
+            features = lyr.selectedFeatures()#vyberieme vybrate prvky
             if features != []:
 
-                field_names = [field.name() for field in fields]
+                field_names = [field.name() for field in fields]#vytvorim
+                #zahlavie
+                #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
             
-            
-                etaz_numb = features_list[0][-1]
+                idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
+                etaz_numb = features_list[0][idx] 
             else:
                 etaz_numb = -1
                 field_names = []
                 features_list = []
-            #request = QgsFeatureRequest().setFilterExpression(u'"PSK_NUMB" =\
-                    #str(etaz_numb)') 
-            expr = QgsExpression("PSK_NUMB ="+ str(etaz_numb))
-                     
-            #selected = etz_csv.getFeatures(request)
+            
+            
+            expr = QgsExpression("PSK_NUM ="+ str(etaz_numb))
             selected = etz_csv.getFeatures(QgsFeatureRequest(expr))
-            #for ft in selected:
-            #    print ft
+
             fields_etz = etz_csv.pendingFields()
             field_names_etz = [field.name() for field in fields_etz]
             features_list_etz = [feature.attributes() for feature in selected]
-            print features_list_etz 
+            print features_list_etz
             
+            etz_numbers = []
+            idx = etz_csv.fieldNameIndex('ETZ_NUM')
+            for item in features_list_etz:
+                etz_numbers.append(item[idx])
+           
+            
+            features_list_drv = []
+            for index in etz_numbers:
+                expr = QgsExpression('ETZ_NUM ='+str(index))
+                one_list = drv_csv.getFeatures(QgsFeatureRequest(expr))
+                another_list = [feature.attributes() for feature in one_list]
+                for one_ft in another_list:
+                    features_list_drv.append(one_ft)
+            print features_list_drv
+            
+            fields_drv = drv_csv.pendingFields()
+            field_names_drv = [field.name() for field in fields_drv]
+            
+                
+            
+
+
             self.shower.show()
             self.shower.set_data(field_names, features_list,self.shower.tableWidget)
             self.shower.set_data(field_names_etz,
                     features_list_etz,self.shower.etaz)
+
+            self.shower.set_data(field_names_drv,
+                    features_list_drv,self.shower.drevina)
         #result = self.shower.exec_()
 
     

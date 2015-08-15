@@ -47,6 +47,16 @@
      <string>refresh</string>
     </property>
    </widget>
+   <widget class="QTableWidget" name="drevina">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>180</y>
+      <width>1481</width>
+      <height>111</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

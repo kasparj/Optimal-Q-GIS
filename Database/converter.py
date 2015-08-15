@@ -28,13 +28,17 @@ pt = QgsFeature()#premenna pre jedne geom. objekt
 
 
 
-
-
+names_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
+'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
+'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
+'DR_ZAS_HA','DR_ZAS_CEL','DR_CBP','DR_CPP',
+'DR_PMP','HMOT','HK','IMISE','DR_KVAL','PROC_SOUS',
+'DR_TV','DR_TO','DR_TVYB','ETZ_NUM']
 names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI', 
 'OBN_DOBA','POC_OBNOVY','MZD','VEK','ZAKM','HOSP_TV', 
 'M_TEZ_PROC','ODVOZ_TEZ','M_Z_ZASOBY','PRO_P','PRO_NAL', 
 'PRO_POC','TV_P','TV_NAL','TV_POC','TO_P','TO_NAL','TO_DUVOD', 
-'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUMB'] 
+'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUM','ETZ_NUM'] 
 #------------------------------------------------------
 
 
@@ -148,6 +152,15 @@ def convert_to_shp(pretty_name,folder_name):
    
     
     try:
+        #iny nazov, podla vstupneho suboru
+        drv_file = codecs.open(folder_name+'/drv_file.csv','w',encoding='utf-8')
+        drv_file.write(",".join(names_of_drv)+'\n')
+    except:
+        return 1
+    
+    
+    
+    try:
         string = ""
         #iny nazov, podla vstupneho suboru
         etz_csvt = codecs.open(folder_name+'/etz_file.csvt','w',encoding='utf-8')
@@ -159,6 +172,17 @@ def convert_to_shp(pretty_name,folder_name):
     except:
         return 1
     
+    try:
+        string = ""
+        #iny nazov, podla vstupneho suboru
+        drv_csvt = codecs.open(folder_name+'/drv_file.csvt','w',encoding='utf-8')
+        #etz_file.write(",".join(names_of_etz)+'\n')
+        for name in names_of_drv:
+            string += "\"String\","
+        drv_csvt.write(string)
+        drv_csvt.close()
+    except:
+        return 1
 
 #------------------------------------------------------------------------
 #priprava vrstiev
@@ -398,7 +422,8 @@ def convert_to_shp(pretty_name,folder_name):
         return 2
     root = tree.getroot()
 
-    ID_LIST = 0
+    PSK_ID = 0
+    ETZ_ID = 0
 
     for child in root:
         #save_LHC(child.attrib)
@@ -475,9 +500,6 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for bzl_obraz in bezlesie.findall('BZL_OBRAZ'):
                             for MP in bzl_obraz.findall('MP'):
-                                #my_id = ID_LIST
-                                #ID_LIST += 1
-                                #atts.append(my_id)
                                 create_from_MP(MP,bzl_poly,atts)
 
                     for jine in porast.findall('JP'):
@@ -494,15 +516,12 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for jp_obraz in jine.findall('JP_OBRAZ'):
                             for MP in jp_obraz.findall('MP'):
-                                #my_id = ID_LIST
-                                #ID_LIST += 1
-                                #atts.append(my_id)
                                 create_from_MP(MP,jp_poly,atts)
 
                     #na porastoch dat join
                     for psk in porast.findall('PSK'):
-                        my_id = ID_LIST
-                        ID_LIST += 1
+                        my_id = PSK_ID
+                        PSK_ID += 1
 
                         psk_atts = create_attributes(psk, list_of_psk)
                         if not psk.findall('PSK_OBRAZ'):
@@ -523,11 +542,20 @@ def convert_to_shp(pretty_name,folder_name):
                                 create_from_MP(MP,psk_poly,atts)
 
                         for etaz in psk.findall('ETZ'):
+                            etz_id = ETZ_ID
+                            ETZ_ID += 1
                             etz_atts = create_attributes(etaz,list_of_etz)
                             etz_atts.append(str(my_id))
+                            etz_atts.append(str(etz_id))
                             
                             to_write = "\",\"".join(etz_atts)
                             etz_file.write("\""+to_write+'\"\n')
+                            for drevina in etaz.findall('DRV'):
+                                drv_atts = create_attributes(drevina,list_of_drv)
+                                drv_atts.append(str(etz_id))
+
+                                to_write = "\",\"".join(drv_atts)
+                                drv_file.write("\""+to_write+'\"\n')
                             
                     #for kategoria in porast.findall('KAT'):
 
@@ -545,14 +573,18 @@ def convert_to_shp(pretty_name,folder_name):
     new_address = folder_name + '/' + file_name
 #odseknut este .xml
     etz_file.close()
+    drv_file.close()
     
 
     
     etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
-
     QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
     caps = etz_csv.dataProvider().capabilities()
 
+
+    drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
+    QgsMapLayerRegistry.instance().addMapLayer(drv_csv)
+    caps1 = drv_csv.dataProvider().capabilities()
     
 
     #joinObject = QgsVectorJoinInfo()
