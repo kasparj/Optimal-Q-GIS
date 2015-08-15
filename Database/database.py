@@ -234,6 +234,17 @@ class Database:
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
+
+        if not etz_csv:
+
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+            "Pripojte vrstvu etz_file ako Porast")
+
+            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            for name, layer in layerMap.iteritems():
+                if layer.name() == "Porast":
+                    etz_csv = layer
+
 #kontorla ci naslo vsetky co treba
 #kontorla ci je aj vybrata feature
         if not lyr:
