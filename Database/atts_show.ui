@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1512</width>
-    <height>367</height>
+    <width>1548</width>
+    <height>478</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>1481</width>
+      <width>1531</width>
       <height>61</height>
      </rect>
     </property>
@@ -29,7 +29,7 @@
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>1481</width>
+      <width>1531</width>
       <height>91</height>
      </rect>
     </property>
@@ -37,8 +37,8 @@
    <widget class="QPushButton" name="refresh">
     <property name="geometry">
      <rect>
-      <x>1400</x>
-      <y>290</y>
+      <x>1430</x>
+      <y>350</y>
       <width>85</width>
       <height>27</height>
      </rect>
@@ -52,8 +52,38 @@
      <rect>
       <x>10</x>
       <y>180</y>
-      <width>1481</width>
+      <width>1531</width>
       <height>111</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="zalozene">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>300</y>
+      <width>451</width>
+      <height>121</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="pos">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>300</y>
+      <width>451</width>
+      <height>121</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="kategoria">
+    <property name="geometry">
+     <rect>
+      <x>950</x>
+      <y>300</y>
+      <width>451</width>
+      <height>121</height>
      </rect>
     </property>
    </widget>
@@ -63,7 +93,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1512</width>
+     <width>1548</width>
      <height>27</height>
     </rect>
    </property>

@@ -27,7 +27,7 @@ pt = QgsFeature()#premenna pre jedne geom. objekt
 
 
 
-
+names_of_kat = ['KATEGORIE','KAT_SPEC','PSK_NUM']
 names_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
 'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
 'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
@@ -41,7 +41,7 @@ names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI',
 'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUM','ETZ_NUM'] 
 #------------------------------------------------------
 
-
+list_of_kat = ['KATEGORIE','KAT_SPEC']
 list_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
 'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
 'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
@@ -123,6 +123,19 @@ def create_from_ML(ML, layer, atts):
         layer.addFeatures([pt])
         #Poly_layer.updateExtents()
 
+def create_csvt(path, list_of_names):
+    #!ROBI VSETKO STRINGY!!!
+    try:
+        string = ""
+        #iny nazov, podla vstupneho suboru
+        csvt = codecs.open(path,'w',encoding='utf-8')
+        #etz_file.write(",".join(names_of_etz)+'\n')
+        for name in list_of_names:
+            string += "\"String\","
+        csvt.write(string)
+        csvt.close()
+    except:
+        return 1
 
 #OBJ je objekt, ktory obsahuje atributy, ktorych zoznam je v list_for_obj
 #e.g. objekt je <ODD> tak k nemu dam list_of_odd
@@ -157,31 +170,27 @@ def convert_to_shp(pretty_name,folder_name):
         drv_file.write(",".join(names_of_drv)+'\n')
     except:
         return 1
-    
-    
-    
+
+
     try:
-        string = ""
         #iny nazov, podla vstupneho suboru
-        etz_csvt = codecs.open(folder_name+'/etz_file.csvt','w',encoding='utf-8')
-        #etz_file.write(",".join(names_of_etz)+'\n')
-        for name in names_of_etz:
-            string += "\"String\","
-        etz_csvt.write(string)
-        etz_csvt.close()
+        kat_file = codecs.open(folder_name+'/kat_file.csv','w',encoding='utf-8')
+        kat_file.write(",".join(names_of_kat)+'\n')
     except:
         return 1
-    
-    try:
-        string = ""
-        #iny nazov, podla vstupneho suboru
-        drv_csvt = codecs.open(folder_name+'/drv_file.csvt','w',encoding='utf-8')
-        #etz_file.write(",".join(names_of_etz)+'\n')
-        for name in names_of_drv:
-            string += "\"String\","
-        drv_csvt.write(string)
-        drv_csvt.close()
-    except:
+
+
+    return_v = create_csvt(folder_name+'/etz_file.csvt',names_of_etz)
+    if return_v == 1:
+        return 1
+
+
+    return_v = create_csvt(folder_name+'/kat_file.csvt',names_of_kat)
+    if return_v == 1:
+        return 1
+
+    return_v = create_csvt(folder_name+'/drv_file.csvt',names_of_drv)
+    if return_v == 1:
         return 1
 
 #------------------------------------------------------------------------
@@ -557,7 +566,11 @@ def convert_to_shp(pretty_name,folder_name):
                                 to_write = "\",\"".join(drv_atts)
                                 drv_file.write("\""+to_write+'\"\n')
                             
-                    #for kategoria in porast.findall('KAT'):
+                    for kategoria in porast.findall('KAT'):
+                        kat_atts = create_attributes(kategoria,list_of_kat)
+                        kat_atts.append(str(my_id))
+                        to_write = "\",\"".join(kat_atts)
+                        kat_file.write("\""+to_write+'\"\n')
 
     
     #qgis.utils.iface.mapCanvas().refresh()
@@ -574,6 +587,7 @@ def convert_to_shp(pretty_name,folder_name):
 #odseknut este .xml
     etz_file.close()
     drv_file.close()
+    kat_file.close()
     
 
     
@@ -586,6 +600,9 @@ def convert_to_shp(pretty_name,folder_name):
     QgsMapLayerRegistry.instance().addMapLayer(drv_csv)
     caps1 = drv_csv.dataProvider().capabilities()
     
+    kat_csv = QgsVectorLayer("file:///"+folder_name+'/kat_file.csv',"Kategorie","delimitedtext")
+    QgsMapLayerRegistry.instance().addMapLayer(kat_csv)
+    caps2 = kat_csv.dataProvider().capabilities()
 
     #joinObject = QgsVectorJoinInfo()
     #joinObject.joinLayerId = por_csv.id()

@@ -237,6 +237,8 @@ class Database:
                 etz_csv = layer
             elif layer.name() == "Dreviny":
                 drv_csv = layer
+            elif layer.name() == "Kategorie":
+                kat_csv = layer
 
 #kontorla ci naslo vsetky co treba
 #kontorla ci je aj vybrata feature
@@ -254,20 +256,31 @@ class Database:
                 features_list = [feature.attributes() for feature in features]
             
                 idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
-                etaz_numb = features_list[0][idx] 
+                if idx == -1:
+                    psk_numb = "xX!48p"
+                else:
+                    psk_numb = features_list[0][idx] 
             else:
-                etaz_numb = -1
+                psk_numb = -1
                 field_names = []
                 features_list = []
             
             
-            expr = QgsExpression("PSK_NUM ="+ str(etaz_numb))
-            selected = etz_csv.getFeatures(QgsFeatureRequest(expr))
+            expr = QgsExpression("PSK_NUM ="+ str(psk_numb))
+            selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
+            selected_kats = kat_csv.getFeatures(QgsFeatureRequest(expr))
+            
 
             fields_etz = etz_csv.pendingFields()
             field_names_etz = [field.name() for field in fields_etz]
-            features_list_etz = [feature.attributes() for feature in selected]
-            print features_list_etz
+            features_list_etz = [feature.attributes() for feature in selected_etzs]
+            
+            
+            fields_kat = kat_csv.pendingFields()
+            field_names_kat = [field.name() for field in fields_kat]
+            features_list_kat = [feature.attributes() for feature in
+                    selected_kats]
+            
             
             etz_numbers = []
             idx = etz_csv.fieldNameIndex('ETZ_NUM')
@@ -282,7 +295,6 @@ class Database:
                 another_list = [feature.attributes() for feature in one_list]
                 for one_ft in another_list:
                     features_list_drv.append(one_ft)
-            print features_list_drv
             
             fields_drv = drv_csv.pendingFields()
             field_names_drv = [field.name() for field in fields_drv]
@@ -298,6 +310,8 @@ class Database:
 
             self.shower.set_data(field_names_drv,
                     features_list_drv,self.shower.drevina)
+            self.shower.set_data(field_names_kat,
+                    features_list_kat,self.shower.kategoria)
         #result = self.shower.exec_()
 
     
