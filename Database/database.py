@@ -22,6 +22,7 @@
 """
 
 #!!!!!!
+#http://stackoverflow.com/questions/11476907/python-and-pyqt-get-input-from-qtablewidget
 #http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
 #pyrcc4 -o resources_rc.py resources.qrc
 
