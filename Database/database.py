@@ -22,6 +22,7 @@
 """
 
 #!!!!!!
+#http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
 #pyrcc4 -o resources_rc.py resources.qrc
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
@@ -84,7 +85,7 @@ class Database:
         self.dlg.lineEdit_2.clear()
         self.dlg.pushButton_2.clicked.connect(self.select_output_folder)
 
-        
+        iface.mapCanvas().selectionChanged.connect(self.show_atts)        
         
 
         
