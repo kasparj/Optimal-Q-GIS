@@ -21,19 +21,20 @@ import codecs
 pt = QgsFeature()#premenna pre jedne geom. objekt
 
 #Tieto listy nemenit, to su zoznamy pre parsovanie dat
-#menit iba ak sa zmeni standard, na poradi nezalezi
+#menit iba ak sa zmeni standard, na poradi nezalezi(pri names zalezi!)
 #ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
+#nemenit XXX_NUM - ani poradie!
 
 
-
-
+names_of_pos = ['POSKOZ_D','POSKOZ_R','DRV_NUM']
+names_of_zal = ['ZAL_DR','ZAL_DR_P','ETZ_NUM']
 names_of_kat = ['KATEGORIE','KAT_SPEC','PSK_NUM']
 names_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
 'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
 'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
 'DR_ZAS_HA','DR_ZAS_CEL','DR_CBP','DR_CPP',
 'DR_PMP','HMOT','HK','IMISE','DR_KVAL','PROC_SOUS',
-'DR_TV','DR_TO','DR_TVYB','ETZ_NUM']
+'DR_TV','DR_TO','DR_TVYB','ETZ_NUM','DRV_NUM']
 names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI', 
 'OBN_DOBA','POC_OBNOVY','MZD','VEK','ZAKM','HOSP_TV', 
 'M_TEZ_PROC','ODVOZ_TEZ','M_Z_ZASOBY','PRO_P','PRO_NAL', 
@@ -41,6 +42,8 @@ names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI',
 'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUM','ETZ_NUM'] 
 #------------------------------------------------------
 
+list_of_pos = ['POSKOZ_D','POSKOZ_R']
+list_of_zal = ['ZAL_DR','ZAL_DR_P']
 list_of_kat = ['KATEGORIE','KAT_SPEC']
 list_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
 'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
@@ -150,6 +153,14 @@ def create_attributes(OBJ, list_for_obj):
     return atts
 
 
+def save_layer(layer,address):
+    error = QgsVectorFileWriter.writeAsVectorFormat(layer,
+        address, "CP1250", None,"ESRI Shapefile")
+    if error == QgsVectorFileWriter.NoError:
+        return 0
+    else:
+        return 1
+
 #Tuto funkciu volat externe!
 #pretty_name = adresa vstupneho suboru
 #folder_name = adresa, kam sa bude ukladat vysledok
@@ -180,6 +191,21 @@ def convert_to_shp(pretty_name,folder_name):
         return 1
 
 
+    try:
+        #iny nazov, podla vstupneho suboru
+        zal_file = codecs.open(folder_name+'/zal_file.csv','w',encoding='utf-8')
+        zal_file.write(",".join(names_of_zal)+'\n')
+    except:
+        return 1
+
+
+    try:
+        #iny nazov, podla vstupneho suboru
+        pos_file = codecs.open(folder_name+'/pos_file.csv','w',encoding='utf-8')
+        pos_file.write(",".join(names_of_pos)+'\n')
+    except:
+        return 1
+
     return_v = create_csvt(folder_name+'/etz_file.csvt',names_of_etz)
     if return_v == 1:
         return 1
@@ -193,6 +219,13 @@ def convert_to_shp(pretty_name,folder_name):
     if return_v == 1:
         return 1
 
+    return_v = create_csvt(folder_name+'/zal_file.csvt',names_of_zal)
+    if return_v == 1:
+        return 1
+    
+    return_v = create_csvt(folder_name+'/pos_file.csvt',names_of_pos)
+    if return_v == 1:
+        return 1
 #------------------------------------------------------------------------
 #priprava vrstiev
 #------------------------------------------------------------------------
@@ -433,6 +466,7 @@ def convert_to_shp(pretty_name,folder_name):
 
     PSK_ID = 0
     ETZ_ID = 0
+    DRV_ID = 0
 
     for child in root:
         #save_LHC(child.attrib)
@@ -560,11 +594,31 @@ def convert_to_shp(pretty_name,folder_name):
                             to_write = "\",\"".join(etz_atts)
                             etz_file.write("\""+to_write+'\"\n')
                             for drevina in etaz.findall('DRV'):
+                                my_drv_id = DRV_ID
+                                DRV_ID += 1
                                 drv_atts = create_attributes(drevina,list_of_drv)
                                 drv_atts.append(str(etz_id))
+                                drv_atts.append(str(my_drv_id))
 
                                 to_write = "\",\"".join(drv_atts)
                                 drv_file.write("\""+to_write+'\"\n')
+
+                                
+                                for poskodenie in drevina.findall('POS'):
+                                    pos_atts = create_attributes(poskodenie,
+                                            list_of_pos)
+                                    pos_atts.append(str(my_drv_id))
+                                    to_write = "\",\"".join(pos_atts)
+                                    pos_file.write("\""+to_write+'\"\n')
+
+                            
+                            
+                            for zalozenie in etaz.findall('ZAL'):
+                                zal_atts = create_attributes(zalozenie,list_of_zal)
+                                zal_atts.append(str(etz_id))
+
+                                to_write = "\",\"".join(zal_atts)
+                                zal_file.write("\""+to_write+'\"\n')
                             
                     for kategoria in porast.findall('KAT'):
                         kat_atts = create_attributes(kategoria,list_of_kat)
@@ -580,14 +634,18 @@ def convert_to_shp(pretty_name,folder_name):
     canvas.setExtent(PSK_layer.extent())
     qgis.utils.iface.mapCanvas().refresh()
 
-
+    """
     file_name = path_leaf(pretty_name)
     file_name = file_name[:file_name.find('xml')-1]
+
     new_address = folder_name + '/' + file_name
-#odseknut este .xml
+    """
+
     etz_file.close()
     drv_file.close()
     kat_file.close()
+    pos_file.close()
+    zal_file.close()
     
 
     
@@ -604,6 +662,14 @@ def convert_to_shp(pretty_name,folder_name):
     QgsMapLayerRegistry.instance().addMapLayer(kat_csv)
     caps2 = kat_csv.dataProvider().capabilities()
 
+    zal_csv = QgsVectorLayer("file:///"+folder_name+'/zal_file.csv',"Zalozenie","delimitedtext")
+    QgsMapLayerRegistry.instance().addMapLayer(zal_csv)
+    caps3 = zal_csv.dataProvider().capabilities()
+    
+    
+    pos_csv = QgsVectorLayer("file:///"+folder_name+'/pos_file.csv',"Poskodenia","delimitedtext")
+    QgsMapLayerRegistry.instance().addMapLayer(pos_csv)
+    caps4 = pos_csv.dataProvider().capabilities()
     #joinObject = QgsVectorJoinInfo()
     #joinObject.joinLayerId = por_csv.id()
     #joinObject.joinFieldName = 'MY_ID'
@@ -612,16 +678,42 @@ def convert_to_shp(pretty_name,folder_name):
 
 #close files mainly csv    
 #ukladanie
-    """
-    error = QgsVectorFileWriter.writeAsVectorFormat(PSK_layer,
-        new_address, "CP1250", None,"ESRI Shapefile")
-    if error == QgsVectorFileWriter.NoError:
-        print "subor bol vytvoreny"
-    else:
-        print "subor sa nepodarilo vytvori"
-    """
+  
+    error_code = 0
+    err_stat = save_layer(PSK_layer,folder_name+'/PSK')
+    if err_stat != 0:
+        err_code = err_stat
     
+    err_stat = save_layer(KPO_layer,folder_name+'/KPO')
+    if err_stat != 0:
+        err_code = err_stat
+
+    err_stat = save_layer(JP_layer,folder_name+'/JP')
+    if err_stat != 0:
+        err_code = err_stat
+
+    err_stat = save_layer(BZL_layer,folder_name+'/BZL')
+    if err_stat != 0:
+        err_code = err_stat
+    
+    err_stat = save_layer(KLO_layer,folder_name+'/KLO')
+    if err_stat != 0:
+        err_code = err_stat
+
+    err_stat = save_layer(KBO_layer,folder_name+'/KBO')
+    if err_stat != 0:
+        err_code = err_stat
+
+    err_stat = save_layer(KTO_layer,folder_name+'/KTO')
+    if err_stat != 0:
+        err_code = err_stat
+
+    if error_code != 0:
+        return error_code
 
     return 0
+
+
 if __name__ == '__main__':
     convert_to_shp("name")
+

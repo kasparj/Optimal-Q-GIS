@@ -44,30 +44,13 @@ from PyQt4.QtCore import *
 pretty_name = ""
 pretty_folder = ""
 
-data = {'col1':['1','2','3'], 'col2':['4','5','6']}
-
-
-#class mynewWindow(QtGui.QMainWindow):
-#    def __init__(self):
-#        QtGui.QMainWindow.__init__(self, None, QtCore.Qt.WindowStaysOnTopHint)
 
 
 class Database:
-    """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
-        """Constructor.
-
-        :param iface: An interface instance that will be passed to this class
-            which provides the hook by which you can manipulate the QGIS
-            application at run time.
-        :type iface: QgsInterface
-        """
-        # Save reference to the QGIS interface
         self.iface = iface
-        # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
-        # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
             self.plugin_dir,
@@ -239,6 +222,10 @@ class Database:
                 drv_csv = layer
             elif layer.name() == "Kategorie":
                 kat_csv = layer
+            elif layer.name() == "Zalozenie":
+                zal_csv = layer
+            elif layer.name() == "Poskodenia":
+                pos_csv = layer
 
 #kontorla ci naslo vsetky co treba
 #kontorla ci je aj vybrata feature
@@ -300,7 +287,35 @@ class Database:
             field_names_drv = [field.name() for field in fields_drv]
             
                 
+            drv_numbers = []
+            idx = drv_csv.fieldNameIndex('DRV_NUM')
+            for item in features_list_drv:
+                drv_numbers.append(item[idx])
             
+            
+            features_list_pos = []
+            for index in drv_numbers:
+                expr = QgsExpression('DRV_NUM ='+str(index))
+                one_list = pos_csv.getFeatures(QgsFeatureRequest(expr))
+                another_list = [feature.attributes() for feature in one_list]
+                for one_ft in another_list:
+                    features_list_pos.append(one_ft)
+            
+            fields_pos = pos_csv.pendingFields()
+            field_names_pos = [field.name() for field in fields_pos]
+            
+            
+            
+            features_list_zal = []
+            for index in etz_numbers:
+                expr = QgsExpression('ETZ_NUM ='+str(index))
+                one_list = zal_csv.getFeatures(QgsFeatureRequest(expr))
+                another_list = [feature.attributes() for feature in one_list]
+                for one_ft in another_list:
+                    features_list_zal.append(one_ft)
+            
+            fields_zal = zal_csv.pendingFields()
+            field_names_zal = [field.name() for field in fields_zal]
 
 
             self.shower.show()
@@ -312,6 +327,10 @@ class Database:
                     features_list_drv,self.shower.drevina)
             self.shower.set_data(field_names_kat,
                     features_list_kat,self.shower.kategoria)
+            self.shower.set_data(field_names_zal,
+                    features_list_zal,self.shower.zalozene)
+            self.shower.set_data(field_names_pos,
+                    features_list_pos,self.shower.pos)
         #result = self.shower.exec_()
 
     
