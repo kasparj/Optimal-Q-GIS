@@ -27,48 +27,16 @@ from PyQt4 import QtGui, uic
 from PyQt4.QtGui import QTableWidgetItem 
 from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
 
-FORM_CLASS_1, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'atts_show.ui'))
-class ShowAtts(QtGui.QMainWindow, FORM_CLASS_1):
+FORM_CLASS_3, _ = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'open.ui'))
+class Open_all(QtGui.QMainWindow, FORM_CLASS_3):
     def __init__(self, parent=None):
         """Constructor."""
-        super(ShowAtts, self).__init__(parent)
+        super(Open_all, self).__init__(parent)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint)
-
-        """
-        mainW = QtGui.QWidget()
-        
-
-        scroll = QtGui.QScrollArea()
-        scroll.setWidget(mainW)
-        scroll.setWidgetResizable(True)
-
-        self.setCentralWidget(scroll)
-        """
-    def set_data(self,head,lines,where):
-        horHeaders = []
-        where.setRowCount(len(lines))
-        where.setColumnCount(len(head))
-        col = -1
-        row = -1
-        for i in lines:
-            row+= 1
-            col = -1
-            for item in i:
-                col += 1
-                if isinstance(item,QPyNullVariant):
-                    item = ""
-                newitem = QTableWidgetItem(item)
-                where.setItem(row,col,newitem)
-        where.setHorizontalHeaderLabels(head)
-        where.resizeColumnsToContents()
-        where.resizeRowsToContents()
-
-
 

@@ -32,10 +32,13 @@ from PyQt4.QtGui import QTableWidgetItem
 from PyQt4.QtCore import SIGNAL,QPyNullVariant
 from PyQt4 import QtGui, QtCore
 from qgis.utils import iface
+import qgis
 from qgis.core import QgsFeatureRequest
 import resources_rc
 from database_dialog import DatabaseDialog
 from show_atts import ShowAtts
+from save import Save_all 
+from open_all import Open_all 
 import os.path
 from converter import convert_to_shp
 import sys 
@@ -45,6 +48,7 @@ from qgis.gui import *
 from PyQt4.QtCore import *
 pretty_name = ""
 pretty_folder = ""
+input_folder = ""
 
 
 
@@ -71,7 +75,23 @@ class Database:
         
         #----------------------------------
         self.shower = ShowAtts()
-        self.shower.refresh.clicked.connect(self.show_atts)       
+        self.shower.refresh.clicked.connect(self.edit_data)
+        self.shower.tableWidget.itemChanged.connect(self.edit_data)
+
+        self.save_all = Save_all()
+
+        self.save_all.address.clear()
+        self.save_all.lookup.clicked.connect(self.select_output_folder)
+
+        self.save_all.save.clicked.connect(self.save_all_1)
+
+        self.open_all = Open_all()
+        self.open_all.address.clear()
+        self.open_all.lookup.clicked.connect(self.select_input_folder)
+
+        self.open_all.open.clicked.connect(self.open_all_1)
+        
+
 
         # Declare instance attributes
         self.actions = []
@@ -84,7 +104,7 @@ class Database:
         self.dlg.pushButton.clicked.connect(self.select_input_file)
 
         self.dlg.lineEdit_2.clear()
-        self.dlg.pushButton_2.clicked.connect(self.select_output_folder)
+        self.dlg.pushButton_2.clicked.connect(self.select_output_folder_c)
 
         iface.mapCanvas().selectionChanged.connect(self.show_atts)        
         
@@ -195,6 +215,22 @@ class Database:
             text=self.tr(u'Show attributes'),
             callback=self.show_atts,
             parent=self.iface.mainWindow())
+        
+        
+        icon_path = ':/plugins/Database/icon_tables.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Save All'),
+            callback=self.save_all_11,
+            parent=self.iface.mainWindow())
+        
+        icon_path = ':/plugins/Database/icon_tables.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Open All'),
+            callback=self.open_all_11,
+            parent=self.iface.mainWindow())
+        
         self.handler = None
         self.selected_layer = None
 
@@ -208,11 +244,108 @@ class Database:
         # remove the toolbar
         del self.toolbar
 
+    def save_all_11(self):
+        self.save_all.show()
+    
+    def open_layer(self, name, address,type_ft):
+
+        new_ft = QgsVectorLayer(address,name,type_ft)
+        QgsMapLayerRegistry.instance().addMapLayer(new_ft)
+        #layer = iface.addVectorLayer(address, name, type_ft)
+        caps  = new_ft.dataProvider().capabilities()
+        canvas = qgis.utils.iface.mapCanvas()
+        canvas.setExtent(new_ft.extent())
+
+    def open_all_11(self):
+        self.open_all.show()
+
+    def open_all_1(self):
+
+        self.open_layer("Porast", 'file:///'+input_folder+'/etz_file.csv',"delimitedtext")
+        self.open_layer("Dreviny", 'file:///'+input_folder+'/drv_file.csv',"delimitedtext")
+        self.open_layer("Kategorie", 'file:///'+input_folder+'/kat_file.csv',"delimitedtext")
+        self.open_layer("Zalozenie", 'file:///'+input_folder+'/zal_file.csv',"delimitedtext")
+        self.open_layer("Poskodenia", 'file:///'+input_folder+'/pos_file.csv',"delimitedtext")
+        
+        self.open_layer("KTO",input_folder+'/KTO.shp',"ogr")
+        self.open_layer("Body",input_folder+'/KBO.shp',"ogr")
+        self.open_layer("KLO",input_folder+'/KLO.shp',"ogr")
+        self.open_layer("Bezlesie",input_folder+'/BZL.shp',"ogr")
+        self.open_layer("Ine plochy",input_folder+'/JP.shp',"ogr")
+        self.open_layer("KPO",input_folder+'/KPO.shp',"ogr")
+        self.open_layer("Lesne porasty",input_folder+'/PSK.shp',"ogr")
+
+
+        self.open_all.close()
+    
+    def save_layer(self,layer,address):
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer,
+            address, "CP1250", None,"ESRI Shapefile")
+        if error == QgsVectorFileWriter.NoError:
+            return 0
+        else:
+            return 1
+    
+    def save_csv(self,layer,address):
+        error = QgsVectorFileWriter.writeAsVectorFormat(layer,
+            address, "CP1250", None,"CSV")
+        if error == QgsVectorFileWriter.NoError:
+            return 0
+        else:
+            return 1
+    
+    
+    
+    def save_all_1(self):
+        global pretty_folder
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                self.save_csv(layer,pretty_folder+'/etz_file.csv')
+            elif layer.name() == "Dreviny":
+                self.save_csv(layer,pretty_folder+'/drv_file.csv')
+            elif layer.name() == "Kategorie":
+                self.save_csv(layer,pretty_folder+'/kat_file.csv')
+            elif layer.name() == "Zalozenie":
+                self.save_csv(layer,pretty_folder+'/zal_file.csv')
+            elif layer.name() == "Poskodenia":
+                self.save_csv(layer,pretty_folder+'/pos_file.csv')
+            elif layer.name() == "KTO":
+                self.save_layer(layer,pretty_folder+'/KTO')
+            elif layer.name() == "Body":
+                self.save_layer(layer,pretty_folder+'/KBO')
+            elif layer.name() == "KLO":
+                self.save_layer(layer,pretty_folder+'/KLO')
+            elif layer.name() == "Bezlesie":
+                self.save_layer(layer,pretty_folder+'/BZL')
+            elif layer.name() == "Ine plochy":
+                self.save_layer(layer,pretty_folder+'/JP')
+            elif layer.name() == "KPO":
+                self.save_layer(layer,pretty_folder+'/KPO')
+            elif layer.name() == "Lesne porasty":
+                self.save_layer(layer,pretty_folder+'/PSK')
+            
+        self.save_all.close()
+    
+    
+    
+    
+    def edit_data(self,item):
+        """lyr = iface.activeLayer()
+        features = lyr.selectedFeatures()
+        lyr.startEditing()
+        lyr.changeAttributeValue(features[0].id(),0,'x',True)
+        lyr.commitChanges()
+        """
+        print item.row()
+        print item.column()
+        #print item.text()
+
     
     
     def show_atts(self):
         #vybrana vrstva
-        lyr = iface.activeLayer()
+        lyr = self.iface.activeLayer()
 
 
         #Vyberieme si potrebne vrsty podla mena - pozor na zmeny!
@@ -333,15 +466,19 @@ class Database:
                     features_list_zal,self.shower.zalozene)
             self.shower.set_data(field_names_pos,
                     features_list_pos,self.shower.pos)
-        #result = self.shower.exec_()
 
     
-    def select_output_folder(self):
+    def select_output_folder_c(self):
         global pretty_folder
         pretty_folder = QFileDialog.getExistingDirectory(self.dlg, "Vyberte\
                  vystupny priecinok")
         self.dlg.lineEdit_2.setText(pretty_folder)
     
+    def select_output_folder(self):
+        global pretty_folder
+        pretty_folder = QFileDialog.getExistingDirectory(self.save_all, "Vyberte\
+                 vystupny priecinok")
+        self.save_all.address.setText(pretty_folder)
     
     def select_input_file(self):
         global pretty_name
@@ -349,6 +486,11 @@ class Database:
         subor","","*.xml")
         self.dlg.lineEdit.setText(pretty_name)
 
+    def select_input_folder(self):
+        global input_folder
+        input_folder = QFileDialog.getExistingDirectory(self.open_all, "Vyberte vstupny\
+        pricinok")
+        self.open_all.address.setText(input_folder)
     
 
     def run(self):
