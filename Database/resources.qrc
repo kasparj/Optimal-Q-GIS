@@ -5,4 +5,10 @@
     <qresource prefix="/plugins/Database" >
         <file>icon_tables.png</file>
     </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icon_save.png</file>
+    </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icon_open.png</file>
+    </qresource>
 </RCC>

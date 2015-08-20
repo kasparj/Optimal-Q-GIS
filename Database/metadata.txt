@@ -8,9 +8,9 @@
 
 [general]
 name=Optimal
-qgisMinimumVersion=2.0
-description=Does something
-version=0.1
+qgisMinimumVersion=2.2
+description=Optimal for QGis
+version=0.8
 author=M. Marusak
 email=marusak.matej@gmail.com
 
@@ -30,7 +30,7 @@ repository=
 category=Plugins
 icon=icon.png
 # experimental flag
-experimental=True
+experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False

@@ -49,6 +49,7 @@ from PyQt4.QtCore import *
 pretty_name = ""
 pretty_folder = ""
 input_folder = ""
+edit_pos = 0
 
 
 
@@ -75,8 +76,8 @@ class Database:
         
         #----------------------------------
         self.shower = ShowAtts()
-        self.shower.refresh.clicked.connect(self.edit_data)
-        self.shower.tableWidget.itemChanged.connect(self.edit_data)
+        self.shower.refresh.clicked.connect(self.edit_main)
+        self.shower.tableWidget.itemChanged.connect(self.edit_main)
 
         self.save_all = Save_all()
 
@@ -217,14 +218,14 @@ class Database:
             parent=self.iface.mainWindow())
         
         
-        icon_path = ':/plugins/Database/icon_tables.png'
+        icon_path = ':/plugins/Database/icon_save.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Save All'),
             callback=self.save_all_11,
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/Database/icon_tables.png'
+        icon_path = ':/plugins/Database/icon_open.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Open All'),
@@ -330,20 +331,26 @@ class Database:
     
     
     
-    def edit_data(self,item):
-        """lyr = iface.activeLayer()
-        features = lyr.selectedFeatures()
-        lyr.startEditing()
-        lyr.changeAttributeValue(features[0].id(),0,'x',True)
-        lyr.commitChanges()
-        """
-        print item.row()
-        print item.column()
+    def edit_main(self,item):
+        global edit_pos
+        
+        if not edit_pos:
+        
+            lyr = iface.activeLayer()
+            features = lyr.selectedFeatures()
+            lyr.startEditing()
+            lyr.changeAttributeValue(features[0].id(),item.column(),item.text(),True)
+            lyr.commitChanges()
+        
+            print item.row()
+            print item.column()
         #print item.text()
 
     
     
     def show_atts(self):
+        global edit_pos
+        edit_pos = 1
         #vybrana vrstva
         lyr = self.iface.activeLayer()
 
@@ -400,8 +407,11 @@ class Database:
             
             fields_kat = kat_csv.pendingFields()
             field_names_kat = [field.name() for field in fields_kat]
+            selected_kats =list(selected_kats)
             features_list_kat = [feature.attributes() for feature in
                     selected_kats]
+            for fit in selected_kats:
+                print fit.id()
             
             
             etz_numbers = []
@@ -467,6 +477,7 @@ class Database:
             self.shower.set_data(field_names_pos,
                     features_list_pos,self.shower.pos)
 
+        edit_pos = 0
     
     def select_output_folder_c(self):
         global pretty_folder
