@@ -46,15 +46,19 @@ import sys
 from qgis.core import *
 from qgis.gui import *
 from PyQt4.QtCore import *
+
+
 pretty_name = ""
 pretty_folder = ""
 input_folder = ""
 edit_pos = 0
-
+list_of_kats_ids = []
 
 
 class Database:
 
+    #tu sa reaguje sa signaly
+    #popisane je to na ShowAtts - zvysok je obdoba
     def __init__(self, iface):
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
@@ -75,10 +79,13 @@ class Database:
         self.dlg = DatabaseDialog()
         
         #----------------------------------
-        self.shower = ShowAtts()
-        self.shower.refresh.clicked.connect(self.edit_main)
-        self.shower.tableWidget.itemChanged.connect(self.edit_main)
-
+        self.shower = ShowAtts()#toto sa importuje
+        self.shower.refresh.clicked.connect(self.edit_main)#ked kliknem na
+        #refrsh zavola sa edit_main
+        self.shower.tableWidget.itemChanged.connect(self.edit_main)#ak pride
+        #signal itemChanged zavola sa funkcia edit_main
+        self.shower.kategoria.itemChanged.connect(self.edit_kats)
+            
         self.save_all = Save_all()
 
         self.save_all.address.clear()
@@ -203,6 +210,8 @@ class Database:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
+        #tu vzdy pridat cely tento kus
+        #zmenit cestu k ikonke a zmenit popis
         icon_path = ':/plugins/Database/icon_convert.png'
         self.add_action(
             icon_path,
@@ -346,13 +355,28 @@ class Database:
             print item.column()
         #print item.text()
 
-    
+    def edit_kats(self,item):
+        global edit_pos
+        global list_of_kats_ids
+
+        if not edit_pos:
+            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            for name, layer in layerMap.iteritems():
+                if layer.name() == "Kategorie":
+                    lyr = layer
+            lyr.startEditing()
+            lyr.changeAttributeValue(list_of_kats_ids[item.row()],item.column(),item.text(),True)
+            lyr.commitChanges()
+            
     
     def show_atts(self):
         global edit_pos
+        global list_of_kats_ids
+        list_of_kats_ids = []
         edit_pos = 1
         #vybrana vrstva
         lyr = self.iface.activeLayer()
+
 
 
         #Vyberieme si potrebne vrsty podla mena - pozor na zmeny!
@@ -411,7 +435,7 @@ class Database:
             features_list_kat = [feature.attributes() for feature in
                     selected_kats]
             for fit in selected_kats:
-                print fit.id()
+                list_of_kats_ids.append(fit.id())
             
             
             etz_numbers = []

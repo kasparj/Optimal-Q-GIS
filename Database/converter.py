@@ -12,7 +12,6 @@ import sys
 import ntpath
 import codecs
 
-
 #------------------------------------------------------------------------
 #globalne premenne
 #------------------------------------------------------------------------
@@ -20,11 +19,8 @@ import codecs
 
 pt = QgsFeature()#premenna pre jedne geom. objekt
 
-#Tieto listy nemenit, to su zoznamy pre parsovanie dat
-#menit iba ak sa zmeni standard, na poradi nezalezi(pri names zalezi!)
-#ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
-#nemenit XXX_NUM - ani poradie!
-
+#mozu sa menit, ale treba zachovat poradie
+#tieto nazvy sa priamo zapisu do suboru ako hlavicky
 
 names_of_pos = ['POSKOZ_D','POSKOZ_R','DRV_NUM']
 names_of_zal = ['ZAL_DR','ZAL_DR_P','ETZ_NUM']
@@ -41,6 +37,11 @@ names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI',
 'PRO_POC','TV_P','TV_NAL','TV_POC','TO_P','TO_NAL','TO_DUVOD', 
 'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUM','ETZ_NUM'] 
 #------------------------------------------------------
+
+#Tieto listy nemenit, to su zoznamy pre parsovanie dat
+#menit iba ak sa zmeni standard, na poradi zalezi
+#ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
+#nemenit XXX_NUM 
 
 list_of_pos = ['POSKOZ_D','POSKOZ_R']
 list_of_zal = ['ZAL_DR','ZAL_DR_P']
@@ -85,24 +86,17 @@ list_of_lhc = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
 #------------------------------------------------------------------------
 
 
-#Vytvorenie cesty z cesty k suboru
-#path = /home/user/Optimal/map.xml
-#return = /home/user/Optimal
-def path_leaf(path):
-    head, tail = ntpath.split(path)
-    return tail or ntpath.basename(head)
-
-
 #Vytvori list z <L>, z kazdeho bodu <B> urobi QgsPoint
 #vrati list vsetkych bodov v <L> = lines
 def create_points(lines):
     points = []
     for point in lines.findall('B'):
         np =  point.get('S')
-        number1 = np[:np.find("$")]
-        number2 = np[np.find("$")+1:]
-        points.append(QgsPoint(float(number1),float(number2)))
-    return points
+        number1 = np[:np.find("$")]#odstrihne od zaciatku po $
+        number2 = np[np.find("$")+1:]#odstrihne od $ dokonca
+        points.append(QgsPoint(float(number1),float(number2)))#vytvorim bod v
+        #priestore a ten dam nakoniec zoznamu
+    return points#zoznam bodov vratim
 
 
 #MP = objekt <MP>, layer = vrstva do ktorej chceme pridat objekt,
@@ -110,9 +104,10 @@ def create_points(lines):
 def create_from_MP(MP, layer,atts):
     for polygon in MP.findall('P'):
         for lines in polygon.findall('L'):
-            points = create_points(lines)
-            pt.setGeometry(QgsGeometry.fromPolygon([points]))
-            pt.setAttributes(atts)
+            points = create_points(lines)#ziskam zoznam bodov
+            pt.setGeometry(QgsGeometry.fromPolygon([points]))#vytvorim geom.
+            #objekt
+            pt.setAttributes(atts)#nastavim atributy
             layer.addFeatures([pt])
             #Poly_layer.updateExtents()
 
@@ -126,6 +121,7 @@ def create_from_ML(ML, layer, atts):
         layer.addFeatures([pt])
         #Poly_layer.updateExtents()
 
+#vytvori .csvt subor - nechcem ale nakoniec pracovat s csv, ale dbf...
 def create_csvt(path, list_of_names):
     #!ROBI VSETKO STRINGY!!!
     try:
@@ -140,19 +136,24 @@ def create_csvt(path, list_of_names):
     except:
         return 1
 
+#ziskam list atributov parsovanim
 #OBJ je objekt, ktory obsahuje atributy, ktorych zoznam je v list_for_obj
 #e.g. objekt je <ODD> tak k nemu dam list_of_odd
 def create_attributes(OBJ, list_for_obj):
     atts = []
-    for att in list_for_obj:
-        new_item = OBJ.get(att)
-        if new_item:
-            atts.append(new_item.replace("\"","\\\'"))
+    for att in list_for_obj:#pre kazdu polozku zo zoznamu
+        new_item = OBJ.get(att)#vyhladam co jej odpoveda
+        if new_item:#ak najdem nieco
+            atts.append(new_item.replace("\"","\\\'"))#tak to zapisem
         else:
-            atts.append("")
-    return atts
+            atts.append("")#inak zapisem prazdy retazec
+    return atts#vratim list
 
 
+#funkcia na ulozenie .shp vrstvy
+#layer je platny ukazatel na vrstvu
+#address je cesta aj s menom suboru kde sa ma ulozit
+#pri chybe vracia 1 inak vracia 0
 def save_layer(layer,address):
     error = QgsVectorFileWriter.writeAsVectorFormat(layer,
         address, "CP1250", None,"ESRI Shapefile")
@@ -165,7 +166,8 @@ def save_layer(layer,address):
 #pretty_name = adresa vstupneho suboru
 #folder_name = adresa, kam sa bude ukladat vysledok
 def convert_to_shp(pretty_name,folder_name):
-    #praca s CSV - este to asi pouzijem 
+    #praca s CSV - otvorim si vsetky potrebne .csv subory a rovno do nich
+        #zapisem aj hlavicku - mohlo by sa to vytiahnut nejako do funckie...
     
     try:
         #iny nazov, podla vstupneho suboru
@@ -206,6 +208,8 @@ def convert_to_shp(pretty_name,folder_name):
     except:
         return 1
 
+
+    #vytvorim si .csvt subory
     return_v = create_csvt(folder_name+'/etz_file.csvt',names_of_etz)
     if return_v == 1:
         return 1
@@ -272,10 +276,11 @@ def convert_to_shp(pretty_name,folder_name):
     if not KTO_layer.isValid():
             return 1
 
-#priprava vstiev, cast durha
+#priprava vstiev, cast druha
 #format jedneho parametra :
     #QgsField(
     #"nazov stlpca v tabulke - moze sa menit lubovolne, ale nie poradie"
+    #tieto parametre sa zobrazia v tabulke uzivatelovi
     #typ parametra QVariant.[String/Int/Double] - pomenit tak, aby odpovedalo
     #NEMENIT POSLEDNY PARAMTERE - XXXX-NUMB!
     QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
@@ -464,13 +469,13 @@ def convert_to_shp(pretty_name,folder_name):
         return 2
     root = tree.getroot()
 
-    PSK_ID = 0
+    PSK_ID = 0#pocitadla etazi, porastov...
     ETZ_ID = 0
     DRV_ID = 0
 
     for child in root:
-        #save_LHC(child.attrib)
-        #for HS,OU1,OU2,MZD
+        #save_LHC(child.attrib)!
+        #for HS,OU1,OU2,MZD!
         
         
         for KBO in child.findall('KBO'):
@@ -627,19 +632,11 @@ def convert_to_shp(pretty_name,folder_name):
                         kat_file.write("\""+to_write+'\"\n')
 
     
-    #qgis.utils.iface.mapCanvas().refresh()
-    #PSK_layer.commitChanges()
     PSK_layer.updateExtents()
     canvas = qgis.utils.iface.mapCanvas()
     canvas.setExtent(PSK_layer.extent())
     qgis.utils.iface.mapCanvas().refresh()
 
-    """
-    file_name = path_leaf(pretty_name)
-    file_name = file_name[:file_name.find('xml')-1]
-
-    new_address = folder_name + '/' + file_name
-    """
 
     etz_file.close()
     drv_file.close()
@@ -647,11 +644,10 @@ def convert_to_shp(pretty_name,folder_name):
     pos_file.close()
     zal_file.close()
     
-
-    
+    #otvorim csv subory pre potreby QGIS    
     etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
-    QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
-    caps = etz_csv.dataProvider().capabilities()
+    #QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
+    #caps = etz_csv.dataProvider().capabilities()
 
 
     drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
@@ -670,15 +666,18 @@ def convert_to_shp(pretty_name,folder_name):
     pos_csv = QgsVectorLayer("file:///"+folder_name+'/pos_file.csv',"Poskodenia","delimitedtext")
     QgsMapLayerRegistry.instance().addMapLayer(pos_csv)
     caps4 = pos_csv.dataProvider().capabilities()
+
+    
+    #save_layer(etz_csv,folder_name+'/etz')
+    
+    #etz1=qgis.utils.iface.addVectorLayer("file:///"+folder_name+'/etz.dbf',"Porast1","ogr")
     #joinObject = QgsVectorJoinInfo()
     #joinObject.joinLayerId = por_csv.id()
     #joinObject.joinFieldName = 'MY_ID'
     #joinObject.targetFieldName = 'POR_NUMB'
     #PSK_layer.addJoin(joinObject)
 
-#close files mainly csv    
-#ukladanie
-  
+    #ulozim vrstvy 
     error_code = 0
     err_stat = save_layer(PSK_layer,folder_name+'/PSK')
     if err_stat != 0:

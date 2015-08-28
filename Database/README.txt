@@ -1,38 +1,22 @@
 nastavit QGISHOME = /usr v premmenych v QGIS
 
+Ktore subory editovat:
+
+converter.py - sluzi na konverziu .xml suborov na .shp subory a .csv. Vola sa
+funkcia ****(je oznacena, tusim ako posledna). Zaroven aj ulozi vsetky subory,
+cize po zavolani funkcie **** je mozne QGIS ukoncit. Obsahuje aj dalsie
+funkcie, ich popis je priamo v pri funkcii, tie sa nevolaju mimo ten skript.
 
 
+open_all.py, database_dialog.py, show_all.py ... su subory, pre kazdu polozku v
+menu - obsah je viac-menej rovnaky - potom na zaciatku database.py treba
+importovat z toho
 
-Plugin Builder Results
+database.py - !! Dolezite - tu sa inicializuje cely plugin, tu sa reaguje na
+signaly, tu sa volaju vsetky funckie... popis v subore
 
-Your plugin Database was created in:
-    /home/matej/Optimal-Q-GIS/Database
+****.ui - editovat v Qt, inak nic ine
 
-Your QGIS plugin directory is located at:
-    /home/matej/.qgis2/python/plugins
+ikony - 
 
-What's Next:
-
-  * Copy the entire directory containing your new plugin to the QGIS plugin
-    directory
-
-  * Compile the resources file using pyrcc4
-
-  * Run the tests (``make test``)
-
-  * Test the plugin by enabling it in the QGIS plugin manager
-
-  * Customize it by editing the implementation file: ``database.py``
-
-  * Create your own custom icon, replacing the default icon.png
-
-  * Modify your user interface by opening Database.ui in Qt Designer
-
-  * You can use the Makefile to compile your Ui and resource files when
-    you make changes. This requires GNU make (gmake)
-
-For more information, see the PyQGIS Developer Cookbook at:
-http://www.qgis.org/pyqgis-cookbook/index.html
-
-(C) 2011-2014 GeoApt LLC - geoapt.com
-Git revision : $Format:%H$
+dalsie subory netreba editovat
