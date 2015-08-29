@@ -646,8 +646,8 @@ def convert_to_shp(pretty_name,folder_name):
     
     #otvorim csv subory pre potreby QGIS    
     etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
-    #QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
-    #caps = etz_csv.dataProvider().capabilities()
+    QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
+    caps = etz_csv.dataProvider().capabilities()
 
 
     drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
