@@ -45,6 +45,8 @@ from open_all import Open_all
 import os.path
 from converter import convert_to_shp
 import sys 
+from PyQt4.QtGui import QColor
+
 
 from qgis.core import *
 from qgis.gui import *
@@ -271,7 +273,43 @@ class Database:
 
     def colorize(self):
         layer = iface.activeLayer()
+
+        index = layer.fieldNameIndex('COLOR')
+        layer.startEditing()
+        for feature in layer.getFeatures():
+            COLOR = 'BW'
+            if feature.geometry().area() < 10500:
+                if feature.geometry().length() < 45:
+                    COLOR = 'BR'
+                else:
+                    COLOR = 'LW'
+            elif feature.geometry().length() < 45:
+                COLOR = 'AW'
+            layer.changeAttributeValue(feature.id(),index,str(COLOR))
+        layer.commitChanges()
         
+        correct = {
+                'BR':('green','Both right'),
+                'AW':('yellow','area wrong'),
+                'LW':('orange','length wrong'),
+                'BW':('red','Both wrong')
+                }
+        categories = []
+        for COLOR, (color, label) in correct.items():
+            sym = QgsSymbolV2.defaultSymbol(layer.geometryType())
+            sym.setColor(QColor(color))
+            category = QgsRendererCategoryV2(COLOR, sym, label)
+            categories.append(category)
+
+        field = "COLOR"
+
+        renderer = QgsCategorizedSymbolRendererV2(field, categories)
+
+        layer.setRendererV2(renderer)
+
+        #aa
+        
+                
 
     def add_drv_f(self):
         self.add_drv.show()
@@ -519,7 +557,7 @@ class Database:
         else: 
             fields = lyr.pendingFields()#vyberieme vsetky mena atributov
             features = lyr.selectedFeatures()#vyberieme vybrate prvky
-            #print  features[0].geometry().area()
+            print  features[0].geometry().area()
             #print  features[0].geometry().length()
             if features != []:
 
@@ -577,14 +615,14 @@ class Database:
 
                 one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
-                print another_list
+                #print another_list
                 for one_ft in another_list:
                     features_list_drv.append(one_ft)
                 for each_item in one_list:
                     list_of_drvs_ids.append(each_item.id())
             
             features_list_drv = self.convert_to_strings(features_list_drv)
-            print features_list_drv
+            #print features_list_drv
             fields_drv = drv_csv.pendingFields()
             field_names_drv = [field.name() for field in fields_drv]
             

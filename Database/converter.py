@@ -121,21 +121,6 @@ def create_from_ML(ML, layer, atts):
         layer.addFeatures([pt])
         #Poly_layer.updateExtents()
 
-#vytvori .csvt subor - nechcem ale nakoniec pracovat s csv, ale dbf...
-"""def create_csvt(path, list_of_names):
-    #!ROBI VSETKO STRINGY!!!
-    try:
-        string = ""
-        #iny nazov, podla vstupneho suboru
-        csvt = codecs.open(path,'w',encoding='utf-8')
-        #etz_file.write(",".join(names_of_etz)+'\n')
-        for name in list_of_names:
-            string += "\"String\","
-        csvt.write(string)
-        csvt.close()
-    except:
-        return 1
-"""
 #ziskam list atributov parsovanim
 #OBJ je objekt, ktory obsahuje atributy, ktorych zoznam je v list_for_obj
 #e.g. objekt je <ODD> tak k nemu dam list_of_odd
@@ -327,6 +312,8 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("CISLO_TEL" , QVariant.Int),
 
                             QgsField("PSK_NUM" , QVariant.Int),
+                            QgsField("COLOR" , QVariant.String),
+
                             ])
     PSK_layer.updateFields()
 
@@ -588,6 +575,7 @@ def convert_to_shp(pretty_name,folder_name):
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):
                                 atts.append(my_id)
+                                
                                 create_from_MP(MP,psk_poly,atts)
 
                         for etaz in psk.findall('ETZ'):
@@ -637,6 +625,7 @@ def convert_to_shp(pretty_name,folder_name):
     canvas = qgis.utils.iface.mapCanvas()
     canvas.setExtent(PSK_layer.extent())
     qgis.utils.iface.mapCanvas().refresh()
+
 
 
     etz_file.close()
