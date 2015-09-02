@@ -122,7 +122,7 @@ def create_from_ML(ML, layer, atts):
         #Poly_layer.updateExtents()
 
 #vytvori .csvt subor - nechcem ale nakoniec pracovat s csv, ale dbf...
-def create_csvt(path, list_of_names):
+"""def create_csvt(path, list_of_names):
     #!ROBI VSETKO STRINGY!!!
     try:
         string = ""
@@ -135,7 +135,7 @@ def create_csvt(path, list_of_names):
         csvt.close()
     except:
         return 1
-
+"""
 #ziskam list atributov parsovanim
 #OBJ je objekt, ktory obsahuje atributy, ktorych zoznam je v list_for_obj
 #e.g. objekt je <ODD> tak k nemu dam list_of_odd
@@ -156,7 +156,7 @@ def create_attributes(OBJ, list_for_obj):
 #pri chybe vracia 1 inak vracia 0
 def save_layer(layer,address):
     error = QgsVectorFileWriter.writeAsVectorFormat(layer,
-        address, "CP1250", None,"ESRI Shapefile")
+        address, "System", None,"ESRI Shapefile")
     if error == QgsVectorFileWriter.NoError:
         return 0
     else:
@@ -208,7 +208,7 @@ def convert_to_shp(pretty_name,folder_name):
     except:
         return 1
 
-
+    """
     #vytvorim si .csvt subory
     return_v = create_csvt(folder_name+'/etz_file.csvt',names_of_etz)
     if return_v == 1:
@@ -230,6 +230,7 @@ def convert_to_shp(pretty_name,folder_name):
     return_v = create_csvt(folder_name+'/pos_file.csvt',names_of_pos)
     if return_v == 1:
         return 1
+    """
 #------------------------------------------------------------------------
 #priprava vrstiev
 #------------------------------------------------------------------------
@@ -237,10 +238,6 @@ def convert_to_shp(pretty_name,folder_name):
 #Multi[Polygon/LineString/Point] - podla typu geometrie ?crs=EPSG:4326 - typ ukladania
 #Nazov vrsty, ktory je zobrazny v QGIS
 #memory - pracujeme s mamory provider-om
-    global PSK_layer
-    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
-    if not PSK_layer.isValid():
-            return 1
 
 
     global KPO_layer
@@ -276,6 +273,10 @@ def convert_to_shp(pretty_name,folder_name):
     if not KTO_layer.isValid():
             return 1
 
+    global PSK_layer
+    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
+    if not PSK_layer.isValid():
+            return 1
 #priprava vstiev, cast druha
 #format jedneho parametra :
     #QgsField(
@@ -646,29 +647,39 @@ def convert_to_shp(pretty_name,folder_name):
     
     #otvorim csv subory pre potreby QGIS    
     etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
-    QgsMapLayerRegistry.instance().addMapLayer(etz_csv)
-    caps = etz_csv.dataProvider().capabilities()
+    save_layer(etz_csv,folder_name+'/etz')
+    new_etz = QgsVectorLayer(folder_name+'/etz.dbf',"Porast","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_etz)
 
 
     drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
-    QgsMapLayerRegistry.instance().addMapLayer(drv_csv)
-    caps1 = drv_csv.dataProvider().capabilities()
-    
+    save_layer(drv_csv,folder_name+'/drv')
+    new_drv = QgsVectorLayer(folder_name+'/drv.dbf',"Dreviny","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_drv)
+
+
+
     kat_csv = QgsVectorLayer("file:///"+folder_name+'/kat_file.csv',"Kategorie","delimitedtext")
-    QgsMapLayerRegistry.instance().addMapLayer(kat_csv)
-    caps2 = kat_csv.dataProvider().capabilities()
+    save_layer(kat_csv,folder_name+'/kat')
+    new_kat = QgsVectorLayer(folder_name+'/kat.dbf',"Kategorie","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_kat)
+
+
 
     zal_csv = QgsVectorLayer("file:///"+folder_name+'/zal_file.csv',"Zalozenie","delimitedtext")
-    QgsMapLayerRegistry.instance().addMapLayer(zal_csv)
-    caps3 = zal_csv.dataProvider().capabilities()
-    
-    
-    pos_csv = QgsVectorLayer("file:///"+folder_name+'/pos_file.csv',"Poskodenia","delimitedtext")
-    QgsMapLayerRegistry.instance().addMapLayer(pos_csv)
-    caps4 = pos_csv.dataProvider().capabilities()
+    save_layer(zal_csv,folder_name+'/zal')
+    new_zal = QgsVectorLayer(folder_name+'/zal.dbf',"Zalozenie","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_zal)
+
 
     
-    #save_layer(etz_csv,folder_name+'/etz')
+    pos_csv = QgsVectorLayer("file:///"+folder_name+'/pos_file.csv',"Poskodenia","delimitedtext")
+    save_layer(pos_csv,folder_name+'/pos')
+    new_pos = QgsVectorLayer(folder_name+'/pos.dbf',"Poskodenia","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_pos)
+
+    
+
     
     #etz1=qgis.utils.iface.addVectorLayer("file:///"+folder_name+'/etz.dbf',"Porast1","ogr")
     #joinObject = QgsVectorJoinInfo()
@@ -708,8 +719,12 @@ def convert_to_shp(pretty_name,folder_name):
         err_code = err_stat
 
     if error_code != 0:
-        return error_code
+        return error_codei
 
+    address = "/home/matej/Desktop/map/pokus.dbf"
+    new_stuff = QgsVectorLayer(address,"pokusne","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_stuff)
+    
     return 0
 
 

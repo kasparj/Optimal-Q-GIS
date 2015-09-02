@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Atributy</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QScrollArea" name="scrollArea">
@@ -76,7 +76,7 @@
        <rect>
         <x>0</x>
         <y>290</y>
-        <width>451</width>
+        <width>191</width>
         <height>121</height>
        </rect>
       </property>
@@ -84,9 +84,9 @@
      <widget class="QTableWidget" name="pos">
       <property name="geometry">
        <rect>
-        <x>470</x>
+        <x>200</x>
         <y>290</y>
-        <width>451</width>
+        <width>221</width>
         <height>121</height>
        </rect>
       </property>
@@ -94,24 +94,24 @@
      <widget class="QTableWidget" name="kategoria">
       <property name="geometry">
        <rect>
-        <x>930</x>
+        <x>430</x>
         <y>290</y>
-        <width>451</width>
+        <width>221</width>
         <height>121</height>
        </rect>
       </property>
      </widget>
-     <widget class="QPushButton" name="refresh">
+     <widget class="QPushButton" name="add_drv">
       <property name="geometry">
        <rect>
-        <x>1420</x>
-        <y>350</y>
-        <width>85</width>
+        <x>660</x>
+        <y>290</y>
+        <width>171</width>
         <height>27</height>
        </rect>
       </property>
       <property name="text">
-       <string>save</string>
+       <string>Pridať drevinu</string>
       </property>
      </widget>
     </widget>

@@ -21,6 +21,8 @@
  ***************************************************************************/
 """
 
+#PRIDAT HORE LSITU A TRI BODKY ... ako onverzia
+#pridat farby
 #!!!!!!
 #http://stackoverflow.com/questions/11476907/python-and-pyqt-get-input-from-qtablewidget
 #http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
@@ -38,6 +40,7 @@ import resources_rc
 from database_dialog import DatabaseDialog
 from show_atts import ShowAtts
 from save import Save_all 
+from add_drv import Add_drv 
 from open_all import Open_all 
 import os.path
 from converter import convert_to_shp
@@ -53,6 +56,10 @@ pretty_folder = ""
 input_folder = ""
 edit_pos = 0
 list_of_kats_ids = []
+list_of_etzs_ids = []
+list_of_drvs_ids = []
+list_of_zals_ids = []
+list_of_poss_ids = []
 
 
 class Database:
@@ -80,19 +87,24 @@ class Database:
         
         #----------------------------------
         self.shower = ShowAtts()#toto sa importuje
-        self.shower.refresh.clicked.connect(self.edit_main)#ked kliknem na
+        #self.shower.refresh.clicked.connect(self.edit_main)#ked kliknem na
         #refrsh zavola sa edit_main
         self.shower.tableWidget.itemChanged.connect(self.edit_main)#ak pride
         #signal itemChanged zavola sa funkcia edit_main
         self.shower.kategoria.itemChanged.connect(self.edit_kats)
+        self.shower.etaz.itemChanged.connect(self.edit_etzs)
+        self.shower.zalozene.itemChanged.connect(self.edit_zals)
+        self.shower.pos.itemChanged.connect(self.edit_poss)
+        self.shower.drevina.itemChanged.connect(self.edit_drvs)
             
         self.save_all = Save_all()
+        self.add_drv = Add_drv()
 
         self.save_all.address.clear()
         self.save_all.lookup.clicked.connect(self.select_output_folder)
 
         self.save_all.save.clicked.connect(self.save_all_1)
-
+        self.shower.add_drv.clicked.connect(self.add_drv_f)
         self.open_all = Open_all()
         self.open_all.address.clear()
         self.open_all.lookup.clicked.connect(self.select_input_folder)
@@ -207,6 +219,8 @@ class Database:
 
         return action
 
+    
+
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -223,7 +237,8 @@ class Database:
         self.add_action(
             icon_path,
             text=self.tr(u'Show attributes'),
-            callback=self.show_atts,
+            #callback=self.show_atts,
+            callback=self.colorize,
             parent=self.iface.mainWindow())
         
         
@@ -254,6 +269,29 @@ class Database:
         # remove the toolbar
         del self.toolbar
 
+    def colorize(self):
+        layer = iface.activeLayer()
+        
+
+    def add_drv_f(self):
+        self.add_drv.show()
+
+        
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Dreviny":
+                drv_csv = layer
+        fields_drv = drv_csv.pendingFields()
+        field_names_drv = [field.name() for field in fields_drv]
+        default_list_drv = []
+        #zoberiem aktualnu tabulku pre etz, vyberiem PSK_NUM a to setnem
+        #nejako z drv_csv zsitiit posledne pridane a noe cisloa  to setnut
+        #a potom najst funckiu, tu zvolat po kliknuti na ulzoit list from table
+        self.add_drv.set_data(field_names_drv,
+                default_list_drv,self.add_drv.drv_table)
+
+
+
     def save_all_11(self):
         self.save_all.show()
     
@@ -271,11 +309,11 @@ class Database:
 
     def open_all_1(self):
 
-        self.open_layer("Porast", 'file:///'+input_folder+'/etz_file.csv',"delimitedtext")
-        self.open_layer("Dreviny", 'file:///'+input_folder+'/drv_file.csv',"delimitedtext")
-        self.open_layer("Kategorie", 'file:///'+input_folder+'/kat_file.csv',"delimitedtext")
-        self.open_layer("Zalozenie", 'file:///'+input_folder+'/zal_file.csv',"delimitedtext")
-        self.open_layer("Poskodenia", 'file:///'+input_folder+'/pos_file.csv',"delimitedtext")
+        self.open_layer("Porast", input_folder+'/etz.dbf',"ogr")
+        self.open_layer("Dreviny", input_folder+'/drv.dbf',"ogr")
+        self.open_layer("Kategorie", input_folder+'/kat.dbf',"ogr")
+        self.open_layer("Zalozenie", input_folder+'/zal.dbf',"ogr")
+        self.open_layer("Poskodenia", input_folder+'/pos.dbf',"ogr")
         
         self.open_layer("KTO",input_folder+'/KTO.shp',"ogr")
         self.open_layer("Body",input_folder+'/KBO.shp',"ogr")
@@ -290,20 +328,11 @@ class Database:
     
     def save_layer(self,layer,address):
         error = QgsVectorFileWriter.writeAsVectorFormat(layer,
-            address, "CP1250", None,"ESRI Shapefile")
+            address, "System", None,"ESRI Shapefile")
         if error == QgsVectorFileWriter.NoError:
             return 0
         else:
             return 1
-    
-    def save_csv(self,layer,address):
-        error = QgsVectorFileWriter.writeAsVectorFormat(layer,
-            address, "CP1250", None,"CSV")
-        if error == QgsVectorFileWriter.NoError:
-            return 0
-        else:
-            return 1
-    
     
     
     def save_all_1(self):
@@ -311,15 +340,15 @@ class Database:
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
-                self.save_csv(layer,pretty_folder+'/etz_file.csv')
+                self.save_layer(layer,pretty_folder+'/etz')
             elif layer.name() == "Dreviny":
-                self.save_csv(layer,pretty_folder+'/drv_file.csv')
+                self.save_layer(layer,pretty_folder+'/drv')
             elif layer.name() == "Kategorie":
-                self.save_csv(layer,pretty_folder+'/kat_file.csv')
+                self.save_layer(layer,pretty_folder+'/kat')
             elif layer.name() == "Zalozenie":
-                self.save_csv(layer,pretty_folder+'/zal_file.csv')
+                self.save_layer(layer,pretty_folder+'/zal')
             elif layer.name() == "Poskodenia":
-                self.save_csv(layer,pretty_folder+'/pos_file.csv')
+                self.save_layer(layer,pretty_folder+'/pos')
             elif layer.name() == "KTO":
                 self.save_layer(layer,pretty_folder+'/KTO')
             elif layer.name() == "Body":
@@ -338,11 +367,24 @@ class Database:
         self.save_all.close()
     
     
+    def convert_to_strings(self,old_list):
+        new_list_list = []
+        new_list = []
+        for each_list in old_list:
+            new_list = []
+            for item in each_list:
+                try:
+                    new_list.append(str(item))
+                except:
+                    new_list.append(item)
+            new_list_list.append(new_list)
+        return new_list_list
+
     
     
     def edit_main(self,item):
         global edit_pos
-        
+         
         if not edit_pos:
         
             lyr = iface.activeLayer()
@@ -355,24 +397,100 @@ class Database:
             print item.column()
         #print item.text()
 
+
+    def edit_attribute(self,lyr,item, list_of_ids):
+        lyr.startEditing()
+        features = list(lyr.getFeatures())
+        type_T =  type(features[list_of_ids[item.row()]][item.column()])
+        print type_T
+        if type_T is unicode or type_T is str:
+            try:
+                lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Zly typ, ocakava sa retazec")
+        elif type_T is int:
+            try:
+                lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),int(item.text()),True)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Zly typ, ocakava sa cele cislo")
+        elif type_T is float:
+            try:
+                lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),float(item.text()),True)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Zly typ, ocakava sa desatinne cislo")
+        #TYPE MOZE BYT NULL!!!
+            #new_ft = QgsFeature(lyr.pendingFields())
+            #new_ft.setAttributes([0,0])
+            #lyr.dataProvider().addFeatures([new_ft])
+            lyr.commitChanges()
+    
+    
     def edit_kats(self,item):
         global edit_pos
         global list_of_kats_ids
-
         if not edit_pos:
             layerMap = QgsMapLayerRegistry.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Kategorie":
                     lyr = layer
-            lyr.startEditing()
-            lyr.changeAttributeValue(list_of_kats_ids[item.row()],item.column(),item.text(),True)
-            lyr.commitChanges()
+            self.edit_attribute(lyr, item, list_of_kats_ids)
             
+    def edit_etzs(self,item):
+        global edit_pos
+        global list_of_etzs_ids
+        if not edit_pos:
+            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            for name, layer in layerMap.iteritems():
+                if layer.name() == "Porast":
+                    lyr = layer
+            self.edit_attribute(lyr, item, list_of_etzs_ids)
+   
+    def edit_poss(self,item):
+        global edit_pos
+        global list_of_poss_ids
+        if not edit_pos:
+            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            for name, layer in layerMap.iteritems():
+                if layer.name() == "Poskodenia":
+                    lyr = layer
+            self.edit_attribute(lyr, item, list_of_poss_ids)
+    
+    def edit_drvs(self,item):
+        global edit_pos
+        global list_of_drvs_ids
+        if not edit_pos:
+            print "uprava drviny"
+            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            for name, layer in layerMap.iteritems():
+                if layer.name() == "Dreviny":
+                    lyr = layer
+            self.edit_attribute(lyr, item, list_of_drvs_ids)
+    
+    def edit_zals(self,item):
+        global edit_pos
+        global list_of_zals_ids
+        if not edit_pos:
+            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            for name, layer in layerMap.iteritems():
+                if layer.name() == "Zalozenie":
+                    lyr = layer
+            self.edit_attribute(lyr, item, list_of_zals_ids)
     
     def show_atts(self):
         global edit_pos
         global list_of_kats_ids
+        global list_of_etzs_ids
+        global list_of_drvs_ids
+        global list_of_poss_ids
+        global list_of_zals_ids
         list_of_kats_ids = []
+        list_of_etzs_ids = []
+        list_of_drvs_ids = []
+        list_of_poss_ids = []
+        list_of_zals_ids = []
         edit_pos = 1
         #vybrana vrstva
         lyr = self.iface.activeLayer()
@@ -401,13 +519,16 @@ class Database:
         else: 
             fields = lyr.pendingFields()#vyberieme vsetky mena atributov
             features = lyr.selectedFeatures()#vyberieme vybrate prvky
+            #print  features[0].geometry().area()
+            #print  features[0].geometry().length()
             if features != []:
 
                 field_names = [field.name() for field in fields]#vytvorim
                 #zahlavie
                 #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
-            
+                features_list = self.convert_to_strings(features_list)
+                    
                 idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
                 if idx == -1:
                     psk_numb = "xX!48p"
@@ -426,7 +547,11 @@ class Database:
 
             fields_etz = etz_csv.pendingFields()
             field_names_etz = [field.name() for field in fields_etz]
+            selected_etzs = list(selected_etzs)
             features_list_etz = [feature.attributes() for feature in selected_etzs]
+            features_list_etz = self.convert_to_strings(features_list_etz)
+            for fit in selected_etzs:
+                list_of_etzs_ids.append(fit.id())
             
             
             fields_kat = kat_csv.pendingFields()
@@ -434,6 +559,7 @@ class Database:
             selected_kats =list(selected_kats)
             features_list_kat = [feature.attributes() for feature in
                     selected_kats]
+            features_list_kat = self.convert_to_strings(features_list_kat)
             for fit in selected_kats:
                 list_of_kats_ids.append(fit.id())
             
@@ -448,10 +574,17 @@ class Database:
             for index in etz_numbers:
                 expr = QgsExpression('ETZ_NUM ='+str(index))
                 one_list = drv_csv.getFeatures(QgsFeatureRequest(expr))
+
+                one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
+                print another_list
                 for one_ft in another_list:
                     features_list_drv.append(one_ft)
+                for each_item in one_list:
+                    list_of_drvs_ids.append(each_item.id())
             
+            features_list_drv = self.convert_to_strings(features_list_drv)
+            print features_list_drv
             fields_drv = drv_csv.pendingFields()
             field_names_drv = [field.name() for field in fields_drv]
             
@@ -466,10 +599,14 @@ class Database:
             for index in drv_numbers:
                 expr = QgsExpression('DRV_NUM ='+str(index))
                 one_list = pos_csv.getFeatures(QgsFeatureRequest(expr))
+                one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
                 for one_ft in another_list:
                     features_list_pos.append(one_ft)
+                for each_item in one_list:
+                    list_of_poss_ids.append(each_item.id())
             
+            features_list_pos = self.convert_to_strings(features_list_pos)
             fields_pos = pos_csv.pendingFields()
             field_names_pos = [field.name() for field in fields_pos]
             
@@ -479,13 +616,16 @@ class Database:
             for index in etz_numbers:
                 expr = QgsExpression('ETZ_NUM ='+str(index))
                 one_list = zal_csv.getFeatures(QgsFeatureRequest(expr))
+                one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
                 for one_ft in another_list:
                     features_list_zal.append(one_ft)
+                for each_item in one_list:
+                    list_of_zals_ids.append(each_item.id())
             
+            features_list_zal = self.convert_to_strings(features_list_zal)
             fields_zal = zal_csv.pendingFields()
             field_names_zal = [field.name() for field in fields_zal]
-
 
             self.shower.show()
             self.shower.set_data(field_names, features_list,self.shower.tableWidget)
