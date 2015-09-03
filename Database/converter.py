@@ -7,6 +7,8 @@ from qgis.core import *
 from qgis.gui import *
 from PyQt4.QtCore import *
 from PyQt4 import QtGui
+from PyQt4.QtGui import QProgressBar
+from qgis.utils import iface
 import os
 import sys
 import ntpath
@@ -85,6 +87,14 @@ list_of_lhc = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
 #funkcie
 #------------------------------------------------------------------------
 
+def open_layer(name, address,type_ft):
+
+    new_ft = QgsVectorLayer(address,name,type_ft)
+    QgsMapLayerRegistry.instance().addMapLayer(new_ft)
+    #layer = iface.addVectorLayer(address, name, type_ft)
+    caps  = new_ft.dataProvider().capabilities()
+    canvas = qgis.utils.iface.mapCanvas()
+    canvas.setExtent(new_ft.extent())
 
 #Vytvori list z <L>, z kazdeho bodu <B> urobi QgsPoint
 #vrati list vsetkych bodov v <L> = lines
@@ -151,6 +161,20 @@ def save_layer(layer,address):
 #pretty_name = adresa vstupneho suboru
 #folder_name = adresa, kam sa bude ukladat vysledok
 def convert_to_shp(pretty_name,folder_name):
+
+
+    progressMessageBar =\
+    iface.messageBar().createMessage('Konvertujem')
+    progress = QProgressBar()
+    progress.setMaximum(100)
+    progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+    progressMessageBar.layout().addWidget(progress)
+    iface.messageBar().pushWidget(progressMessageBar,
+                        iface.messageBar().INFO)
+    
+    i = 0
+
+
     #praca s CSV - otvorim si vsetky potrebne .csv subory a rovno do nich
         #zapisem aj hlavicku - mohlo by sa to vytiahnut nejako do funckie...
     
@@ -193,29 +217,6 @@ def convert_to_shp(pretty_name,folder_name):
     except:
         return 1
 
-    """
-    #vytvorim si .csvt subory
-    return_v = create_csvt(folder_name+'/etz_file.csvt',names_of_etz)
-    if return_v == 1:
-        return 1
-
-
-    return_v = create_csvt(folder_name+'/kat_file.csvt',names_of_kat)
-    if return_v == 1:
-        return 1
-
-    return_v = create_csvt(folder_name+'/drv_file.csvt',names_of_drv)
-    if return_v == 1:
-        return 1
-
-    return_v = create_csvt(folder_name+'/zal_file.csvt',names_of_zal)
-    if return_v == 1:
-        return 1
-    
-    return_v = create_csvt(folder_name+'/pos_file.csvt',names_of_pos)
-    if return_v == 1:
-        return 1
-    """
 #------------------------------------------------------------------------
 #priprava vrstiev
 #------------------------------------------------------------------------
@@ -269,7 +270,9 @@ def convert_to_shp(pretty_name,folder_name):
     #tieto parametre sa zobrazia v tabulke uzivatelovi
     #typ parametra QVariant.[String/Int/Double] - pomenit tak, aby odpovedalo
     #NEMENIT POSLEDNY PARAMTERE - XXXX-NUMB!
-    QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
+    
+    
+    #QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
     global psk_poly
     psk_poly = PSK_layer.dataProvider()
     psk_poly.addAttributes([
@@ -318,7 +321,7 @@ def convert_to_shp(pretty_name,folder_name):
     PSK_layer.updateFields()
 
 
-    QgsMapLayerRegistry.instance().addMapLayer(KPO_layer)
+    #QgsMapLayerRegistry.instance().addMapLayer(KPO_layer)
     global kpo_poly
     kpo_poly = KPO_layer.dataProvider()
     kpo_poly.addAttributes([
@@ -330,7 +333,7 @@ def convert_to_shp(pretty_name,folder_name):
     KPO_layer.updateFields()
 
 
-    QgsMapLayerRegistry.instance().addMapLayer(JP_layer)
+    #QgsMapLayerRegistry.instance().addMapLayer(JP_layer)
     global jp_poly
     jp_poly = JP_layer.dataProvider()
     jp_poly.addAttributes([
@@ -371,7 +374,7 @@ def convert_to_shp(pretty_name,folder_name):
     JP_layer.updateFields()
 
 
-    QgsMapLayerRegistry.instance().addMapLayer(BZL_layer)
+    #QgsMapLayerRegistry.instance().addMapLayer(BZL_layer)
     global bzl_poly
     bzl_poly = BZL_layer.dataProvider()
     bzl_poly.addAttributes([
@@ -411,7 +414,7 @@ def convert_to_shp(pretty_name,folder_name):
     BZL_layer.updateFields()
 
 
-    QgsMapLayerRegistry.instance().addMapLayer(KLO_layer)
+    #QgsMapLayerRegistry.instance().addMapLayer(KLO_layer)
     global klo_line
     klo_line = KLO_layer.dataProvider()
     klo_line.addAttributes([
@@ -423,7 +426,7 @@ def convert_to_shp(pretty_name,folder_name):
     KLO_layer.updateFields()
 
 
-    QgsMapLayerRegistry.instance().addMapLayer(KBO_layer)
+    #QgsMapLayerRegistry.instance().addMapLayer(KBO_layer)
     global kbo_line
     kbo_line = KBO_layer.dataProvider()
     kbo_line.addAttributes([
@@ -436,7 +439,7 @@ def convert_to_shp(pretty_name,folder_name):
     KBO_layer.updateFields()
 
 
-    QgsMapLayerRegistry.instance().addMapLayer(KTO_layer)
+    #QgsMapLayerRegistry.instance().addMapLayer(KTO_layer)
     global kto_line
     kto_line = KTO_layer.dataProvider()
     kto_line.addAttributes([
@@ -461,10 +464,12 @@ def convert_to_shp(pretty_name,folder_name):
     ETZ_ID = 0
     DRV_ID = 0
 
+    
     for child in root:
         #save_LHC(child.attrib)!
         #for HS,OU1,OU2,MZD!
         
+                
         
         for KBO in child.findall('KBO'):
             atts = create_attributes(KBO, list_of_kbo)
@@ -484,6 +489,8 @@ def convert_to_shp(pretty_name,folder_name):
 
 
         for KTO in child.findall('KTO'):
+            i += 1
+            progress.setValue(i/4)
             atts = create_attributes(KTO,list_of_kto)
             if not KTO.findall('TXT_OBRAZ'):
                 return 3
@@ -669,6 +676,7 @@ def convert_to_shp(pretty_name,folder_name):
 
     
 
+
     
     #etz1=qgis.utils.iface.addVectorLayer("file:///"+folder_name+'/etz.dbf',"Porast1","ogr")
     #joinObject = QgsVectorJoinInfo()
@@ -710,9 +718,14 @@ def convert_to_shp(pretty_name,folder_name):
     if error_code != 0:
         return error_codei
 
-    address = "/home/matej/Desktop/map/pokus.dbf"
-    new_stuff = QgsVectorLayer(address,"pokusne","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_stuff)
+    open_layer("KTO",folder_name+'/KTO.shp',"ogr")
+    open_layer("Body",folder_name+'/KBO.shp',"ogr")
+    open_layer("KLO",folder_name+'/KLO.shp',"ogr")
+    open_layer("Bezlesie",folder_name+'/BZL.shp',"ogr")
+    open_layer("Ine plochy",folder_name+'/JP.shp',"ogr")
+    open_layer("KPO",folder_name+'/KPO.shp',"ogr")
+    open_layer("Lesne porasty",folder_name+'/PSK.shp',"ogr")
+
     
     return 0
 

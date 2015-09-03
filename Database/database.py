@@ -30,7 +30,7 @@
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
-from PyQt4.QtGui import QTableWidgetItem 
+from PyQt4.QtGui import QTableWidgetItem, QProgressBar 
 from PyQt4.QtCore import SIGNAL,QPyNullVariant
 from PyQt4 import QtGui, QtCore
 from qgis.utils import iface
@@ -129,6 +129,8 @@ class Database:
         self.dlg.pushButton_2.clicked.connect(self.select_output_folder_c)
 
         iface.mapCanvas().selectionChanged.connect(self.show_atts)        
+
+
         
 
         
@@ -278,12 +280,12 @@ class Database:
         layer.startEditing()
         for feature in layer.getFeatures():
             COLOR = 'BW'
-            if feature.geometry().area() < 10500:
-                if feature.geometry().length() < 45:
+            if feature.geometry().area() < 10000:
+                if feature.geometry().length() < 50:
                     COLOR = 'BR'
                 else:
                     COLOR = 'LW'
-            elif feature.geometry().length() < 45:
+            elif feature.geometry().length() < 50:
                 COLOR = 'AW'
             layer.changeAttributeValue(feature.id(),index,str(COLOR))
         layer.commitChanges()
@@ -717,6 +719,8 @@ class Database:
         # See if OK was pressed
         if result:
             if pretty_name != "" and pretty_folder != "":        
+
+
                 res = convert_to_shp(pretty_name,pretty_folder)
                 if res == 0:
                     QMessageBox.information(self.iface.mainWindow(),"Vysledok",
