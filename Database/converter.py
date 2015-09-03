@@ -162,7 +162,7 @@ def save_layer(layer,address):
 #folder_name = adresa, kam sa bude ukladat vysledok
 def convert_to_shp(pretty_name,folder_name):
 
-
+    i = 0
     progressMessageBar =\
     iface.messageBar().createMessage('Konvertujem')
     progress = QProgressBar()
@@ -172,7 +172,6 @@ def convert_to_shp(pretty_name,folder_name):
     iface.messageBar().pushWidget(progressMessageBar,
                         iface.messageBar().INFO)
     
-    i = 0
 
 
     #praca s CSV - otvorim si vsetky potrebne .csv subory a rovno do nich
@@ -216,7 +215,6 @@ def convert_to_shp(pretty_name,folder_name):
         pos_file.write(",".join(names_of_pos)+'\n')
     except:
         return 1
-
 #------------------------------------------------------------------------
 #priprava vrstiev
 #------------------------------------------------------------------------
@@ -263,6 +261,10 @@ def convert_to_shp(pretty_name,folder_name):
     PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
     if not PSK_layer.isValid():
             return 1
+
+    
+    i = 5  
+    progress.setValue(i)
 #priprava vstiev, cast druha
 #format jedneho parametra :
     #QgsField(
@@ -450,7 +452,9 @@ def convert_to_shp(pretty_name,folder_name):
                             ])
     KTO_layer.updateFields()
 
-
+    
+    i = 7  
+    progress.setValue(i)
 #------------------------------------------------------------------------
 #parser xml + samotne ukladanie
 #------------------------------------------------------------------------
@@ -470,7 +474,9 @@ def convert_to_shp(pretty_name,folder_name):
         #for HS,OU1,OU2,MZD!
         
                 
-        
+                
+        i = 15  
+        progress.setValue(i)
         for KBO in child.findall('KBO'):
             atts = create_attributes(KBO, list_of_kbo)
             if not KBO.findall('BOD_OBRAZ'):
@@ -487,10 +493,10 @@ def convert_to_shp(pretty_name,folder_name):
                         kbo_line.addFeatures([pt])
 
 
+        i = 22  
+        progress.setValue(i)
 
         for KTO in child.findall('KTO'):
-            i += 1
-            progress.setValue(i/4)
             atts = create_attributes(KTO,list_of_kto)
             if not KTO.findall('TXT_OBRAZ'):
                 return 3
@@ -504,6 +510,8 @@ def convert_to_shp(pretty_name,folder_name):
                     kto_line.addFeatures([pt])
 
 
+        i = 29  
+        progress.setValue(i)
 
         for KPO in child.findall('KPO'):
             if not KPO.findall('PLO_OBRAZ'):
@@ -514,6 +522,8 @@ def convert_to_shp(pretty_name,folder_name):
                     create_from_MP(MP,kpo_poly,atts)
 
 
+        i = 34  
+        progress.setValue(i)
         for KLO in child.findall('KLO'):
             atts = create_attributes(KLO, list_of_klo)
             if not KLO.findall('LIN_OBRAZ'):
@@ -521,6 +531,8 @@ def convert_to_shp(pretty_name,folder_name):
             for KLO_obraz in KLO.findall('LIN_OBRAZ'):
                 for ML in KLO_obraz.findall('ML'):
                     create_from_ML(ML,klo_line,atts)
+        i = 40  
+        progress.setValue(i)
 
 
         for oddiel in child.findall('ODD'):
@@ -611,6 +623,10 @@ def convert_to_shp(pretty_name,folder_name):
                                     pos_atts.append(str(my_drv_id))
                                     to_write = "\",\"".join(pos_atts)
                                     pos_file.write("\""+to_write+'\"\n')
+                                    if i < 95:
+                                        i += 1
+                                    progress.setValue(i)
+
 
                             
                             
@@ -716,7 +732,10 @@ def convert_to_shp(pretty_name,folder_name):
         err_code = err_stat
 
     if error_code != 0:
-        return error_codei
+        return error_code
+
+
+    progress.setValue(100)
 
     open_layer("KTO",folder_name+'/KTO.shp',"ogr")
     open_layer("Body",folder_name+'/KBO.shp',"ogr")
