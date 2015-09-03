@@ -14,27 +14,27 @@
    <string>Pridat drevinu</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableWidget" name="drv_table">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>1141</width>
-      <height>61</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QPushButton" name="add_button">
     <property name="geometry">
      <rect>
-      <x>1060</x>
-      <y>80</y>
+      <x>1070</x>
+      <y>70</y>
       <width>85</width>
       <height>27</height>
      </rect>
     </property>
     <property name="text">
      <string>Pridat</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="drv_table">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>0</y>
+      <width>1141</width>
+      <height>61</height>
+     </rect>
     </property>
    </widget>
   </widget>

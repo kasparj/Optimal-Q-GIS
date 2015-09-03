@@ -22,6 +22,7 @@ import codecs
 pt = QgsFeature()#premenna pre jedne geom. objekt
 
 #mozu sa menit, ale treba zachovat poradie
+#NEMENIT XXX_NUM, ani pordie, nepridavat nakoniec - radsej do stredu!
 #tieto nazvy sa priamo zapisu do suboru ako hlavicky
 
 names_of_pos = ['POSKOZ_D','POSKOZ_R','DRV_NUM']

@@ -21,9 +21,6 @@
  ***************************************************************************/
 """
 
-#PRIDAT HORE LSITU A TRI BODKY ... ako onverzia
-#pridat farby
-#!!!!!!
 #http://stackoverflow.com/questions/11476907/python-and-pyqt-get-input-from-qtablewidget
 #http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
 #pyrcc4 -o resources_rc.py resources.qrc
@@ -104,7 +101,7 @@ class Database:
 
         self.save_all.address.clear()
         self.save_all.lookup.clicked.connect(self.select_output_folder)
-
+        self.add_drv.add_button.clicked.connect(self.save_new_drv)
         self.save_all.save.clicked.connect(self.save_all_1)
         self.shower.add_drv.clicked.connect(self.add_drv_f)
         self.open_all = Open_all()
@@ -273,6 +270,18 @@ class Database:
         # remove the toolbar
         del self.toolbar
 
+    def table_to_list(self, table):
+        result = []
+        num_rows, num_cols = table.rowCount(), table.columnCount()
+        for col in range(num_cols):
+            rows = []
+            for row in range(num_rows):
+                item = table.item(row, col)
+                rows.append(item.text() if item else "")
+            result.append(rows)
+        return result
+
+
     def colorize(self):
         layer = iface.activeLayer()
 
@@ -310,23 +319,38 @@ class Database:
         layer.setRendererV2(renderer)
 
         #aa
-        
-                
-
-    def add_drv_f(self):
-        self.add_drv.show()
-
-        
+    def save_new_drv(self):
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Dreviny":
                 drv_csv = layer
+        
+        all_data =  self.table_to_list(self.add_drv.drv_table)
+
+        new_list = [ item[0] for item in all_data]
+#ZMENIT LIST PODLA DATOVYCH TYPOV
+        new_ft = QgsFeature(drv_csv.pendingFields())
+        new_ft.setAttributes(new_list)
+        drv_csv.dataProvider().addFeatures([new_ft])
+        
+
+
+
+        self.add_drv.close()
+
+    def add_drv_f(self):
+        self.add_drv.show()
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Dreviny":
+                drv_csv = layer
+        new_number =  len(list(drv_csv.getFeatures()))
+        etz_nums =  self.table_to_list(self.shower.etaz)[-1]
         fields_drv = drv_csv.pendingFields()
         field_names_drv = [field.name() for field in fields_drv]
-        default_list_drv = []
-        #zoberiem aktualnu tabulku pre etz, vyberiem PSK_NUM a to setnem
-        #nejako z drv_csv zsitiit posledne pridane a noe cisloa  to setnut
-        #a potom najst funckiu, tu zvolat po kliknuti na ulzoit list from table
+        default_list_drv = [["" for field in fields_drv]]
+        default_list_drv[0][-1] = str(new_number)
+        default_list_drv[0][-2] = etz_nums[0]
         self.add_drv.set_data(field_names_drv,
                 default_list_drv,self.add_drv.drv_table)
 
@@ -462,9 +486,6 @@ class Database:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Zly typ, ocakava sa desatinne cislo")
         #TYPE MOZE BYT NULL!!!
-            #new_ft = QgsFeature(lyr.pendingFields())
-            #new_ft.setAttributes([0,0])
-            #lyr.dataProvider().addFeatures([new_ft])
             lyr.commitChanges()
     
     
@@ -559,7 +580,7 @@ class Database:
         else: 
             fields = lyr.pendingFields()#vyberieme vsetky mena atributov
             features = lyr.selectedFeatures()#vyberieme vybrate prvky
-            print  features[0].geometry().area()
+            #print  features[0].geometry().area()
             #print  features[0].geometry().length()
             if features != []:
 
@@ -666,7 +687,9 @@ class Database:
             features_list_zal = self.convert_to_strings(features_list_zal)
             fields_zal = zal_csv.pendingFields()
             field_names_zal = [field.name() for field in fields_zal]
-
+            
+            print field_names_drv
+            print features_list_drv
             self.shower.show()
             self.shower.set_data(field_names, features_list,self.shower.tableWidget)
             self.shower.set_data(field_names_etz,
