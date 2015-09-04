@@ -38,6 +38,7 @@ from database_dialog import DatabaseDialog
 from show_atts import ShowAtts
 from save import Save_all 
 from add_drv import Add_drv 
+from add_etz import Add_etz 
 from open_all import Open_all 
 import os.path
 from converter import convert_to_shp
@@ -98,16 +99,22 @@ class Database:
             
         self.save_all = Save_all()
         self.add_drv = Add_drv()
+        self.add_etz = Add_etz()
 
         self.save_all.address.clear()
         self.save_all.lookup.clicked.connect(self.select_output_folder)
-        self.add_drv.add_button.clicked.connect(self.save_new_drv)
         self.save_all.save.clicked.connect(self.save_all_1)
+
+        self.add_etz.add_button.clicked.connect(self.save_new_etz)
+        self.shower.add_etz.clicked.connect(self.add_etz_f)
+
+
+        self.add_drv.add_button.clicked.connect(self.save_new_drv)
         self.shower.add_drv.clicked.connect(self.add_drv_f)
+        
         self.open_all = Open_all()
         self.open_all.address.clear()
         self.open_all.lookup.clicked.connect(self.select_input_folder)
-
         self.open_all.open.clicked.connect(self.open_all_1)
         
 
@@ -121,7 +128,6 @@ class Database:
 
         self.dlg.lineEdit.clear()
         self.dlg.pushButton.clicked.connect(self.select_input_file)
-
         self.dlg.lineEdit_2.clear()
         self.dlg.pushButton_2.clicked.connect(self.select_output_folder_c)
 
@@ -338,11 +344,51 @@ class Database:
                 except:
                     list_of_wrongs.append(list_of_fields[i].name())
         
-
-        QMessageBox.information(self.iface.mainWindow(),"Chyba",
-            "Zle typy u poloziek "+str(list_of_wrongs))
+        if list_of_wrongs != []:
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                "Zle typy u poloziek "+str(list_of_wrongs))
          
         return new_list
+    
+    
+    def save_new_etz(self):
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                drv_csv = layer
+        
+        all_data =  self.table_to_list(self.add_etz.etz_table)
+
+        new_list = [ item[0] for item in all_data]
+        new_list = self.edit_list_by_types(new_list, drv_csv)
+        
+        new_ft = QgsFeature(drv_csv.pendingFields())
+        new_ft.setAttributes(new_list)
+        drv_csv.dataProvider().addFeatures([new_ft])
+
+        self.show_atts()
+        self.add_etz.close()
+
+    def add_etz_f(self):
+        self.add_etz.show()
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                drv_csv = layer
+        
+        new_number =  len(list(drv_csv.getFeatures()))
+        
+        fields_drv = drv_csv.pendingFields()
+        field_names_drv = [field.name() for field in fields_drv]
+        
+        default_list_drv = self.table_to_list(self.shower.etaz)
+        if default_list_drv == []:
+            default_list_drv = [["" for field in fields_drv]]
+        else:
+            default_list_drv = [[item[0] for item in default_list_drv]]
+        default_list_drv[0][-1] = str(new_number)
+        self.add_etz.set_data(field_names_drv,
+                default_list_drv,self.add_etz.etz_table)
 
     def save_new_drv(self):
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
@@ -375,9 +421,13 @@ class Database:
         fields_drv = drv_csv.pendingFields()
         field_names_drv = [field.name() for field in fields_drv]
         
-        default_list_drv = [["" for field in fields_drv]]
+        default_list_drv = self.table_to_list(self.shower.drevina)
+        if default_list_drv == []:
+            default_list_drv = [["" for field in fields_drv]]
+            default_list_drv[0][-2] = etz_nums[0]
+        else:
+            default_list_drv = [[item[0] for item in default_list_drv]]
         default_list_drv[0][-1] = str(new_number)
-        default_list_drv[0][-2] = etz_nums[0]
         self.add_drv.set_data(field_names_drv,
                 default_list_drv,self.add_drv.drv_table)
 
