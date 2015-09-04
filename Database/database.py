@@ -318,7 +318,32 @@ class Database:
 
         layer.setRendererV2(renderer)
 
-        #aa
+    def edit_list_by_types(self,new_list,lyr_pointer):
+        list_of_fields = list(lyr_pointer.pendingFields()) 
+        features = list(lyr_pointer.getFeatures())
+        if features == []:
+            print "neexistuje ziadna drevina!"
+        list_of_wrongs = []
+        for i in range(len(new_list)):
+            if new_list[i] == "":
+                continue
+            elif type(features[0][i]) is int:
+                try:
+                    new_list[i] = int(new_list[i])
+                except:
+                    list_of_wrongs.append(list_of_fields[i].name())
+            elif type(features[0][i]) is float:
+                try:
+                    new_list[i] = float(new_list[i])
+                except:
+                    list_of_wrongs.append(list_of_fields[i].name())
+        
+
+        QMessageBox.information(self.iface.mainWindow(),"Chyba",
+            "Zle typy u poloziek "+str(list_of_wrongs))
+         
+        return new_list
+
     def save_new_drv(self):
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
@@ -328,14 +353,13 @@ class Database:
         all_data =  self.table_to_list(self.add_drv.drv_table)
 
         new_list = [ item[0] for item in all_data]
-#ZMENIT LIST PODLA DATOVYCH TYPOV
+        new_list = self.edit_list_by_types(new_list, drv_csv)
+        
         new_ft = QgsFeature(drv_csv.pendingFields())
         new_ft.setAttributes(new_list)
         drv_csv.dataProvider().addFeatures([new_ft])
-        
 
-
-
+        self.show_atts()
         self.add_drv.close()
 
     def add_drv_f(self):
@@ -344,10 +368,13 @@ class Database:
         for name, layer in layerMap.iteritems():
             if layer.name() == "Dreviny":
                 drv_csv = layer
+        
         new_number =  len(list(drv_csv.getFeatures()))
         etz_nums =  self.table_to_list(self.shower.etaz)[-1]
+        
         fields_drv = drv_csv.pendingFields()
         field_names_drv = [field.name() for field in fields_drv]
+        
         default_list_drv = [["" for field in fields_drv]]
         default_list_drv[0][-1] = str(new_number)
         default_list_drv[0][-2] = etz_nums[0]
@@ -457,23 +484,19 @@ class Database:
             lyr.changeAttributeValue(features[0].id(),item.column(),item.text(),True)
             lyr.commitChanges()
         
-            print item.row()
-            print item.column()
-        #print item.text()
-
-
+            
     def edit_attribute(self,lyr,item, list_of_ids):
         lyr.startEditing()
         features = list(lyr.getFeatures())
         type_T =  type(features[list_of_ids[item.row()]][item.column()])
         print type_T
-        if type_T is unicode or type_T is str:
-            try:
-                lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
-            except:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Zly typ, ocakava sa retazec")
-        elif type_T is int:
+        #if type_T is unicode or type_T is str:
+        #    try:
+        #        lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
+        #    except:
+        #        QMessageBox.information(self.iface.mainWindow(),"Chyba",
+        #            "Zly typ, ocakava sa retazec")
+        if type_T is int:
             try:
                 lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),int(item.text()),True)
             except:
@@ -485,7 +508,14 @@ class Database:
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Zly typ, ocakava sa desatinne cislo")
-        #TYPE MOZE BYT NULL!!!
+                
+        else:
+            try:
+                lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Zly typ, ocakava sa retazec")
+                #TYPE MOZE BYT NULL!!!
             lyr.commitChanges()
     
     
@@ -688,8 +718,7 @@ class Database:
             fields_zal = zal_csv.pendingFields()
             field_names_zal = [field.name() for field in fields_zal]
             
-            print field_names_drv
-            print features_list_drv
+           
             self.shower.show()
             self.shower.set_data(field_names, features_list,self.shower.tableWidget)
             self.shower.set_data(field_names_etz,
