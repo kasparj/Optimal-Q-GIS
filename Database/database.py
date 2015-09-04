@@ -301,8 +301,8 @@ class Database:
         
         correct = {
                 'BR':('green','Both right'),
-                'AW':('yellow','area wrong'),
-                'LW':('orange','length wrong'),
+                'AW':('yellow','Area wrong'),
+                'LW':('orange','Width wrong'),
                 'BW':('red','Both wrong')
                 }
         categories = []
@@ -406,8 +406,8 @@ class Database:
         self.open_layer("Zalozenie", input_folder+'/zal.dbf',"ogr")
         self.open_layer("Poskodenia", input_folder+'/pos.dbf',"ogr")
         
-        self.open_layer("KTO",input_folder+'/KTO.shp',"ogr")
-        self.open_layer("Body",input_folder+'/KBO.shp',"ogr")
+        #self.open_layer("KTO",input_folder+'/KTO.shp',"ogr")
+        #self.open_layer("Body",input_folder+'/KBO.shp',"ogr")
         self.open_layer("KLO",input_folder+'/KLO.shp',"ogr")
         self.open_layer("Bezlesie",input_folder+'/BZL.shp',"ogr")
         self.open_layer("Ine plochy",input_folder+'/JP.shp',"ogr")
@@ -440,10 +440,10 @@ class Database:
                 self.save_layer(layer,pretty_folder+'/zal')
             elif layer.name() == "Poskodenia":
                 self.save_layer(layer,pretty_folder+'/pos')
-            elif layer.name() == "KTO":
-                self.save_layer(layer,pretty_folder+'/KTO')
-            elif layer.name() == "Body":
-                self.save_layer(layer,pretty_folder+'/KBO')
+            #elif layer.name() == "KTO":
+            #    self.save_layer(layer,pretty_folder+'/KTO')
+            #elif layer.name() == "Body":
+            #    self.save_layer(layer,pretty_folder+'/KBO')
             elif layer.name() == "KLO":
                 self.save_layer(layer,pretty_folder+'/KLO')
             elif layer.name() == "Bezlesie":
@@ -583,6 +583,8 @@ class Database:
         list_of_poss_ids = []
         list_of_zals_ids = []
         edit_pos = 1
+        area = 0
+        length = 0
         #vybrana vrstva
         lyr = self.iface.activeLayer()
 
@@ -610,11 +612,11 @@ class Database:
         else: 
             fields = lyr.pendingFields()#vyberieme vsetky mena atributov
             features = lyr.selectedFeatures()#vyberieme vybrate prvky
-            #print  features[0].geometry().area()
-            #print  features[0].geometry().length()
             if features != []:
 
                 field_names = [field.name() for field in fields]#vytvorim
+                area =  features[0].geometry().area()
+                length =  features[0].geometry().length()
                 #zahlavie
                 #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
@@ -732,6 +734,10 @@ class Database:
                     features_list_zal,self.shower.zalozene)
             self.shower.set_data(field_names_pos,
                     features_list_pos,self.shower.pos)
+            print area
+            print length
+            self.shower.area.setText(str("%.2f" % (area/10000)))
+            self.shower.length.setText(str(round(length*2)/2))
 
         edit_pos = 0
     

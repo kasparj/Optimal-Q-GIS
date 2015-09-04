@@ -737,9 +737,10 @@ def convert_to_shp(pretty_name,folder_name):
 
 
     progress.setValue(100)
+    iface.messageBar().clearWidgets()
 
-    open_layer("KTO",folder_name+'/KTO.shp',"ogr")
-    open_layer("Body",folder_name+'/KBO.shp',"ogr")
+    #open_layer("KTO",folder_name+'/KTO.shp',"ogr")
+    #open_layer("Body",folder_name+'/KBO.shp',"ogr")
     open_layer("KLO",folder_name+'/KLO.shp',"ogr")
     open_layer("Bezlesie",folder_name+'/BZL.shp',"ogr")
     open_layer("Ine plochy",folder_name+'/JP.shp',"ogr")
