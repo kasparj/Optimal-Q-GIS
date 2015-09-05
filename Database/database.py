@@ -39,6 +39,7 @@ from show_atts import ShowAtts
 from save import Save_all 
 from add_drv import Add_drv 
 from add_etz import Add_etz 
+from set_ranges import Set_ranges 
 from open_all import Open_all 
 import os.path
 from converter import convert_to_shp
@@ -60,6 +61,8 @@ list_of_etzs_ids = []
 list_of_drvs_ids = []
 list_of_zals_ids = []
 list_of_poss_ids = []
+maximum_length = 10000
+maximum_area = 50
 
 
 class Database:
@@ -111,13 +114,20 @@ class Database:
 
         self.add_drv.add_button.clicked.connect(self.save_new_drv)
         self.shower.add_drv.clicked.connect(self.add_drv_f)
-        
+
+        self.set_ranges = Set_ranges()
+        self.set_ranges.set_all.clicked.connect(self.set_ranges_f)
+
+        self.shower.area_max.editingFinished.connect(self.edit_area)
+        self.shower.length_max.editingFinished.connect(self.edit_length)
+
+
         self.open_all = Open_all()
         self.open_all.address.clear()
         self.open_all.lookup.clicked.connect(self.select_input_folder)
         self.open_all.open.clicked.connect(self.open_all_1)
         
-
+        self.shower.etaz.itemSelectionChanged.connect(self.highlight_drv)
 
         # Declare instance attributes
         self.actions = []
@@ -245,7 +255,7 @@ class Database:
             icon_path,
             text=self.tr(u'Show attributes'),
             #callback=self.show_atts,
-            callback=self.colorize,
+            callback=self.open_ranges,
             parent=self.iface.mainWindow())
         
         
@@ -275,6 +285,157 @@ class Database:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+    
+    
+    def highlight_drv(self):
+        self.shower.drevina.clearSelection()
+        self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection) 
+        drvs = self.table_to_list(self.shower.etaz)[-1]
+        list_for_drvs = []
+        indexes = self.shower.etaz.selectionModel().selectedRows()
+        for index in sorted(indexes):
+            list_for_drvs.append(drvs[index.row()])
+        ids_of_rows = []
+        drvs_atts = self.table_to_list(self.shower.drevina)[-2]
+        for i in range(len(drvs_atts)):
+            if drvs_atts[i] in list_for_drvs:
+                ids_of_rows.append(i)
+            
+        for item in ids_of_rows:
+            self.shower.drevina.selectRow(item)
+    
+    def edit_area(self):
+        if not self.shower.area_max.isModified():
+            return
+        maximum_area =  self.shower.area_max.text() 
+        if  maximum_area == "":
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Nezadane udaje")
+            return
+        else:
+            try:
+                maximum_area = int(maximum_area)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Je potrebne zadat v celych cislach")
+                return
+            if  maximum_area <= 0:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Je potrebne zadat v  nezapornych cislach")
+                return
+
+            
+        lyr = iface.activeLayer()
+        id_C = lyr.fieldNameIndex('COLOR')
+        id_A = lyr.fieldNameIndex('max_area')
+        id_L = lyr.fieldNameIndex('max_len')
+        
+        features = lyr.selectedFeatures()
+        lyr.startEditing()
+        lyr.changeAttributeValue(features[0].id(),id_A,maximum_area,True)
+        maximum_length = features[0].attributes()[id_L]
+        print "dlzka"+str(maximum_length)
+        print "area"+ str(maximum_area)
+        
+        COLOR = 'BW'
+        if features[0].geometry().area() < maximum_area:
+            if features[0].geometry().length() < maximum_length:
+                COLOR = 'BR'
+            else:
+                COLOR = 'LW'
+        elif features[0].geometry().length() < maximum_length:
+            COLOR = 'AW'
+        
+        lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
+        
+        lyr.commitChanges()
+        self.colorize()               
+        
+        
+#ulozi
+#prepocitat aj COLOR a zaovlat na to farbenie
+    def edit_length(self):
+        print self.shower.length_max.text()
+        if not self.shower.length_max.isModified():
+            return
+        maximum_length =  self.shower.length_max.text() 
+        if  maximum_length == "":
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Nezadane udaje")
+            return
+        else:
+            try:
+                maximum_length = int(maximum_length)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Je potrebne zadat v celych cislach")
+                return
+            if  maximum_length <= 0:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Je potrebne zadat v  nezapornych cislach")
+                return
+
+            
+        lyr = iface.activeLayer()
+        id_C = lyr.fieldNameIndex('COLOR')
+        id_A = lyr.fieldNameIndex('max_area')
+        id_L = lyr.fieldNameIndex('max_len')
+        
+        features = lyr.selectedFeatures()
+        lyr.startEditing()
+        lyr.changeAttributeValue(features[0].id(),id_L,maximum_length,True)
+        maximum_area = features[0].attributes()[id_A]
+        COLOR = 'BW'
+        if features[0].geometry().area() < maximum_area:
+            if features[0].geometry().length() < maximum_length:
+                COLOR = 'BR'
+            else:
+                COLOR = 'LW'
+        elif features[0].geometry().length() < maximum_length:
+            COLOR = 'AW'
+        
+        lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
+        
+        lyr.commitChanges()
+        self.colorize()               
+
+
+    def set_ranges_f(self):
+        global maximum_length
+        global maximum_area
+
+        maximum_length = self.set_ranges.max_len.text()
+        maximum_area = self.set_ranges.max_area.text()
+        
+        if  maximum_area == "" or maximum_length == "":
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Nezadane udaje")
+            self.set_ranges.close()
+            return
+        else:
+            try:
+                maximum_area = int(maximum_area)
+                maximum_length = int(maximum_length)
+            except:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Je potrebne zadat v celych cislach")
+                self.set_ranges.close()
+                return
+            if  maximum_area <= 0 or maximum_length <=0:
+                QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Je potrebne zadat v  nezapornych cislach")
+                self.set_ranges.close()
+                return
+
+        self.set_ranges.close()
+        self.set_colorize_values()
+
+
+        
+        
+    def open_ranges(self):
+        self.set_ranges.show()
+
 
     def table_to_list(self, table):
         result = []
@@ -287,24 +448,42 @@ class Database:
             result.append(rows)
         return result
 
+    def set_colorize_values(self):
+        global maximum_length
+        global maximum_area
+        print maximum_length
+        print maximum_area
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, lyr in layerMap.iteritems():
+            if lyr.name() == "Lesne porasty":
+                layer = lyr
 
-    def colorize(self):
-        layer = iface.activeLayer()
-
-        index = layer.fieldNameIndex('COLOR')
+        id_C = layer.fieldNameIndex('COLOR')
+        id_A = layer.fieldNameIndex('max_area')
+        id_L = layer.fieldNameIndex('max_len')
+        
         layer.startEditing()
         for feature in layer.getFeatures():
             COLOR = 'BW'
-            if feature.geometry().area() < 10000:
-                if feature.geometry().length() < 50:
+            if feature.geometry().area() < maximum_area:
+                if feature.geometry().length() < maximum_length:
                     COLOR = 'BR'
                 else:
                     COLOR = 'LW'
-            elif feature.geometry().length() < 50:
+            elif feature.geometry().length() < maximum_length:
                 COLOR = 'AW'
-            layer.changeAttributeValue(feature.id(),index,str(COLOR))
+            layer.changeAttributeValue(feature.id(),id_C,str(COLOR))
+            layer.changeAttributeValue(feature.id(),id_A,maximum_area)
+            layer.changeAttributeValue(feature.id(),id_L,maximum_length)
         layer.commitChanges()
+        self.colorize()
+
+    def colorize(self):
         
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, lyr in layerMap.iteritems():
+            if lyr.name() == "Lesne porasty":
+                layer = lyr
         correct = {
                 'BR':('green','Both right'),
                 'AW':('yellow','Area wrong'),
@@ -539,7 +718,6 @@ class Database:
         lyr.startEditing()
         features = list(lyr.getFeatures())
         type_T =  type(features[list_of_ids[item.row()]][item.column()])
-        print type_T
         #if type_T is unicode or type_T is str:
         #    try:
         #        lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
@@ -603,7 +781,6 @@ class Database:
         global edit_pos
         global list_of_drvs_ids
         if not edit_pos:
-            print "uprava drviny"
             layerMap = QgsMapLayerRegistry.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Dreviny":
@@ -637,7 +814,8 @@ class Database:
         length = 0
         #vybrana vrstva
         lyr = self.iface.activeLayer()
-
+        self.shower.drevina.clearSelection()
+        self.shower.etaz.clearSelection()
 
 
         #Vyberieme si potrebne vrsty podla mena - pozor na zmeny!
@@ -671,7 +849,15 @@ class Database:
                 #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
                 features_list = self.convert_to_strings(features_list)
-                    
+                
+
+                id_area = lyr.fieldNameIndex("max_area") #index parametru PSK_NUM 
+                id_len = lyr.fieldNameIndex("max_len") #index parametru PSK_NUM 
+
+                
+                self.shower.area_max.setText(features_list[0][id_area])
+                self.shower.length_max.setText(features_list[0][id_len])
+
                 idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
                 if idx == -1:
                     psk_numb = "xX!48p"
@@ -784,13 +970,11 @@ class Database:
                     features_list_zal,self.shower.zalozene)
             self.shower.set_data(field_names_pos,
                     features_list_pos,self.shower.pos)
-            print area
-            print length
             self.shower.area.setText(str("%.2f" % (area/10000)))
             self.shower.length.setText(str(round(length*2)/2))
 
         edit_pos = 0
-    
+   
     def select_output_folder_c(self):
         global pretty_folder
         pretty_folder = QFileDialog.getExistingDirectory(self.dlg, "Vyberte\

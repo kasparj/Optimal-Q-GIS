@@ -73,10 +73,10 @@ list_of_bzl = ['BZL','ORP','KRAJ','KATUZE_KOD','BZL_P0',
 list_of_jp = ['JP','JP_PUPFL','ORP','KRAJ','KATUZE_KOD',
 'JP_P0','JP_V','JP_P','KVAL_P','KAT_PAR_KOD',
 'JP_VYUZ','JP_DRUH','CISLO_TEL'] 
-list_of_kto = [ 'TEXT', 'TXT_STYL', 'TXT_UHEL', 'L_' ]
+#list_of_kto = [ 'TEXT', 'TXT_STYL', 'TXT_UHEL', 'L_' ]
 list_of_kpo = [ 'PLO_DRUH', 'PLO_ZNACKA', 'PLO_BARVA', 'L_']
 list_of_klo = [ 'LIN_DRUH', 'LIN_ZNACKA', 'LIN_BARVA', 'L_']
-list_of_kbo = [ 'BOD_DRUH', 'BOD_ZNACKA', 'BOD_UHELZN', 'BOD_BARVA', 'L_']
+#list_of_kbo = [ 'BOD_DRUH', 'BOD_ZNACKA', 'BOD_UHELZN', 'BOD_BARVA', 'L_']
 list_of_lhc = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
 'LHP_TAX','LHP_Z_OD','LHP_Z_DO','LHP_Z_LIC','LHP_Z_TAX',
 'KU_DATUM','LHP_NEZDAR','TEZ_PROC','NOR_PAS','ETAT_TO',
@@ -247,6 +247,7 @@ def convert_to_shp(pretty_name,folder_name):
     if not KLO_layer.isValid():
             return 1
 
+    """
     global KBO_layer
     KBO_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", 'Body', "memory")
     if not KBO_layer.isValid():
@@ -257,7 +258,7 @@ def convert_to_shp(pretty_name,folder_name):
     KTO_layer = QgsVectorLayer("MultiPoint?crs=EPSG:4326", 'KTO', "memory")
     if not KTO_layer.isValid():
             return 1
-
+    """
     global PSK_layer
     PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
     if not PSK_layer.isValid():
@@ -319,6 +320,9 @@ def convert_to_shp(pretty_name,folder_name):
 
                             QgsField("PSK_NUM" , QVariant.Int),
                             QgsField("COLOR" , QVariant.String),
+                            QgsField("max_len" , QVariant.Double),
+                            QgsField("max_area" , QVariant.Double),
+                            
 
                             ])
     PSK_layer.updateFields()
@@ -430,6 +434,7 @@ def convert_to_shp(pretty_name,folder_name):
 
 
     #QgsMapLayerRegistry.instance().addMapLayer(KBO_layer)
+    """
     global kbo_line
     kbo_line = KBO_layer.dataProvider()
     kbo_line.addAttributes([
@@ -452,7 +457,7 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("L_",QVariant.String)
                             ])
     KTO_layer.updateFields()
-
+    """
     
     i = 7  
     progress.setValue(i)
@@ -478,6 +483,7 @@ def convert_to_shp(pretty_name,folder_name):
                 
         i = 15  
         progress.setValue(i)
+        """
         for KBO in child.findall('KBO'):
             atts = create_attributes(KBO, list_of_kbo)
             if not KBO.findall('BOD_OBRAZ'):
@@ -492,7 +498,6 @@ def convert_to_shp(pretty_name,folder_name):
                         pt.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
                         pt.setAttributes(atts)
                         kbo_line.addFeatures([pt])
-
 
         i = 22  
         progress.setValue(i)
@@ -510,10 +515,10 @@ def convert_to_shp(pretty_name,folder_name):
                     pt.setAttributes(atts)
                     kto_line.addFeatures([pt])
 
-
         i = 29  
         progress.setValue(i)
 
+        """
         for KPO in child.findall('KPO'):
             if not KPO.findall('PLO_OBRAZ'):
                 return 3
@@ -523,7 +528,7 @@ def convert_to_shp(pretty_name,folder_name):
                     create_from_MP(MP,kpo_poly,atts)
 
 
-        i = 34  
+        i = 19  
         progress.setValue(i)
         for KLO in child.findall('KLO'):
             atts = create_attributes(KLO, list_of_klo)
@@ -532,7 +537,7 @@ def convert_to_shp(pretty_name,folder_name):
             for KLO_obraz in KLO.findall('LIN_OBRAZ'):
                 for ML in KLO_obraz.findall('ML'):
                     create_from_ML(ML,klo_line,atts)
-        i = 40  
+        i = 24  
         progress.setValue(i)
 
 
@@ -723,7 +728,7 @@ def convert_to_shp(pretty_name,folder_name):
     err_stat = save_layer(KLO_layer,folder_name+'/KLO')
     if err_stat != 0:
         err_code = err_stat
-
+    """
     err_stat = save_layer(KBO_layer,folder_name+'/KBO')
     if err_stat != 0:
         err_code = err_stat
@@ -731,7 +736,7 @@ def convert_to_shp(pretty_name,folder_name):
     err_stat = save_layer(KTO_layer,folder_name+'/KTO')
     if err_stat != 0:
         err_code = err_stat
-
+    """
     if error_code != 0:
         return error_code
 
