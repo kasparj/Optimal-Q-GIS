@@ -11,4 +11,10 @@
     <qresource prefix="/plugins/Database" >
         <file>icon_open.png</file>
     </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>colorize.png</file>
+    </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icon_cut.png</file>
+    </qresource>
 </RCC>
