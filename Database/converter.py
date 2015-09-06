@@ -22,7 +22,7 @@ import codecs
 pt = QgsFeature()#premenna pre jedne geom. objekt
 
 #mozu sa menit, ale treba zachovat poradie
-#NEMENIT XXX_NUM, ani pordie, nepridavat nakoniec - radsej do stredu!
+#NEMENIT XXX_NUM, ani poradie, nepridavat nakoniec - radsej do stredu!
 #tieto nazvy sa priamo zapisu do suboru ako hlavicky
 
 names_of_pos = ['POSKOZ_D','POSKOZ_R','DRV_NUM']
@@ -44,7 +44,6 @@ names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI',
 #Tieto listy nemenit, to su zoznamy pre parsovanie dat
 #menit iba ak sa zmeni standard, na poradi zalezi
 #ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
-#nemenit XXX_NUM 
 
 list_of_pos = ['POSKOZ_D','POSKOZ_R']
 list_of_zal = ['ZAL_DR','ZAL_DR_P']
@@ -87,9 +86,10 @@ list_of_lhc = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
 #------------------------------------------------------------------------
 #funkcie
 #------------------------------------------------------------------------
-
+#otvori vrstu, ktora sa zobrazi pod nazvom "name"
+#otvori sa na adrese - cela cesta
+#type_ft = ogr pre vektorove vrstvy, "delimitedText" pre csv
 def open_layer(name, address,type_ft):
-
     new_ft = QgsVectorLayer(address,name,type_ft)
     QgsMapLayerRegistry.instance().addMapLayer(new_ft)
     #layer = iface.addVectorLayer(address, name, type_ft)
@@ -163,13 +163,13 @@ def save_layer(layer,address):
 #folder_name = adresa, kam sa bude ukladat vysledok
 def convert_to_shp(pretty_name,folder_name):
 
-    i = 0
+    i = 0#percento dokoncenia pre progressBar
     progressMessageBar =\
-    iface.messageBar().createMessage('Konvertujem')
-    progress = QProgressBar()
-    progress.setMaximum(100)
-    progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-    progressMessageBar.layout().addWidget(progress)
+            iface.messageBar().createMessage('Konvertujem')#pridam text konvertujem
+    progress = QProgressBar()#vytvorim progressBar
+    progress.setMaximum(100)#maxium je 100
+    progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)#zarovnam ho vlavo
+    progressMessageBar.layout().addWidget(progress)#a pridam ho do hroenj listy
     iface.messageBar().pushWidget(progressMessageBar,
                         iface.messageBar().INFO)
     
@@ -177,9 +177,8 @@ def convert_to_shp(pretty_name,folder_name):
 
     #praca s CSV - otvorim si vsetky potrebne .csv subory a rovno do nich
         #zapisem aj hlavicku - mohlo by sa to vytiahnut nejako do funckie...
-    
+    #otvorim kazdy subor a zapisem tam aj hlavicky tabuliek
     try:
-        #iny nazov, podla vstupneho suboru
         etz_file = codecs.open(folder_name+'/etz_file.csv','w',encoding='utf-8')
         etz_file.write(",".join(names_of_etz)+'\n')
     except:
@@ -187,7 +186,6 @@ def convert_to_shp(pretty_name,folder_name):
    
     
     try:
-        #iny nazov, podla vstupneho suboru
         drv_file = codecs.open(folder_name+'/drv_file.csv','w',encoding='utf-8')
         drv_file.write(",".join(names_of_drv)+'\n')
     except:
@@ -195,7 +193,6 @@ def convert_to_shp(pretty_name,folder_name):
 
 
     try:
-        #iny nazov, podla vstupneho suboru
         kat_file = codecs.open(folder_name+'/kat_file.csv','w',encoding='utf-8')
         kat_file.write(",".join(names_of_kat)+'\n')
     except:
@@ -203,7 +200,6 @@ def convert_to_shp(pretty_name,folder_name):
 
 
     try:
-        #iny nazov, podla vstupneho suboru
         zal_file = codecs.open(folder_name+'/zal_file.csv','w',encoding='utf-8')
         zal_file.write(",".join(names_of_zal)+'\n')
     except:
@@ -211,7 +207,6 @@ def convert_to_shp(pretty_name,folder_name):
 
 
     try:
-        #iny nazov, podla vstupneho suboru
         pos_file = codecs.open(folder_name+'/pos_file.csv','w',encoding='utf-8')
         pos_file.write(",".join(names_of_pos)+'\n')
     except:
@@ -220,37 +215,31 @@ def convert_to_shp(pretty_name,folder_name):
 #priprava vrstiev
 #------------------------------------------------------------------------
 #format:
-#Multi[Polygon/LineString/Point] - podla typu geometrie ?crs=EPSG:4326 - typ ukladania
+#Multi[Polygon/LineString/Point] - podla typu geometrie ?crs=EPSG:5514 - typ ukladania
 #Nazov vrsty, ktory je zobrazny v QGIS
 #memory - pracujeme s mamory provider-om
     
-    my_crs = QgsCoordinateReferenceSystem()
-    my_crs.createFromProj4("+proj=krovak +lat_0=49.5 +lon_0=24.83333333333333\
-    +alpha=30.28813975277778 +k=0.9999 +x_0=0 +y_0=0 +ellps=bessel +units=m\
-    +no_defs")
-    print my_crs.isValid()
-
     
     global KPO_layer
     #KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'KPO', "memory")
-    KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'KPO', "memory")
+    KPO_layer = QgsVectorLayer("Polygon?crs=EPSG:5514", 'KPO', "memory")
     if not KPO_layer.isValid():
             return 1
     
     
     global JP_layer
-    JP_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Ine plochy', "memory")
+    JP_layer = QgsVectorLayer("Polygon?crs=EPSG:5514", 'Ine plochy', "memory")
     if not JP_layer.isValid():
             return 1
 
 
     global BZL_layer
-    BZL_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Bezlesie', "memory")
+    BZL_layer = QgsVectorLayer("Polygon?crs=EPSG:5514", 'Bezlesie', "memory")
     if not BZL_layer.isValid():
             return 1
 
     global KLO_layer
-    KLO_layer = QgsVectorLayer("MultiLineString?crs=EPSG:5514", 'KLO', "memory")
+    KLO_layer = QgsVectorLayer("LineString?crs=EPSG:5514", 'KLO', "memory")
     if not KLO_layer.isValid():
             return 1
 
@@ -267,7 +256,7 @@ def convert_to_shp(pretty_name,folder_name):
             return 1
     """
     global PSK_layer
-    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Lesne porasty', "memory")
+    PSK_layer = QgsVectorLayer("Polygon?crs=EPSG:5514", 'Lesne porasty', "memory")
     if not PSK_layer.isValid():
             return 1
 
@@ -472,7 +461,7 @@ def convert_to_shp(pretty_name,folder_name):
 #parser xml + samotne ukladanie
 #------------------------------------------------------------------------
 
-    tree = ET.parse(pretty_name)
+    tree = ET.parse(pretty_name)#pripravime si vstupn subor
     if not tree:
         return 2
     root = tree.getroot()
@@ -485,8 +474,6 @@ def convert_to_shp(pretty_name,folder_name):
     for child in root:
         #save_LHC(child.attrib)!
         #for HS,OU1,OU2,MZD!
-        
-                
                 
         i = 15  
         progress.setValue(i)
@@ -526,6 +513,11 @@ def convert_to_shp(pretty_name,folder_name):
         progress.setValue(i)
 
         """
+        """
+        findall - najde vsetky podradene tagy ktore su ako argument
+        vytovim zoznam atributov volanim funkcie create_attributes
+        """
+
         for KPO in child.findall('KPO'):
             if not KPO.findall('PLO_OBRAZ'):
                 return 3
@@ -533,6 +525,7 @@ def convert_to_shp(pretty_name,folder_name):
             for KPO_obraz in KPO.findall('PLO_OBRAZ'):
                 for MP in KPO_obraz.findall('MP'):
                     create_from_MP(MP,kpo_poly,atts)
+
 
 
         i = 19  
@@ -670,7 +663,11 @@ def convert_to_shp(pretty_name,folder_name):
     pos_file.close()
     zal_file.close()
     
-    #otvorim csv subory pre potreby QGIS    
+    #otvorim si csv ako delimitedText
+    #ulozim to ako vektorovu vrstvu - vznikne mi .dbf
+    #to otvorim ako vektorovu vrstvu
+    #a mam editovatlnu vrstvu atributov
+
     etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
     save_layer(etz_csv,folder_name+'/etz')
     new_etz = QgsVectorLayer(folder_name+'/etz.dbf',"Porast","ogr")
@@ -750,6 +747,8 @@ def convert_to_shp(pretty_name,folder_name):
 
     progress.setValue(100)
     iface.messageBar().clearWidgets()
+
+    #otvaram nanovo vrsty - zistil som ze je to tak vyhodnejsie
 
     #open_layer("KTO",folder_name+'/KTO.shp',"ogr")
     #open_layer("Body",folder_name+'/KBO.shp',"ogr")

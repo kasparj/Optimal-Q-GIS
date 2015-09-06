@@ -25,14 +25,14 @@
 #http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
 #pyrcc4 -o resources_rc.py resources.qrc
 
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox
-from PyQt4.QtGui import QTableWidgetItem, QProgressBar 
-from PyQt4.QtCore import SIGNAL,QPyNullVariant
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
+    Qt,SIGNAL,QPyNullVariant
+from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox,\
+        QTableWidgetItem, QProgressBar, QColor
 from PyQt4 import QtGui, QtCore
 from qgis.utils import iface
 import qgis
-from qgis.core import QgsFeatureRequest
+#from qgis.core import QgsFeatureRequest
 import resources_rc
 from database_dialog import DatabaseDialog
 from show_atts import ShowAtts
@@ -44,26 +44,37 @@ from open_all import Open_all
 import os.path
 from converter import convert_to_shp
 import sys 
-from PyQt4.QtGui import QColor
 import dtutils
+import math
+
+from qgis.core import *
+#from qgis.gui import *
+#from PyQt4.QtCore import *
+
+
 
 
 from qgis.core import *
 from qgis.gui import *
 from PyQt4.QtCore import *
+from PyQt4 import QtGui
+from PyQt4.QtGui import QProgressBar
+from qgis.utils import iface
 
 
-pretty_name = ""
-pretty_folder = ""
-input_folder = ""
-edit_pos = 0
-list_of_kats_ids = []
-list_of_etzs_ids = []
+
+pretty_name = ""#nazov pre vstupny subor
+pretty_folder = ""#nazov priecinku pre ukladanie
+input_folder = ""#nazov pre vstupny priecinok
+edit_pos = 0#povoluje editovanie - aby si nemyslelo ze editujem, ked len
+    #nastavujem hodnoty do tabulky
+list_of_kats_ids = []#globalne uloziska pre id  prave vypisanych hodnot
+list_of_etzs_ids = []#sluzi na rychjesiu editaciu parametrov
 list_of_drvs_ids = []
 list_of_zals_ids = []
 list_of_poss_ids = []
-maximum_length = 10000
-maximum_area = 50
+maximum_length = 50 #predvolena hodnota maximalnej sirky
+maximum_area = 10000#predvolena hodnota maximalnej plochy
 
 
 class Database:
@@ -92,7 +103,7 @@ class Database:
         #----------------------------------
         self.shower = ShowAtts()#toto sa importuje
         #self.shower.refresh.clicked.connect(self.edit_main)#ked kliknem na
-        #refrsh zavola sa edit_main
+            #refrsh zavola sa edit_main
         self.shower.tableWidget.itemChanged.connect(self.edit_main)#ak pride
         #signal itemChanged zavola sa funkcia edit_main
         self.shower.kategoria.itemChanged.connect(self.edit_kats)
@@ -244,6 +255,7 @@ class Database:
 
         #tu vzdy pridat cely tento kus
         #zmenit cestu k ikonke a zmenit popis
+        #zmenit aj volanu funkciu
         icon_path = ':/plugins/Database/icon_convert.png'
         self.add_action(
             icon_path,
@@ -293,9 +305,49 @@ class Database:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-    
+   
+
+
+
+    def count_width(self):
+        pt = QgsFeature()#premenna pre jedne geom. objekt
+        lyr = iface.activeLayer()
+        
+
+        PSK_layer = QgsVectorLayer("LineString?crs=EPSG:5514", 'Ciary', "memory")
+        if not PSK_layer.isValid():
+            return 1
+        psk_poly = PSK_layer.dataProvider()
+        psk_poly.addAttributes([
+                            QgsField("ODD" , QVariant.String),
+                            ])
+        PSK_layer.updateFields()
+        QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
+        
+        features = lyr.getFeatures()
+        for ft in features:
+            points = ft.geometry().asPolygon()[0]
+            max_x = 0
+            max_y = 0
+            max_len = 0
+            for i in range(len(points)-1):
+                for j in range(len(points)-i-1):
+                    length = self.get_length(points[i],points[i+j+1])
+                    if length > max_len:
+                        max_x = points[i]
+                        max_y = points[i+j+1]
+                        max_len = length
+            points = [QgsPoint(max_x[0],max_x[1]),QgsPoint(max_y[0],max_y[1])]            
+            pt.setGeometry(QgsGeometry.fromPolyline(points))
+            psk_poly.addFeatures([pt])
+            
+    def get_length(self,point1,point2):
+        return math.hypot(point2[0]-point1[0],point2[1]-point1[1])
+
+
+
+    #funkcia na delenie polygonov
     def cut_polygon(self):
-        '''Function that does all the real work'''
         title = QtCore.QCoreApplication.translate("digitizingtools", "Splitter")
         splitterLayer = dtutils.dtChooseVectorLayer(self.iface,  1,  msg = QtCore.QCoreApplication.translate("digitizingtools", "splitter layer"))
 
@@ -429,47 +481,54 @@ class Database:
                 else:
                     passiveLayer.destroyEditCommand()
         
-    
+    #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
-        self.shower.drevina.clearSelection()
-        self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection) 
-        drvs = self.table_to_list(self.shower.etaz)[-1]
+        self.count_width()
+        self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
+        self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
+            #ze budem vyberat viacero riadkov naraz
+        drvs = self.table_to_list(self.shower.etaz)[-1]#ziskam cisla vsetkych
+            #drevin
         list_for_drvs = []
-        indexes = self.shower.etaz.selectionModel().selectedRows()
+        indexes = self.shower.etaz.selectionModel().selectedRows()#ziskam
+            #vsetky vybrane riadky etazi
         for index in sorted(indexes):
-            list_for_drvs.append(drvs[index.row()])
+            list_for_drvs.append(drvs[index.row()])#urobim si zoznam cisel
+                #drevin, ktore odpovedaju vybranym etazam
         ids_of_rows = []
         drvs_atts = self.table_to_list(self.shower.drevina)[-2]
         for i in range(len(drvs_atts)):
             if drvs_atts[i] in list_for_drvs:
-                ids_of_rows.append(i)
+                ids_of_rows.append(i)#a ak sa vyskytuje cislo dreviny  oboch
+                    #zoznamoch, tak si ho ulozim
             
         for item in ids_of_rows:
-            self.shower.drevina.selectRow(item)
+            self.shower.drevina.selectRow(item)#q vsetky ulozene cisla vyberiem
     
+    #funkcia na editovanie maximalnej plochy
     def edit_area(self):
         if not self.shower.area_max.isModified():
-            return
-        maximum_area =  self.shower.area_max.text() 
-        if  maximum_area == "":
+            return#ak nebolo zmenene (len potlacil napr enter) tak skoncim
+        maximum_area =  self.shower.area_max.text()#ziskam nove cislo z pola
+        if  maximum_area == "":#testujem ci nie je to prazdny retazec
             QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Nezadane udaje")
             return
         else:
             try:
-                maximum_area = int(maximum_area)
+                maximum_area = int(maximum_area)#testuje ci ej to int
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Je potrebne zadat v celych cislach")
                 return
-            if  maximum_area <= 0:
+            if  maximum_area <= 0:#testujem ci je kladne
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v  nezapornych cislach")
+                    "Je potrebne zadat v kladnych cislach")
                 return
 
             
         lyr = iface.activeLayer()
-        id_C = lyr.fieldNameIndex('COLOR')
+        id_C = lyr.fieldNameIndex('COLOR')#ziskam indexy v poli atributov
         id_A = lyr.fieldNameIndex('max_area')
         id_L = lyr.fieldNameIndex('max_len')
         
@@ -480,7 +539,7 @@ class Database:
         print "dlzka"+str(maximum_length)
         print "area"+ str(maximum_area)
         
-        COLOR = 'BW'
+        COLOR = 'BW'#nastavim parameter podla rozmerov
         if features[0].geometry().area() < maximum_area:
             if features[0].geometry().length() < maximum_length:
                 COLOR = 'BR'
@@ -494,9 +553,7 @@ class Database:
         lyr.commitChanges()
         self.colorize()               
         
-        
-#ulozi
-#prepocitat aj COLOR a zaovlat na to farbenie
+    #upravuje sirku- funguje rovnako ao edit_area    
     def edit_length(self):
         print self.shower.length_max.text()
         if not self.shower.length_max.isModified():
@@ -542,10 +599,10 @@ class Database:
         lyr.commitChanges()
         self.colorize()               
 
-
+    #funkcia, ktora nastavy vsetkym polozkam atribut COLOR
     def set_ranges_f(self):
-        global maximum_length
-        global maximum_area
+        global maximum_length#hranicna hodnota
+        global maximum_area#hranicna hodnota
 
         maximum_length = self.set_ranges.max_len.text()
         maximum_area = self.set_ranges.max_area.text()
