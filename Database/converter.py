@@ -223,27 +223,34 @@ def convert_to_shp(pretty_name,folder_name):
 #Multi[Polygon/LineString/Point] - podla typu geometrie ?crs=EPSG:4326 - typ ukladania
 #Nazov vrsty, ktory je zobrazny v QGIS
 #memory - pracujeme s mamory provider-om
+    
+    my_crs = QgsCoordinateReferenceSystem()
+    my_crs.createFromProj4("+proj=krovak +lat_0=49.5 +lon_0=24.83333333333333\
+    +alpha=30.28813975277778 +k=0.9999 +x_0=0 +y_0=0 +ellps=bessel +units=m\
+    +no_defs")
+    print my_crs.isValid()
 
-
+    
     global KPO_layer
-    KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'KPO', "memory")
+    #KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'KPO', "memory")
+    KPO_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'KPO', "memory")
     if not KPO_layer.isValid():
             return 1
     
     
     global JP_layer
-    JP_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Ine plochy', "memory")
+    JP_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Ine plochy', "memory")
     if not JP_layer.isValid():
             return 1
 
 
     global BZL_layer
-    BZL_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Bezlesie', "memory")
+    BZL_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Bezlesie', "memory")
     if not BZL_layer.isValid():
             return 1
 
     global KLO_layer
-    KLO_layer = QgsVectorLayer("MultiLineString?crs=EPSG:4326", 'KLO', "memory")
+    KLO_layer = QgsVectorLayer("MultiLineString?crs=EPSG:5514", 'KLO', "memory")
     if not KLO_layer.isValid():
             return 1
 
@@ -260,7 +267,7 @@ def convert_to_shp(pretty_name,folder_name):
             return 1
     """
     global PSK_layer
-    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:4326", 'Lesne porasty', "memory")
+    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Lesne porasty', "memory")
     if not PSK_layer.isValid():
             return 1
 

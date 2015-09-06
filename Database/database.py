@@ -386,7 +386,8 @@ class Database:
                     id_L = lyr.fieldNameIndex('max_len')
                     lyr.startEditing()
                     features = lyr.selectedFeatures()
-
+                    for item in features:
+                        item.id()
 
 
                     maximum_area = features[0].attributes()[id_A]
@@ -403,9 +404,9 @@ class Database:
                     lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
 
 
-
                     #TU MAME FEATURE!
                     for item in featuresToAdd:
+                        print item
                         maximum_area = item.attributes()[id_A]
                         maximum_length = item.attributes()[id_A]
                         COLOR = 'BW'
@@ -420,12 +421,8 @@ class Database:
                         atts = item.attributes()
                         atts[id_C] = COLOR
                         item.setAttributes(atts)
-                        lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
+                        #lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
 
-
-
-
-                        print item.attributes()
                     passiveLayer.addFeatures(featuresToAdd,  False)
                     passiveLayer.endEditCommand()
                     passiveLayer.removeSelection()
