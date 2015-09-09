@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Maximalna plocha [m2]</string>
+     <string>Maximalna plocha [ha]</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="max_area">

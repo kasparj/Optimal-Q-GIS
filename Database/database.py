@@ -20,15 +20,19 @@
  *                                                                         *
  ***************************************************************************/
 """
-#ked dam ridat drevinu, nech vezme etaz z prave oznacenej etaze - ak
+# OK! ked dam ridat drevinu, nech vezme etaz z prave oznacenej etaze - ak
     #neoznacena, tak nefunguje
-#tie co nefunguju, mozu byt ze to am byt dierva vo vlekom+vnutro ale to robi
+
+#FUNGUJE? tie co nefunguju, mozu byt ze to am byt dierva vo vlekom+vnutro ale to robi
     #ako velky vnutro a vnutro - ako dat ked to ma byt ako hole in that...-
     #alebo identifikovat ze to tak je (nie za sebou iduce?) tak ro dam prec...
+
 #oznacuje len potlacene
-#zadavat pri farbeny v HA
+#OK!zadavat pri farbeny v HA
 #ked sa rozdlei, tak treba aby s aetaze, dreviny a dlasie nakopirovali annove
     #cisla
+#aj pri tovrbe treba, asi sa vytvarli vzdy nove
+#sirku merat ako v amily
 #http://stackoverflow.com/questions/11476907/python-and-pyqt-get-input-from-qtablewidget
 #http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
 #pyrcc4 -o resources_rc.py resources.qrc
@@ -459,13 +463,17 @@ class Database:
                                         featuresToAdd.append(newFeat)
 
                 if featuresBeingSplit > 0:
-                    lyr = iface.activeLayer()
+                    #lyr = iface.activeLayer()
+                    lyr = passiveLayer
                     id_C = lyr.fieldNameIndex('COLOR')
                     id_A = lyr.fieldNameIndex('max_area')
                     id_L = lyr.fieldNameIndex('max_len')
+                    id_PSK = lyr.fieldNameIndex('PSK_NUM')
                     lyr.startEditing()
                     features = lyr.selectedFeatures()
-                    print features[0].geometry().area()
+                    new_psk_num = len(list(lyr.getFeatures()))
+                    print new_psk_num
+                    #print features[0].geometry().area()
                     for item in features:
                         item.id()
 
@@ -486,7 +494,62 @@ class Database:
 
                     #TU MAME FEATURE!
                     for item in featuresToAdd:
-                        print item
+                        self.show_atts()
+                        self.shower.close()
+                        csv_drv = None
+                        csv_etz = None
+                        csv_zal = None
+                        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+                        for name, lyr in layerMap.iteritems():
+                            if lyr.name() == "Dreviny":
+                                csv_drv = lyr
+                            elif lyr.name() == "Porast":
+                                csv_etz = lyr
+                            elif lyr.name() == "Zalozenie":
+                                csv_zal = lyr
+
+
+
+                        etzs = self.table_to_list(self.shower.etaz)
+                        drvs = self.table_to_list(self.shower.drevina)
+                        zals = self.table_to_list(self.shower.zalozene)
+
+                        drvs = [list(x) for x in zip(*drvs)]
+                        etzs = [list(x) for x in zip(*etzs)]
+                        zals = [list(x) for x in zip(*zals)]
+                            
+
+                        new_etz_start = len(list(csv_etz.getFeatures()))
+                        for i in range(len(etzs)):
+                            orig_etz = etzs[i][-1]
+                            etzs[i][-2] = new_psk_num
+                            etzs[i][-1] = new_etz_start
+                            for j in range(len(drvs)):
+                                if drvs[j][-2] == orig_etz:
+                                    drvs[j][-2] = new_etz_start
+                            for j in range(len(zals)):
+                                if zals[j][-1] == orig_etz:
+                                    zals[j][-1] = new_etz_start
+                            new_etz_start += 1
+                       
+                        
+                        for etz in etzs:
+                            new_ft = QgsFeature(csv_etz.pendingFields())
+                            new_ft.setAttributes(etz)
+                            csv_etz.dataProvider().addFeatures([new_ft])
+                        
+                        for drv in drvs:
+                            new_ft = QgsFeature(csv_drv.pendingFields())
+                            new_ft.setAttributes(drv)
+                            csv_drv.dataProvider().addFeatures([new_ft])
+                        
+                        print zals
+                            
+                        for zal in zals:
+                            new_ft = QgsFeature(csv_zal.pendingFields())
+                            new_ft.setAttributes(zal)
+                            csv_zal.dataProvider().addFeatures([new_ft])
+
                         maximum_area = item.attributes()[id_A]
                         maximum_length = item.attributes()[id_L]
                         COLOR = 'BW'
@@ -500,6 +563,7 @@ class Database:
                         
                         atts = item.attributes()
                         atts[id_C] = COLOR
+                        atts[id_PSK] = new_psk_num
                         item.setAttributes(atts)
                         #lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
 
@@ -508,10 +572,11 @@ class Database:
                     passiveLayer.removeSelection()
                 else:
                     passiveLayer.destroyEditCommand()
+                    
+        self.show_atts()
         
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
-        print "som vnutri"
         #self.draw_lines()
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
         self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
@@ -550,10 +615,10 @@ class Database:
             return
         else:
             try:
-                maximum_area = int(maximum_area)#testuje ci ej to int
+                maximum_area = float(maximum_area)*10000#testuje ci ej to int
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v celych cislach")
+                    "Je potrebne zadat v desatinnych cislach")
                 return
             if  maximum_area <= 0:#testujem ci je kladne
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
@@ -650,7 +715,7 @@ class Database:
             return
         else:
             try:
-                maximum_area = int(maximum_area)
+                maximum_area = int(maximum_area)*10000
                 maximum_length = int(maximum_length)
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
@@ -836,13 +901,23 @@ class Database:
         
         fields_drv = drv_csv.pendingFields()
         field_names_drv = [field.name() for field in fields_drv]
+         
+        indexes = self.shower.etaz.selectionModel().selectedRows()
+        if indexes == []:
+
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                    "Musite vybrat etaz, aby ste mohli pridat drevinu")
+            self.add_drv.close()
+            return
+        
         
         default_list_drv = self.table_to_list(self.shower.drevina)
         if default_list_drv == []:
             default_list_drv = [["" for field in fields_drv]]
-            default_list_drv[0][-2] = etz_nums[0]
+            default_list_drv[0][-2] = etz_nums[indexes[0].row()]
         else:
             default_list_drv = [[item[0] for item in default_list_drv]]
+            default_list_drv[0][-2] = etz_nums[indexes[0].row()]
         default_list_drv[0][-1] = str(new_number)
         self.add_drv.set_data(field_names_drv,
                 default_list_drv,self.add_drv.drv_table)
@@ -1097,8 +1172,10 @@ class Database:
                 id_area = lyr.fieldNameIndex("max_area") #index parametru PSK_NUM 
                 id_len = lyr.fieldNameIndex("max_len") #index parametru PSK_NUM 
 
-                
-                self.shower.area_max.setText(features_list[0][id_area])
+                try: 
+                    self.shower.area_max.setText(str("%.2f"%(float(features_list[0][id_area])/10000)))
+                except:
+                    self.shower.area_max.setText("0")
                 self.shower.length_max.setText(features_list[0][id_len])
 
                 idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
