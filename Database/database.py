@@ -20,7 +20,15 @@
  *                                                                         *
  ***************************************************************************/
 """
-
+#ked dam ridat drevinu, nech vezme etaz z prave oznacenej etaze - ak
+    #neoznacena, tak nefunguje
+#tie co nefunguju, mozu byt ze to am byt dierva vo vlekom+vnutro ale to robi
+    #ako velky vnutro a vnutro - ako dat ked to ma byt ako hole in that...-
+    #alebo identifikovat ze to tak je (nie za sebou iduce?) tak ro dam prec...
+#oznacuje len potlacene
+#zadavat pri farbeny v HA
+#ked sa rozdlei, tak treba aby s aetaze, dreviny a dlasie nakopirovali annove
+    #cisla
 #http://stackoverflow.com/questions/11476907/python-and-pyqt-get-input-from-qtablewidget
 #http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
 #pyrcc4 -o resources_rc.py resources.qrc
@@ -307,11 +315,10 @@ class Database:
         del self.toolbar
    
 
-
-
-    def count_width(self):
-        pt = QgsFeature()#premenna pre jedne geom. objekt
+    def draw_lines(self):
         lyr = iface.activeLayer()
+        
+        pt = QgsFeature()#premenna pre jedne geom. objekt
         
 
         PSK_layer = QgsVectorLayer("LineString?crs=EPSG:5514", 'Ciary', "memory")
@@ -323,6 +330,7 @@ class Database:
                             ])
         PSK_layer.updateFields()
         QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
+        features = lyr.getFeatures()
         
         features = lyr.getFeatures()
         for ft in features:
@@ -340,7 +348,26 @@ class Database:
             points = [QgsPoint(max_x[0],max_x[1]),QgsPoint(max_y[0],max_y[1])]            
             pt.setGeometry(QgsGeometry.fromPolyline(points))
             psk_poly.addFeatures([pt])
-            
+        symbols = PSK_layer.rendererV2().symbols()
+        symbol = symbols[0]
+        symbol.setColor(QtGui.QColor('Red'))
+        qgis.utils.iface.mapCanvas().refresh()
+        qgis.utils.iface.legendInterface().refreshLayerSymbology(PSK_layer)
+
+    def count_width(self,ft):
+        points = ft.geometry().asPolygon()
+        if points:
+            points = points[0]
+        max_len = 0
+        for i in range(len(points)-1):
+            for j in range(len(points)-i-1):
+                length = self.get_length(points[i],points[i+j+1])
+                if length > max_len:
+                    max_len = length
+        print max_len
+        return max_len
+
+
     def get_length(self,point1,point2):
         return math.hypot(point2[0]-point1[0],point2[1]-point1[1])
 
@@ -438,19 +465,20 @@ class Database:
                     id_L = lyr.fieldNameIndex('max_len')
                     lyr.startEditing()
                     features = lyr.selectedFeatures()
+                    print features[0].geometry().area()
                     for item in features:
                         item.id()
 
 
                     maximum_area = features[0].attributes()[id_A]
-                    maximum_length = features[0].attributes()[id_A]
+                    maximum_length = features[0].attributes()[id_L]
                     COLOR = 'BW'
                     if features[0].geometry().area() < maximum_area:
-                        if features[0].geometry().length() < maximum_length:
+                        if self.count_width(features[0]) < maximum_length:
                             COLOR = 'BR'
                         else:
                             COLOR = 'LW'
-                    elif features[0].geometry().length() < maximum_length:
+                    elif self.count_width(features[0]) < maximum_length:
                         COLOR = 'AW'
         
                     lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
@@ -460,14 +488,14 @@ class Database:
                     for item in featuresToAdd:
                         print item
                         maximum_area = item.attributes()[id_A]
-                        maximum_length = item.attributes()[id_A]
+                        maximum_length = item.attributes()[id_L]
                         COLOR = 'BW'
                         if item.geometry().area() < maximum_area:
-                            if item.geometry().length() < maximum_length:
+                            if self.count_width(item) < maximum_length:
                                 COLOR = 'BR'
                             else:
                                 COLOR = 'LW'
-                        elif item.geometry().length() < maximum_length:
+                        elif self.count_width(item) < maximum_length:
                             COLOR = 'AW'
                         
                         atts = item.attributes()
@@ -483,7 +511,8 @@ class Database:
         
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
-        self.count_width()
+        print "som vnutri"
+        #self.draw_lines()
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
         self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
             #ze budem vyberat viacero riadkov naraz
@@ -496,13 +525,18 @@ class Database:
             list_for_drvs.append(drvs[index.row()])#urobim si zoznam cisel
                 #drevin, ktore odpovedaju vybranym etazam
         ids_of_rows = []
-        drvs_atts = self.table_to_list(self.shower.drevina)[-2]
+
+        drv_att = self.table_to_list(self.shower.drevina)
+        drvs_atts = drv_att[-2]
         for i in range(len(drvs_atts)):
             if drvs_atts[i] in list_for_drvs:
                 ids_of_rows.append(i)#a ak sa vyskytuje cislo dreviny  oboch
                     #zoznamoch, tak si ho ulozim
             
         for item in ids_of_rows:
+            #for number in range(len(drv_att)):
+                #self.shower.drevina.setItem(item,number,QtGui.QTableWidgetItem())
+                #self.shower.drevina.item(item,number).setBackground(QtGui.QColor("green"))
             self.shower.drevina.selectRow(item)#q vsetky ulozene cisla vyberiem
     
     #funkcia na editovanie maximalnej plochy
@@ -541,11 +575,11 @@ class Database:
         
         COLOR = 'BW'#nastavim parameter podla rozmerov
         if features[0].geometry().area() < maximum_area:
-            if features[0].geometry().length() < maximum_length:
+            if self.count_width(features[0]) < maximum_length:
                 COLOR = 'BR'
             else:
                 COLOR = 'LW'
-        elif features[0].geometry().length() < maximum_length:
+        elif self.count_width(features[0]) < maximum_length:
             COLOR = 'AW'
         
         lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
@@ -555,13 +589,13 @@ class Database:
         
     #upravuje sirku- funguje rovnako ao edit_area    
     def edit_length(self):
-        print self.shower.length_max.text()
         if not self.shower.length_max.isModified():
             return
         maximum_length =  self.shower.length_max.text() 
         if  maximum_length == "":
             QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Nezadane udaje")
+            print "nezadane udaje"
             return
         else:
             try:
@@ -569,10 +603,12 @@ class Database:
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Je potrebne zadat v celych cislach")
+                print "nie cele cisla"
                 return
             if  maximum_length <= 0:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Je potrebne zadat v  nezapornych cislach")
+                print "nie cele nezaporne"
                 return
 
             
@@ -587,11 +623,11 @@ class Database:
         maximum_area = features[0].attributes()[id_A]
         COLOR = 'BW'
         if features[0].geometry().area() < maximum_area:
-            if features[0].geometry().length() < maximum_length:
+            if self.count_width(features[0]) < maximum_length:
                 COLOR = 'BR'
             else:
                 COLOR = 'LW'
-        elif features[0].geometry().length() < maximum_length:
+        elif self.count_width(features[0]) < maximum_length:
             COLOR = 'AW'
         
         lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
@@ -666,11 +702,11 @@ class Database:
         for feature in layer.getFeatures():
             COLOR = 'BW'
             if feature.geometry().area() < maximum_area:
-                if feature.geometry().length() < maximum_length:
+                if self.count_width(feature) < maximum_length:
                     COLOR = 'BR'
                 else:
                     COLOR = 'LW'
-            elif feature.geometry().length() < maximum_length:
+            elif self.count_width(feature) < maximum_length:
                 COLOR = 'AW'
             layer.changeAttributeValue(feature.id(),id_C,str(COLOR))
             layer.changeAttributeValue(feature.id(),id_A,maximum_area)
@@ -702,6 +738,7 @@ class Database:
         renderer = QgsCategorizedSymbolRendererV2(field, categories)
 
         layer.setRendererV2(renderer)
+        print "rendering finished"
 
     def edit_list_by_types(self,new_list,lyr_pointer):
         list_of_fields = list(lyr_pointer.pendingFields()) 
@@ -1012,6 +1049,11 @@ class Database:
         edit_pos = 1
         area = 0
         length = 0
+        etz_csv = None
+        drv_csv = None
+        kat_csv = None
+        zal_csv = None
+        pos_csv = None
         #vybrana vrstva
         lyr = self.iface.activeLayer()
         self.shower.drevina.clearSelection()
@@ -1031,7 +1073,8 @@ class Database:
                 zal_csv = layer
             elif layer.name() == "Poskodenia":
                 pos_csv = layer
-
+        if not etz_csv or not drv_csv or not kat_csv or not zal_csv or not pos_csv:
+            return
 #kontorla ci naslo vsetky co treba
 #kontorla ci je aj vybrata feature
         if not lyr:
@@ -1044,7 +1087,7 @@ class Database:
 
                 field_names = [field.name() for field in fields]#vytvorim
                 area =  features[0].geometry().area()
-                length =  features[0].geometry().length()
+                length =  self.count_width(features[0])
                 #zahlavie
                 #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
