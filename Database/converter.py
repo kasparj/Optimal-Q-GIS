@@ -579,7 +579,6 @@ def convert_to_shp(pretty_name,folder_name):
                             for MP in jp_obraz.findall('MP'):
                                 create_from_MP(MP,jp_poly,atts)
 
-                    #na porastoch dat join
                     for psk in porast.findall('PSK'):
                         my_id = PSK_ID
                         PSK_ID += 1

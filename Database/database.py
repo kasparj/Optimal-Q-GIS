@@ -114,6 +114,34 @@ class Database:
         
         #----------------------------------
         self.shower = ShowAtts()#toto sa importuje
+        
+        table = self.shower.drevina
+        #palette = QtGui.QPalette(table.palette())
+        #palette.setColor(QtGui.QPalette.Highlight, Qt.red)
+        #table.setPalette(palette)
+        #table.setAutoFillBackground(True)
+        #p = table.palette()
+        #p.setColor(table.backgroundRole(), Qt.red)
+        #table.setPalette(p)
+        
+        #self.shower.zalozene.setAlternatingRowColors(True)
+        #self.shower.zalozene.setStyleSheet("""
+        #    .QTableWidget {
+        #        alternate-background-color: rgba(0,0,255,25);
+        #    }
+        #    """)
+
+        
+
+
+        p = QtGui.QPalette(table.palette())
+        p.setBrush(QtGui.QPalette.Active, QtGui.QPalette.HighlightedText,
+                QtGui.QBrush(QColor("red")))
+        p.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Highlight,
+                QtGui.QBrush(QColor("green")))
+        table.setPalette(p)
+
+
         #self.shower.refresh.clicked.connect(self.edit_main)#ked kliknem na
             #refrsh zavola sa edit_main
         self.shower.tableWidget.itemChanged.connect(self.edit_main)#ak pride
@@ -368,6 +396,7 @@ class Database:
                 length = self.get_length(points[i],points[i+j+1])
                 if length > max_len:
                     max_len = length
+        print "pocitam sirky"
         print max_len
         return max_len
 
@@ -602,6 +631,7 @@ class Database:
         
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
+        
         #self.draw_lines()
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
         self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
@@ -628,7 +658,8 @@ class Database:
                 #self.shower.drevina.setItem(item,number,QtGui.QTableWidgetItem())
                 #self.shower.drevina.item(item,number).setBackground(QtGui.QColor("green"))
             self.shower.drevina.selectRow(item)#q vsetky ulozene cisla vyberiem
-    
+        
+
     #funkcia na editovanie maximalnej plochy
     def edit_area(self):
         if not self.shower.area_max.isModified():
@@ -777,6 +808,7 @@ class Database:
     def set_colorize_values(self):
         global maximum_length
         global maximum_area
+        print "vnutri set_colorzie_values"
         print maximum_length
         print maximum_area
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
@@ -1078,10 +1110,12 @@ class Database:
             try:
                 lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
             except:
+                print item.text()
+                print type_T
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Zly typ, ocakava sa retazec")
                 #TYPE MOZE BYT NULL!!!
-            lyr.commitChanges()
+        lyr.commitChanges()
     
     
     def edit_kats(self,item):
