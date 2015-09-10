@@ -507,18 +507,26 @@ class Database:
                                 csv_etz = lyr
                             elif lyr.name() == "Zalozenie":
                                 csv_zal = lyr
+                            elif lyr.name() == "Poskodenia":
+                                csv_pos = lyr
+                            elif lyr.name() == "Kategorie":
+                                csv_kat = lyr
 
 
 
                         etzs = self.table_to_list(self.shower.etaz)
                         drvs = self.table_to_list(self.shower.drevina)
                         zals = self.table_to_list(self.shower.zalozene)
+                        poss = self.table_to_list(self.shower.pos)
+                        kats = self.table_to_list(self.shower.kategoria)
 
                         drvs = [list(x) for x in zip(*drvs)]
                         etzs = [list(x) for x in zip(*etzs)]
                         zals = [list(x) for x in zip(*zals)]
+                        poss = [list(x) for x in zip(*poss)]
+                        kats = [list(x) for x in zip(*kats)]
                             
-
+                        new_drv_start = len(list(csv_drv.getFeatures()))
                         new_etz_start = len(list(csv_etz.getFeatures()))
                         for i in range(len(etzs)):
                             orig_etz = etzs[i][-1]
@@ -527,11 +535,24 @@ class Database:
                             for j in range(len(drvs)):
                                 if drvs[j][-2] == orig_etz:
                                     drvs[j][-2] = new_etz_start
+                                orig_drv = drvs[j][-1]
+                                drvs[j][-1] = new_drv_start
+                                for k in range(len(poss)):
+                                    if poss[k][-1] == orig_drv:
+                                        poss[k][-1] = new_drv_start
+                                new_drv_start += 1
                             for j in range(len(zals)):
                                 if zals[j][-1] == orig_etz:
                                     zals[j][-1] = new_etz_start
+                        
                             new_etz_start += 1
-                       
+                        for i in range(len(kats)):
+                            kats[i][-1] = new_psk_num
+                        
+                        for kat in kats:
+                            new_ft = QgsFeature(csv_kat.pendingFields())
+                            new_ft.setAttributes(kat)
+                            csv_kat.dataProvider().addFeatures([new_ft])
                         
                         for etz in etzs:
                             new_ft = QgsFeature(csv_etz.pendingFields())
@@ -543,7 +564,10 @@ class Database:
                             new_ft.setAttributes(drv)
                             csv_drv.dataProvider().addFeatures([new_ft])
                         
-                        print zals
+                        for pos in poss:
+                            new_ft = QgsFeature(csv_pos.pendingFields())
+                            new_ft.setAttributes(pos)
+                            csv_pos.dataProvider().addFeatures([new_ft])
                             
                         for zal in zals:
                             new_ft = QgsFeature(csv_zal.pendingFields())
@@ -565,6 +589,7 @@ class Database:
                         atts[id_C] = COLOR
                         atts[id_PSK] = new_psk_num
                         item.setAttributes(atts)
+                        new_psk_num += 1
                         #lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
 
                     passiveLayer.addFeatures(featuresToAdd,  False)
