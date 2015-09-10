@@ -116,29 +116,16 @@ class Database:
         self.shower = ShowAtts()#toto sa importuje
         
         table = self.shower.drevina
-        #palette = QtGui.QPalette(table.palette())
-        #palette.setColor(QtGui.QPalette.Highlight, Qt.red)
-        #table.setPalette(palette)
-        #table.setAutoFillBackground(True)
-        #p = table.palette()
-        #p.setColor(table.backgroundRole(), Qt.red)
-        #table.setPalette(p)
-        
-        #self.shower.zalozene.setAlternatingRowColors(True)
-        #self.shower.zalozene.setStyleSheet("""
-        #    .QTableWidget {
-        #        alternate-background-color: rgba(0,0,255,25);
-        #    }
-        #    """)
-
-        
-
 
         p = QtGui.QPalette(table.palette())
-        p.setBrush(QtGui.QPalette.Active, QtGui.QPalette.HighlightedText,
-                QtGui.QBrush(QColor("red")))
+        #p.setBrush(QtGui.QPalette.Active, QtGui.QPalette.HighlightedText,
+                #QtGui.QBrush(QColor("red")))
+        #p.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.HighlightedText,
+                #QtGui.QBrush(QColor("red")))
+        p.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Highlight,
+                QtGui.QBrush(QColor(255,0,0,127)))
         p.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Highlight,
-                QtGui.QBrush(QColor("green")))
+                QtGui.QBrush(QColor("0,0,255,127")))
         table.setPalette(p)
 
 
