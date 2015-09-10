@@ -113,6 +113,15 @@ def create_points(lines):
 #MP = objekt <MP>, layer = vrstva do ktorej chceme pridat objekt,
     #atts = list vsetkych atributov, ktore chceme k danemu objektu priradit
 def create_from_MP(MP, layer,atts):
+    for lines in MP.findall('L'):
+        points = create_points(lines)#ziskam zoznam bodov
+        pt.setGeometry(QgsGeometry.fromPolygon([points]))#vytvorim geom.
+            #objekt
+        pt.setAttributes(atts)#nastavim atributy
+        layer.addFeatures([pt])
+            #Poly_layer.updateExtents()
+"""
+def create_from_MP(MP, layer,atts):
     for polygon in MP.findall('P'):
         for lines in polygon.findall('L'):
             points = create_points(lines)#ziskam zoznam bodov
@@ -121,8 +130,7 @@ def create_from_MP(MP, layer,atts):
             pt.setAttributes(atts)#nastavim atributy
             layer.addFeatures([pt])
             #Poly_layer.updateExtents()
-
-
+"""
 #obodba pre create_from MP, ale pracuje s ML objektom
 def create_from_ML(ML, layer, atts):
     for lines in ML.findall('L'):
@@ -524,7 +532,9 @@ def convert_to_shp(pretty_name,folder_name):
             atts = create_attributes(KPO, list_of_kpo)
             for KPO_obraz in KPO.findall('PLO_OBRAZ'):
                 for MP in KPO_obraz.findall('MP'):
-                    create_from_MP(MP,kpo_poly,atts)
+
+                    for polygon in MP.findall('P'):
+                        create_from_MP(polygon,kpo_poly,atts)
 
 
 
@@ -561,7 +571,8 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for bzl_obraz in bezlesie.findall('BZL_OBRAZ'):
                             for MP in bzl_obraz.findall('MP'):
-                                create_from_MP(MP,bzl_poly,atts)
+                                for polygon in MP.findall('P'):
+                                    create_from_MP(polygon,bzl_poly,atts)
 
                     for jine in porast.findall('JP'):
                         jp_atts = create_attributes(jine, list_of_jp)
@@ -577,11 +588,13 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for jp_obraz in jine.findall('JP_OBRAZ'):
                             for MP in jp_obraz.findall('MP'):
-                                create_from_MP(MP,jp_poly,atts)
+
+                                for polygon in MP.findall('P'):
+                                    create_from_MP(polygon,jp_poly,atts)
 
                     for psk in porast.findall('PSK'):
                         my_id = PSK_ID
-                        PSK_ID += 1
+                        #PSK_ID += 1
 
                         psk_atts = create_attributes(psk, list_of_psk)
                         if not psk.findall('PSK_OBRAZ'):
@@ -596,57 +609,63 @@ def convert_to_shp(pretty_name,folder_name):
                             atts.append(item)
 #to this
 
+                        atts.append(my_id)
+                        number_of_polygons = 0 
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):
-                                atts.append(my_id)
-                                
-                                create_from_MP(MP,psk_poly,atts)
-
-                        for etaz in psk.findall('ETZ'):
-                            etz_id = ETZ_ID
-                            ETZ_ID += 1
-                            etz_atts = create_attributes(etaz,list_of_etz)
-                            etz_atts.append(str(my_id))
-                            etz_atts.append(str(etz_id))
+                                number_of_polygons = 0 
+                                for polygon in MP.findall('P'):
+                                    atts[-1] = atts[-1]+number_of_polygons
+                                    create_from_MP(polygon,psk_poly,atts)
+                                    number_of_polygons += 1
+                        PSK_ID = PSK_ID + number_of_polygons
+                        
+                        for j in range(number_of_polygons):
+                            for etaz in psk.findall('ETZ'):
+                                etz_id = ETZ_ID
+                                ETZ_ID += 1
+                                etz_atts = create_attributes(etaz,list_of_etz)
+                                etz_atts.append(str(my_id+j))
+                                etz_atts.append(str(etz_id))
                             
-                            to_write = "\",\"".join(etz_atts)
-                            etz_file.write("\""+to_write+'\"\n')
-                            for drevina in etaz.findall('DRV'):
-                                my_drv_id = DRV_ID
-                                DRV_ID += 1
-                                drv_atts = create_attributes(drevina,list_of_drv)
-                                drv_atts.append(str(etz_id))
-                                drv_atts.append(str(my_drv_id))
+                                to_write = "\",\"".join(etz_atts)
+                                etz_file.write("\""+to_write+'\"\n')
+                                for drevina in etaz.findall('DRV'):
+                                    my_drv_id = DRV_ID
+                                    DRV_ID += 1
+                                    drv_atts = create_attributes(drevina,list_of_drv)
+                                    drv_atts.append(str(etz_id))
+                                    drv_atts.append(str(my_drv_id))
 
-                                to_write = "\",\"".join(drv_atts)
-                                drv_file.write("\""+to_write+'\"\n')
+                                    to_write = "\",\"".join(drv_atts)
+                                    drv_file.write("\""+to_write+'\"\n')
 
                                 
-                                for poskodenie in drevina.findall('POS'):
-                                    pos_atts = create_attributes(poskodenie,
+                                    for poskodenie in drevina.findall('POS'):
+                                        pos_atts = create_attributes(poskodenie,
                                             list_of_pos)
-                                    pos_atts.append(str(my_drv_id))
-                                    to_write = "\",\"".join(pos_atts)
-                                    pos_file.write("\""+to_write+'\"\n')
-                                    if i < 95:
-                                        i += 1
-                                    progress.setValue(i)
+                                        pos_atts.append(str(my_drv_id))
+                                        to_write = "\",\"".join(pos_atts)
+                                        pos_file.write("\""+to_write+'\"\n')
+                                        if i < 95:
+                                            i += 1
+                                        progress.setValue(i)
 
 
                             
                             
-                            for zalozenie in etaz.findall('ZAL'):
-                                zal_atts = create_attributes(zalozenie,list_of_zal)
-                                zal_atts.append(str(etz_id))
+                                for zalozenie in etaz.findall('ZAL'):
+                                    zal_atts = create_attributes(zalozenie,list_of_zal)
+                                    zal_atts.append(str(etz_id))
 
-                                to_write = "\",\"".join(zal_atts)
-                                zal_file.write("\""+to_write+'\"\n')
-                            
-                    for kategoria in porast.findall('KAT'):
-                        kat_atts = create_attributes(kategoria,list_of_kat)
-                        kat_atts.append(str(my_id))
-                        to_write = "\",\"".join(kat_atts)
-                        kat_file.write("\""+to_write+'\"\n')
+                                    to_write = "\",\"".join(zal_atts)
+                                    zal_file.write("\""+to_write+'\"\n')
+                    for j in range(number_of_polygons):    
+                        for kategoria in porast.findall('KAT'):
+                            kat_atts = create_attributes(kategoria,list_of_kat)
+                            kat_atts.append(str(my_id+j))
+                            to_write = "\",\"".join(kat_atts)
+                            kat_file.write("\""+to_write+'\"\n')
 
     
     PSK_layer.updateExtents()
