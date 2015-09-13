@@ -137,16 +137,6 @@
        </rect>
       </property>
      </widget>
-     <widget class="QLineEdit" name="length">
-      <property name="geometry">
-       <rect>
-        <x>950</x>
-        <y>320</y>
-        <width>113</width>
-        <height>27</height>
-       </rect>
-      </property>
-     </widget>
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
@@ -160,20 +150,7 @@
        <string>Plocha [ha]</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_2">
-      <property name="geometry">
-       <rect>
-        <x>870</x>
-        <y>330</y>
-        <width>56</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Sirka [m]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="area_max">
+     <widget class="QLineEdit" name="area_min">
       <property name="geometry">
        <rect>
         <x>1190</x>
@@ -196,11 +173,11 @@
        <string/>
       </property>
      </widget>
-     <widget class="QLineEdit" name="length_max">
+     <widget class="QLineEdit" name="length_min">
       <property name="geometry">
        <rect>
-        <x>1190</x>
-        <y>320</y>
+        <x>1420</x>
+        <y>290</y>
         <width>113</width>
         <height>27</height>
        </rect>
@@ -229,20 +206,66 @@
        </rect>
       </property>
       <property name="text">
-       <string>Plocha maximum</string>
+       <string>Plocha minimum</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_6">
       <property name="geometry">
        <rect>
-        <x>1080</x>
+        <x>1310</x>
+        <y>300</y>
+        <width>101</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Sirka minimum</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="area_max">
+      <property name="geometry">
+       <rect>
+        <x>1190</x>
         <y>330</y>
+        <width>113</width>
+        <height>27</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_7">
+      <property name="geometry">
+       <rect>
+        <x>1080</x>
+        <y>340</y>
+        <width>101</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Plocha maximum</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_8">
+      <property name="geometry">
+       <rect>
+        <x>1310</x>
+        <y>340</y>
         <width>101</width>
         <height>17</height>
        </rect>
       </property>
       <property name="text">
        <string>Sirka maximum</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="length_max">
+      <property name="geometry">
+       <rect>
+        <x>1420</x>
+        <y>330</y>
+        <width>113</width>
+        <height>27</height>
+       </rect>
       </property>
      </widget>
     </widget>

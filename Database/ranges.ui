@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>292</width>
-    <height>187</height>
+    <height>256</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,20 +18,20 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>20</y>
+      <y>10</y>
       <width>141</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>Maximalna plocha [ha]</string>
+     <string>Minimalna plocha [ha]</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="max_area">
+   <widget class="QLineEdit" name="min_area">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>10</y>
+      <x>170</x>
+      <y>0</y>
       <width>113</width>
       <height>27</height>
      </rect>
@@ -41,20 +41,20 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
+      <y>90</y>
       <width>141</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
-     <string>Maximalna sirka [m]</string>
+     <string>Minimalna sirka [m]</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="max_len">
+   <widget class="QLineEdit" name="min_len">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>50</y>
+      <x>170</x>
+      <y>80</y>
       <width>113</width>
       <height>27</height>
      </rect>
@@ -64,7 +64,7 @@
     <property name="geometry">
      <rect>
       <x>90</x>
-      <y>110</y>
+      <y>180</y>
       <width>85</width>
       <height>27</height>
      </rect>
@@ -76,14 +76,60 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>80</y>
+      <x>40</x>
+      <y>160</y>
       <width>221</width>
       <height>17</height>
      </rect>
     </property>
     <property name="text">
      <string>Vsetky hodnoty budu zmenene!</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>130</y>
+      <width>141</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Maximalna sirka [m]</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="max_len">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>120</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>141</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Maximalna plocha [ha]</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="max_area">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>40</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
     </property>
    </widget>
   </widget>

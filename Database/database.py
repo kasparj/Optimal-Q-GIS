@@ -20,21 +20,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-# OK! ked dam ridat drevinu, nech vezme etaz z prave oznacenej etaze - ak
-    #neoznacena, tak nefunguje
-
-#FUNGUJE? tie co nefunguju, mozu byt ze to am byt dierva vo vlekom+vnutro ale to robi
-    #ako velky vnutro a vnutro - ako dat ked to ma byt ako hole in that...-
-    #alebo identifikovat ze to tak je (nie za sebou iduce?) tak ro dam prec...
-
-#oznacuje len potlacene
-#OK!zadavat pri farbeny v HA
-#ked sa rozdlei, tak treba aby s aetaze, dreviny a dlasie nakopirovali annove
-    #cisla
-#aj pri tovrbe treba, asi sa vytvarli vzdy nove
+#obcas maju niektore viac rovnakych PSK - ked je viac LINE vnutry, ale nie su
+     #diery
 #sirku merat ako v amily
-#http://stackoverflow.com/questions/11476907/python-and-pyqt-get-input-from-qtablewidget
-#http://gis.stackexchange.com/questions/158653/how-to-add-loading-bar-in-qgis-plugin-development
+#editovat este edit_area aj length pre minimum
+#v set_new_colors zmenit alrogritmus a na dvoch miestach
+#dvakrat v cut_polygons nastavit farby
 #pyrcc4 -o resources_rc.py resources.qrc
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
@@ -87,6 +78,8 @@ list_of_zals_ids = []
 list_of_poss_ids = []
 maximum_length = 50 #predvolena hodnota maximalnej sirky
 maximum_area = 10000#predvolena hodnota maximalnej plochy
+minimum_length = 0 #predvolena hodnota minimalnej sirky
+minimum_area = 0#predvolena hodnota minimalnej plochy
 
 
 class Database:
@@ -155,10 +148,14 @@ class Database:
         self.shower.add_drv.clicked.connect(self.add_drv_f)
 
         self.set_ranges = Set_ranges()
+        self.set_ranges.min_area.setText("0.0")
+        self.set_ranges.min_len.setText("0.0")
         self.set_ranges.set_all.clicked.connect(self.set_ranges_f)
 
-        self.shower.area_max.editingFinished.connect(self.edit_area)
-        self.shower.length_max.editingFinished.connect(self.edit_length)
+        self.shower.area_max.editingFinished.connect(self.edit_area_max)
+        self.shower.area_min.editingFinished.connect(self.edit_area_min)
+        self.shower.length_max.editingFinished.connect(self.edit_length_max)
+        self.shower.length_min.editingFinished.connect(self.edit_length_min)
 
 
         self.open_all = Open_all()
@@ -275,7 +272,7 @@ class Database:
 
         return action
 
-    
+   
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
@@ -334,62 +331,45 @@ class Database:
         del self.toolbar
    
 
-    def draw_lines(self):
-        lyr = iface.activeLayer()
-        
-        pt = QgsFeature()#premenna pre jedne geom. objekt
-        
+    def get_color(self, obj, min_a, max_a, min_l, max_l):
+        COLOR = 'BW'
+        if obj.geometry().area() <= max_a and obj.geometry().area() >= min_a:
+            if self.isWideEnough(obj,min_l) and self.isntWider(obj, max_l):
+                COLOR = 'BR'
+            else:
+                COLOR = 'LW'
+        elif self.isWideEnough(obj, min_l) and self.isntWider(obj, max_l):
+            COLOR = 'AW'
+        return COLOR
+   
 
-        PSK_layer = QgsVectorLayer("LineString?crs=EPSG:5514", 'Ciary', "memory")
-        if not PSK_layer.isValid():
-            return 1
-        psk_poly = PSK_layer.dataProvider()
-        psk_poly.addAttributes([
-                            QgsField("ODD" , QVariant.String),
-                            ])
-        PSK_layer.updateFields()
-        QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
-        features = lyr.getFeatures()
-        
-        features = lyr.getFeatures()
-        for ft in features:
-            points = ft.geometry().asPolygon()[0]
-            max_x = 0
-            max_y = 0
-            max_len = 0
-            for i in range(len(points)-1):
-                for j in range(len(points)-i-1):
-                    length = self.get_length(points[i],points[i+j+1])
-                    if length > max_len:
-                        max_x = points[i]
-                        max_y = points[i+j+1]
-                        max_len = length
-            points = [QgsPoint(max_x[0],max_x[1]),QgsPoint(max_y[0],max_y[1])]            
-            pt.setGeometry(QgsGeometry.fromPolyline(points))
-            psk_poly.addFeatures([pt])
-        symbols = PSK_layer.rendererV2().symbols()
-        symbol = symbols[0]
-        symbol.setColor(QtGui.QColor('Red'))
-        qgis.utils.iface.mapCanvas().refresh()
-        qgis.utils.iface.legendInterface().refreshLayerSymbology(PSK_layer)
-
-    def count_width(self,ft):
-        points = ft.geometry().asPolygon()
-        if points:
-            points = points[0]
-        max_len = 0
-        for i in range(len(points)-1):
-            for j in range(len(points)-i-1):
-                length = self.get_length(points[i],points[i+j+1])
-                if length > max_len:
-                    max_len = length
-        print "pocitam sirky"
-        print max_len
-        return max_len
+    def isntWider(self, ft, r):
+        new_ft = ft.geometry().buffer(0,1)
+        new_ft = new_ft.convexHull()
+        new_ft = new_ft.buffer(-1*(r/2),1)
+        if new_ft.isMultipart():
+            for i in range(len(new_ft.asMultiPolygon())):
+                Multi  = new_ft.asMultiPolygon()
+                if Multi != []:
+                    return False
+        else:
+            Poly = new_ft.asPolygon()
+            if Poly != [[]]:
+                return False
+        return True
 
 
-    def get_length(self,point1,point2):
-        return math.hypot(point2[0]-point1[0],point2[1]-point1[1])
+
+    def isWideEnough(self, ft, r):
+        new_ft = ft.geometry().buffer(-1*(r/2),1)
+        if new_ft.isMultipart():
+            return False
+        else:
+            Poly = new_ft.asPolygon()
+            if Poly == [[]]:
+                return False
+        return True
+
 
 
 
@@ -484,29 +464,13 @@ class Database:
                     id_C = lyr.fieldNameIndex('COLOR')
                     id_A = lyr.fieldNameIndex('max_area')
                     id_L = lyr.fieldNameIndex('max_len')
+                    id_MA = lyr.fieldNameIndex('min_area')
+                    id_ML = lyr.fieldNameIndex('min_len')
                     id_PSK = lyr.fieldNameIndex('PSK_NUM')
-                    lyr.startEditing()
+                    #lyr.startEditing()
                     features = lyr.selectedFeatures()
                     new_psk_num = len(list(lyr.getFeatures()))
-                    print new_psk_num
-                    #print features[0].geometry().area()
-                    for item in features:
-                        item.id()
-
-
-                    maximum_area = features[0].attributes()[id_A]
-                    maximum_length = features[0].attributes()[id_L]
-                    COLOR = 'BW'
-                    if features[0].geometry().area() < maximum_area:
-                        if self.count_width(features[0]) < maximum_length:
-                            COLOR = 'BR'
-                        else:
-                            COLOR = 'LW'
-                    elif self.count_width(features[0]) < maximum_length:
-                        COLOR = 'AW'
-        
-                    lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
-
+                    self.set_new_color(passiveLayer, features[0])
 
                     #TU MAME FEATURE!
                     for item in featuresToAdd:
@@ -592,14 +556,10 @@ class Database:
 
                         maximum_area = item.attributes()[id_A]
                         maximum_length = item.attributes()[id_L]
-                        COLOR = 'BW'
-                        if item.geometry().area() < maximum_area:
-                            if self.count_width(item) < maximum_length:
-                                COLOR = 'BR'
-                            else:
-                                COLOR = 'LW'
-                        elif self.count_width(item) < maximum_length:
-                            COLOR = 'AW'
+                        minimum_area = item.attributes()[id_MA]
+                        minimum_length = item.attributes()[id_ML]
+                        COLOR = self.get_color(item, minimum_area,\
+                                maximum_area, minimum_length, maximum_length)
                         
                         atts = item.attributes()
                         atts[id_C] = COLOR
@@ -607,7 +567,7 @@ class Database:
                         item.setAttributes(atts)
                         new_psk_num += 1
                         #lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
-
+                    passiveLayer.startEditing()
                     passiveLayer.addFeatures(featuresToAdd,  False)
                     passiveLayer.endEditCommand()
                     passiveLayer.removeSelection()
@@ -646,126 +606,101 @@ class Database:
                 #self.shower.drevina.item(item,number).setBackground(QtGui.QColor("green"))
             self.shower.drevina.selectRow(item)#q vsetky ulozene cisla vyberiem
         
+    def set_new_color(self,lyr,ft):
+        id_C = lyr.fieldNameIndex('COLOR')#ziskam indexy v poli atributov
+        id_A = lyr.fieldNameIndex('max_area')
+        id_L = lyr.fieldNameIndex('max_len')
+        id_MA = lyr.fieldNameIndex('min_area')
+        id_ML = lyr.fieldNameIndex('min_len')
+        
+        lyr.startEditing()
+        maximum_length = ft.attributes()[id_L]
+        maximum_area = ft.attributes()[id_A]
+        minimum_length = ft.attributes()[id_ML]
+        minimum_area = ft.attributes()[id_MA]
+        
+        COLOR = self.get_color(ft, minimum_area,\
+                    maximum_area, minimum_length, maximum_length)
+        
+        lyr.changeAttributeValue(ft.id(),id_C,COLOR,True)
+        
+        lyr.commitChanges()
+        self.colorize()               
 
-    #funkcia na editovanie maximalnej plochy
-    def edit_area(self):
-        if not self.shower.area_max.isModified():
-            return#ak nebolo zmenene (len potlacil napr enter) tak skoncim
-        maximum_area =  self.shower.area_max.text()#ziskam nove cislo z pola
-        if  maximum_area == "":#testujem ci nie je to prazdny retazec
+    def edit_one_att(self,layer,LineEdit,name_of_field,multiply_by):
+        if not LineEdit.isModified():
+            return
+        new_value = LineEdit.text()
+        if  new_value == "":#testujem ci nie je to prazdny retazec
             QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Nezadane udaje")
             return
         else:
             try:
-                maximum_area = float(maximum_area)*10000#testuje ci ej to int
+                new_value = float(new_value)*multiply_by#testuje ci ej to int
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Je potrebne zadat v desatinnych cislach")
                 return
-            if  maximum_area <= 0:#testujem ci je kladne
+            if  new_value < 0:#testujem ci je kladne
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v kladnych cislach")
+                    "Je potrebne zadat v nezapornych cislach")
                 return
 
             
-        lyr = iface.activeLayer()
-        id_C = lyr.fieldNameIndex('COLOR')#ziskam indexy v poli atributov
-        id_A = lyr.fieldNameIndex('max_area')
-        id_L = lyr.fieldNameIndex('max_len')
-        
-        features = lyr.selectedFeatures()
-        lyr.startEditing()
-        lyr.changeAttributeValue(features[0].id(),id_A,maximum_area,True)
-        maximum_length = features[0].attributes()[id_L]
-        print "dlzka"+str(maximum_length)
-        print "area"+ str(maximum_area)
-        
-        COLOR = 'BW'#nastavim parameter podla rozmerov
-        if features[0].geometry().area() < maximum_area:
-            if self.count_width(features[0]) < maximum_length:
-                COLOR = 'BR'
-            else:
-                COLOR = 'LW'
-        elif self.count_width(features[0]) < maximum_length:
-            COLOR = 'AW'
-        
-        lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
-        
-        lyr.commitChanges()
-        self.colorize()               
-        
-    #upravuje sirku- funguje rovnako ao edit_area    
-    def edit_length(self):
-        if not self.shower.length_max.isModified():
-            return
-        maximum_length =  self.shower.length_max.text() 
-        if  maximum_length == "":
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Nezadane udaje")
-            print "nezadane udaje"
-            return
-        else:
-            try:
-                maximum_length = int(maximum_length)
-            except:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v celych cislach")
-                print "nie cele cisla"
-                return
-            if  maximum_length <= 0:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v  nezapornych cislach")
-                print "nie cele nezaporne"
-                return
-
-            
-        lyr = iface.activeLayer()
-        id_C = lyr.fieldNameIndex('COLOR')
-        id_A = lyr.fieldNameIndex('max_area')
-        id_L = lyr.fieldNameIndex('max_len')
-        
-        features = lyr.selectedFeatures()
-        lyr.startEditing()
-        lyr.changeAttributeValue(features[0].id(),id_L,maximum_length,True)
-        maximum_area = features[0].attributes()[id_A]
-        COLOR = 'BW'
-        if features[0].geometry().area() < maximum_area:
-            if self.count_width(features[0]) < maximum_length:
-                COLOR = 'BR'
-            else:
-                COLOR = 'LW'
-        elif self.count_width(features[0]) < maximum_length:
-            COLOR = 'AW'
-        
-        lyr.changeAttributeValue(features[0].id(),id_C,COLOR,True)
-        
-        lyr.commitChanges()
+        idx = layer.fieldNameIndex(name_of_field)
+        features = layer.selectedFeatures()
+        layer.startEditing()
+        layer.changeAttributeValue(features[0].id(),idx,new_value,True)
+        layer.commitChanges()
+        self.set_new_color(layer,features[0])
         self.colorize()               
 
+    #funkcia na editovanie maximalnej plochy
+    def edit_area_max(self):
+        self.edit_one_att(iface.activeLayer(),self.shower.area_max, "max_area", 10000)
+
+
+    def edit_area_min(self):
+        self.edit_one_att(iface.activeLayer(),self.shower.area_min, "min_area", 10000)
+
+    def edit_length_min(self):
+        self.edit_one_att(iface.activeLayer(),self.shower.length_min, "min_len", 1)
+    
+    def edit_length_max(self):
+        self.edit_one_att(iface.activeLayer(),self.shower.length_max, "max_len", 1)
+        
     #funkcia, ktora nastavy vsetkym polozkam atribut COLOR
     def set_ranges_f(self):
         global maximum_length#hranicna hodnota
         global maximum_area#hranicna hodnota
+        global minimum_length#hranicna hodnota
+        global minimum_area#hranicna hodnota
 
-        maximum_length = self.set_ranges.max_len.text()
-        maximum_area = self.set_ranges.max_area.text()
+        maximum_length = self.set_ranges.max_len.text().strip('"')
+        maximum_area = self.set_ranges.max_area.text().strip('"')
+        minimum_length = self.set_ranges.min_len.text().strip('"')
+        minimum_area = self.set_ranges.min_area.text().strip('"')
         
-        if  maximum_area == "" or maximum_length == "":
+        if  maximum_area == "" or maximum_length == "" or minimum_area == "" or\
+            minimum_length == "" :
             QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Nezadane udaje")
             self.set_ranges.close()
             return
         else:
             try:
-                maximum_area = int(maximum_area)*10000
-                maximum_length = int(maximum_length)
+                maximum_area = float(maximum_area)*10000
+                maximum_length = float(maximum_length)
+                minimum_area = float(minimum_area)*10000
+                minimum_length = float(minimum_length)
             except:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v celych cislach")
+                    "Je potrebne zadat v desatinnych cislach")
                 self.set_ranges.close()
                 return
-            if  maximum_area <= 0 or maximum_length <=0:
+            if  maximum_area <= 0 or maximum_length <=0 or minimum_length < 0\
+                or minimum_area < 0:
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
                     "Je potrebne zadat v  nezapornych cislach")
                 self.set_ranges.close()
@@ -795,9 +730,8 @@ class Database:
     def set_colorize_values(self):
         global maximum_length
         global maximum_area
-        print "vnutri set_colorzie_values"
-        print maximum_length
-        print maximum_area
+        global minimum_length
+        global minimum_area
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, lyr in layerMap.iteritems():
             if lyr.name() == "Lesne porasty":
@@ -806,20 +740,18 @@ class Database:
         id_C = layer.fieldNameIndex('COLOR')
         id_A = layer.fieldNameIndex('max_area')
         id_L = layer.fieldNameIndex('max_len')
+        id_MA = layer.fieldNameIndex('min_area')
+        id_ML = layer.fieldNameIndex('min_len')
         
         layer.startEditing()
         for feature in layer.getFeatures():
-            COLOR = 'BW'
-            if feature.geometry().area() < maximum_area:
-                if self.count_width(feature) < maximum_length:
-                    COLOR = 'BR'
-                else:
-                    COLOR = 'LW'
-            elif self.count_width(feature) < maximum_length:
-                COLOR = 'AW'
+            COLOR = self.get_color(feature, minimum_area,\
+                    maximum_area, minimum_length, maximum_length)
             layer.changeAttributeValue(feature.id(),id_C,str(COLOR))
             layer.changeAttributeValue(feature.id(),id_A,maximum_area)
             layer.changeAttributeValue(feature.id(),id_L,maximum_length)
+            layer.changeAttributeValue(feature.id(),id_MA,minimum_area)
+            layer.changeAttributeValue(feature.id(),id_ML,minimum_length)
         layer.commitChanges()
         self.colorize()
 
@@ -1208,7 +1140,6 @@ class Database:
 
                 field_names = [field.name() for field in fields]#vytvorim
                 area =  features[0].geometry().area()
-                length =  self.count_width(features[0])
                 #zahlavie
                 #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
@@ -1217,12 +1148,21 @@ class Database:
 
                 id_area = lyr.fieldNameIndex("max_area") #index parametru PSK_NUM 
                 id_len = lyr.fieldNameIndex("max_len") #index parametru PSK_NUM 
+                id_Marea = lyr.fieldNameIndex("min_area") #index parametru PSK_NUM 
+                id_Mlen = lyr.fieldNameIndex("min_len") #index parametru PSK_NUM 
 
                 try: 
                     self.shower.area_max.setText(str("%.2f"%(float(features_list[0][id_area])/10000)))
                 except:
                     self.shower.area_max.setText("0")
+                
+                try: 
+                    self.shower.area_min.setText(str("%.2f"%(float(features_list[0][id_Marea])/10000)))
+                except:
+                    self.shower.area_min.setText("0")
+                
                 self.shower.length_max.setText(features_list[0][id_len])
+                self.shower.length_min.setText(features_list[0][id_Mlen])
 
                 idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
                 if idx == -1:
@@ -1337,7 +1277,7 @@ class Database:
             self.shower.set_data(field_names_pos,
                     features_list_pos,self.shower.pos)
             self.shower.area.setText(str("%.2f" % (area/10000)))
-            self.shower.length.setText(str(round(length*2)/2))
+            #self.shower.length.setText(str(round(length*2)/2))
 
         edit_pos = 0
    

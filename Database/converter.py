@@ -113,12 +113,19 @@ def create_points(lines):
 #MP = objekt <MP>, layer = vrstva do ktorej chceme pridat objekt,
     #atts = list vsetkych atributov, ktore chceme k danemu objektu priradit
 def create_from_MP(MP, layer,atts):
+    finished_list = []
     for lines in MP.findall('L'):
+        
         points = create_points(lines)#ziskam zoznam bodov
-        pt.setGeometry(QgsGeometry.fromPolygon([points]))#vytvorim geom.
+        finished_list.append(points)
+        
+    if len(finished_list) > 1:
+        print atts[-1]
+    pt.setGeometry(QgsGeometry.fromPolygon(finished_list))#vytvorim geom.
             #objekt
-        pt.setAttributes(atts)#nastavim atributy
-        layer.addFeatures([pt])
+    pt.setAttributes(atts)#nastavim atributy
+        
+    layer.addFeatures([pt])
             #Poly_layer.updateExtents()
 """
 def create_from_MP(MP, layer,atts):
@@ -326,6 +333,8 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("COLOR" , QVariant.String),
                             QgsField("max_len" , QVariant.Double),
                             QgsField("max_area" , QVariant.Double),
+                            QgsField("min_len" , QVariant.Double),
+                            QgsField("min_area" , QVariant.Double),
                             
 
                             ])
@@ -613,7 +622,6 @@ def convert_to_shp(pretty_name,folder_name):
                         number_of_polygons = 0 
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):
-                                number_of_polygons = 0 
                                 for polygon in MP.findall('P'):
                                     atts[-1] = atts[-1]+number_of_polygons
                                     create_from_MP(polygon,psk_poly,atts)
