@@ -17,4 +17,7 @@
     <qresource prefix="/plugins/Database" >
         <file>icon_cut.png</file>
     </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icon_sek.png</file>
+    </qresource>
 </RCC>

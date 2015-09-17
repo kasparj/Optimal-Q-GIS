@@ -20,12 +20,9 @@
  *                                                                         *
  ***************************************************************************/
 """
-#obcas maju niektore viac rovnakych PSK - ked je viac LINE vnutry, ale nie su
-     #diery
-#sirku merat ako v amily
-#editovat este edit_area aj length pre minimum
-#v set_new_colors zmenit alrogritmus a na dvoch miestach
-#dvakrat v cut_polygons nastavit farby
+#Oprava PSK
+#dat prec ten iny error pozriet ci netreba pyqt
+#volat farbenie aj pri sekvencii(dokonceni) - kazdej zmenenej
 #pyrcc4 -o resources_rc.py resources.qrc
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
@@ -42,6 +39,7 @@ from show_atts import ShowAtts
 from save import Save_all 
 from add_drv import Add_drv 
 from add_etz import Add_etz 
+from sekvencie import Sekvencie 
 from set_ranges import Set_ranges 
 from open_all import Open_all 
 import os.path
@@ -51,19 +49,6 @@ import dtutils
 import math
 
 from qgis.core import *
-#from qgis.gui import *
-#from PyQt4.QtCore import *
-
-
-
-
-from qgis.core import *
-from qgis.gui import *
-from PyQt4.QtCore import *
-from PyQt4 import QtGui
-from PyQt4.QtGui import QProgressBar
-from qgis.utils import iface
-
 
 
 pretty_name = ""#nazov pre vstupny subor
@@ -87,6 +72,11 @@ class Database:
     #tu sa reaguje sa signaly
     #popisane je to na ShowAtts - zvysok je obdoba
     def __init__(self, iface):
+        
+        self.num_of_sek = 1
+        self.num_of_item = 0
+        self.edit_sek = 0
+
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
         locale = QSettings().value('locale/userLocale')[0:2]
@@ -135,6 +125,13 @@ class Database:
         self.save_all = Save_all()
         self.add_drv = Add_drv()
         self.add_etz = Add_etz()
+        self.sekvencie = Sekvencie()
+
+
+        self.sekvencie.finish.clicked.connect(self.end_sek)
+        self.sekvencie.new_s.clicked.connect(self.new_sek)
+
+
 
         self.save_all.address.clear()
         self.save_all.lookup.clicked.connect(self.select_output_folder)
@@ -317,6 +314,13 @@ class Database:
             callback=self.cut_polygon,
             parent=self.iface.mainWindow())
         
+        icon_path = ':/plugins/Database/icon_sek.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Sekvenice'),
+            callback=self.sekvence,
+            parent=self.iface.mainWindow())
+        
         self.handler = None
         self.selected_layer = None
 
@@ -330,7 +334,45 @@ class Database:
         # remove the toolbar
         del self.toolbar
    
+    def sekvence(self):
+        self.sekvencie.show()
+        self.edit_sek = 1
+        self.sekvencie.number.setText(str(self.num_of_sek))
+        self.edit_new_sek()
+        
+    def end_sek(self):
+        self.edit_sek = 0
+        self.num_of_item = 0
+        self.num_of_sek += 1
+        self.sekvencie.close()
 
+    def new_sek(self):
+        self.seknvencie.number.setText(str(self.num_of_sek))
+        self.num_of_sek += 1
+        self.num_of_item = 0
+        self.seknvencie.number.setText(str(self.num_of_sek))
+
+    def edit_new_sek(self):
+        self.num_of_item += 1
+        lyr = iface.activeLayer()
+        fts = lyr.selectedFeatures()
+        if fts == []:
+            return
+
+        idx = lyr.fieldNameIndex('sekvencia')
+        text = fts[0].attributes()[idx]
+        if text == ";":
+            text = str(self.num_of_sek)+','+str(self.num_of_item)+';'
+        else:
+            text = text+str(self.num_of_sek)+','+str(self.num_of_item)+';'
+        lyr.startEditing()
+        print text
+        print fts[0].id()
+        print idx
+        lyr.changeAttributeValue(fts[0].id(),idx,text,True)
+        lyr.commitChanges()
+
+    #tu sa nastavuje parameter pre farbenie polygonov
     def get_color(self, obj, min_a, max_a, min_l, max_l):
         COLOR = 'BW'
         if obj.geometry().area() <= max_a and obj.geometry().area() >= min_a:
@@ -340,6 +382,13 @@ class Database:
                 COLOR = 'LW'
         elif self.isWideEnough(obj, min_l) and self.isntWider(obj, max_l):
             COLOR = 'AW'
+        #tu by bolo zistit index nasledujucich atributov
+        if obj.attributes()[-1] != ';' and obj.attributes()[-2] != 0:
+            COLOR += '+-'
+        elif obj.attributes()[-1] != ';':
+            COLOR = '+'
+        elif obj.attributes()[-2] != 0:
+            COLOR = '-'
         return COLOR
    
 
@@ -575,11 +624,36 @@ class Database:
                     passiveLayer.destroyEditCommand()
                     
         self.show_atts()
-        
+    
+
+    #Vracia list, kde index v liste je index feature a obsahuje list indexov
+        #vsetkych susediacich
+    def select_neighbour(self):
+        lyr = iface.activeLayer()
+        idx = lyr.fieldNameIndex('max_to_nei')
+        return_list = []
+        features = list(lyr.getFeatures())
+        c = lyr.getFeatures()
+        if c == []:
+            return
+        for c1 in c:
+            r = c1.attributes()[idx]
+            buffered = c1.geometry().buffer(r,1)
+
+            ids = []
+            for ft in features:
+
+                if buffered.intersects(ft.geometry()):
+                    ids.append(ft.id())
+            return_list.append(ids)
+        return return_list
+
+
+
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
         
-        #self.draw_lines()
+        self.select_neighbour()
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
         self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
             #ze budem vyberat viacero riadkov naraz
@@ -639,8 +713,17 @@ class Database:
             try:
                 new_value = float(new_value)*multiply_by#testuje ci ej to int
             except:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v desatinnych cislach")
+                print "got expectation"
+                msgBox = QMessageBox()
+                msgBox.setWindowTitle("chyba")
+                msgBox.setText("DESATINNE COMMON!")
+                msgBox.setWindowFlags(Qt.WindowStaysOnTopHint);
+                #msgBox.show()
+                result = msgBox.exec_()
+                if result:
+                    print "kliknute"
+                #QMessageBox.information(self.iface.mainWindow(),"Chyba",
+                #    "Je potrebne zadat v desatinnych cislach")
                 return
             if  new_value < 0:#testujem ci je kladne
                 QMessageBox.information(self.iface.mainWindow(),"Chyba",
@@ -762,10 +845,13 @@ class Database:
             if lyr.name() == "Lesne porasty":
                 layer = lyr
         correct = {
-                'BR':('green','Both right'),
-                'AW':('yellow','Area wrong'),
-                'LW':('orange','Width wrong'),
-                'BW':('red','Both wrong')
+                'BR':(QColor(73,238,13),'Both right'),
+                'AW':(QColor(230,238,13),'Area wrong'),
+                'LW':(QColor(243,113,14),'Width wrong'),
+                'BW':(QColor(198,18,18),'Both wrong'),
+                '+-':(QColor(38,118,238),'Both set'),
+                '+' :(QColor(50,9,213), 'Sequence set'),
+                '-' :(QColor(153,0,204), 'Priority set')
                 }
         categories = []
         for COLOR, (color, label) in correct.items():
@@ -1088,6 +1174,9 @@ class Database:
             self.edit_attribute(lyr, item, list_of_zals_ids)
     
     def show_atts(self):
+        
+        if self.edit_sek:
+            self.edit_new_sek()
         global edit_pos
         global list_of_kats_ids
         global list_of_etzs_ids
@@ -1108,7 +1197,7 @@ class Database:
         zal_csv = None
         pos_csv = None
         #vybrana vrstva
-        lyr = self.iface.activeLayer()
+        lyr = iface.activeLayer()
         self.shower.drevina.clearSelection()
         self.shower.etaz.clearSelection()
 

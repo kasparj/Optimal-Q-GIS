@@ -118,26 +118,15 @@ def create_from_MP(MP, layer,atts):
         
         points = create_points(lines)#ziskam zoznam bodov
         finished_list.append(points)
-        
-    if len(finished_list) > 1:
-        print atts[-1]
+    
     pt.setGeometry(QgsGeometry.fromPolygon(finished_list))#vytvorim geom.
             #objekt
     pt.setAttributes(atts)#nastavim atributy
         
     layer.addFeatures([pt])
             #Poly_layer.updateExtents()
-"""
-def create_from_MP(MP, layer,atts):
-    for polygon in MP.findall('P'):
-        for lines in polygon.findall('L'):
-            points = create_points(lines)#ziskam zoznam bodov
-            pt.setGeometry(QgsGeometry.fromPolygon([points]))#vytvorim geom.
-            #objekt
-            pt.setAttributes(atts)#nastavim atributy
-            layer.addFeatures([pt])
-            #Poly_layer.updateExtents()
-"""
+
+
 #obodba pre create_from MP, ale pracuje s ML objektom
 def create_from_ML(ML, layer, atts):
     for lines in ML.findall('L'):
@@ -271,7 +260,7 @@ def convert_to_shp(pretty_name,folder_name):
             return 1
     """
     global PSK_layer
-    PSK_layer = QgsVectorLayer("Polygon?crs=EPSG:5514", 'Lesne porasty', "memory")
+    PSK_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Lesne porasty', "memory")
     if not PSK_layer.isValid():
             return 1
 
@@ -328,6 +317,7 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("DAN" , QVariant.String),
                             QgsField("PSK_TEXT" , QVariant.String),
                             QgsField("CISLO_TEL" , QVariant.Int),
+                            
 
                             QgsField("PSK_NUM" , QVariant.Int),
                             QgsField("COLOR" , QVariant.String),
@@ -335,6 +325,9 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("max_area" , QVariant.Double),
                             QgsField("min_len" , QVariant.Double),
                             QgsField("min_area" , QVariant.Double),
+                            QgsField("max_to_neigh" , QVariant.Double),
+                            QgsField("perioda" , QVariant.Int),
+                            QgsField("sekvencia" , QVariant.String),
                             
 
                             ])
@@ -486,6 +479,7 @@ def convert_to_shp(pretty_name,folder_name):
     PSK_ID = 0#pocitadla etazi, porastov...
     ETZ_ID = 0
     DRV_ID = 0
+    LAST_COUNT = 0
 
     
     for child in root:
@@ -604,7 +598,6 @@ def convert_to_shp(pretty_name,folder_name):
                     for psk in porast.findall('PSK'):
                         my_id = PSK_ID
                         #PSK_ID += 1
-
                         psk_atts = create_attributes(psk, list_of_psk)
                         if not psk.findall('PSK_OBRAZ'):
                             return 3
@@ -619,11 +612,19 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
 
                         atts.append(my_id)
+                        my_id_id = len(atts)-1
+                        atts.extend(['BW',50,10000,0,0,50,0,';'])
                         number_of_polygons = 0 
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):
                                 for polygon in MP.findall('P'):
-                                    atts[-1] = atts[-1]+number_of_polygons
+                                    if number_of_polygons == 0:
+                                        atts[my_id_id] += 0
+                                    else:
+                                        atts[my_id_id] += 1
+                                    #if atts[my_id_id] == 25:
+                                    #    print number_of_polygons
+                                    #+1ale ptoom uz mam cize dam +1+1...
                                     create_from_MP(polygon,psk_poly,atts)
                                     number_of_polygons += 1
                         PSK_ID = PSK_ID + number_of_polygons
@@ -635,7 +636,6 @@ def convert_to_shp(pretty_name,folder_name):
                                 etz_atts = create_attributes(etaz,list_of_etz)
                                 etz_atts.append(str(my_id+j))
                                 etz_atts.append(str(etz_id))
-                            
                                 to_write = "\",\"".join(etz_atts)
                                 etz_file.write("\""+to_write+'\"\n')
                                 for drevina in etaz.findall('DRV'):
@@ -668,6 +668,9 @@ def convert_to_shp(pretty_name,folder_name):
 
                                     to_write = "\",\"".join(zal_atts)
                                     zal_file.write("\""+to_write+'\"\n')
+
+
+
                     for j in range(number_of_polygons):    
                         for kategoria in porast.findall('KAT'):
                             kat_atts = create_attributes(kategoria,list_of_kat)
