@@ -326,7 +326,7 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("min_len" , QVariant.Double),
                             QgsField("min_area" , QVariant.Double),
                             QgsField("max_to_neigh" , QVariant.Double),
-                            QgsField("perioda" , QVariant.Int),
+                            QgsField("priorita" , QVariant.Int),
                             QgsField("sekvencia" , QVariant.String),
                             
 

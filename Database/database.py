@@ -347,10 +347,10 @@ class Database:
         self.sekvencie.close()
 
     def new_sek(self):
-        self.seknvencie.number.setText(str(self.num_of_sek))
+        self.sekvencie.number.setText(str(self.num_of_sek))
         self.num_of_sek += 1
         self.num_of_item = 0
-        self.seknvencie.number.setText(str(self.num_of_sek))
+        self.sekvencie.number.setText(str(self.num_of_sek))
 
     def edit_new_sek(self):
         self.num_of_item += 1
@@ -384,7 +384,7 @@ class Database:
             COLOR = 'AW'
         #tu by bolo zistit index nasledujucich atributov
         if obj.attributes()[-1] != ';' and obj.attributes()[-2] != 0:
-            COLOR += '+-'
+            COLOR = '!+-!'
         elif obj.attributes()[-1] != ';':
             COLOR = '+'
         elif obj.attributes()[-2] != 0:
@@ -849,7 +849,7 @@ class Database:
                 'AW':(QColor(230,238,13),'Area wrong'),
                 'LW':(QColor(243,113,14),'Width wrong'),
                 'BW':(QColor(198,18,18),'Both wrong'),
-                '+-':(QColor(38,118,238),'Both set'),
+                '!+-!':(QColor(38,118,238),'Both set'),
                 '+' :(QColor(50,9,213), 'Sequence set'),
                 '-' :(QColor(153,0,204), 'Priority set')
                 }
