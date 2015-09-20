@@ -653,8 +653,7 @@ class Database:
 
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
-        
-        self.select_neighbour()
+        #self.select_neighbour()
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
         self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
             #ze budem vyberat viacero riadkov naraz
@@ -702,33 +701,26 @@ class Database:
         lyr.commitChanges()
         self.colorize()               
 
+    def Error_message(self, text):
+        self.shower.showNormal()
+        self.shower.showMinimized()
+        QMessageBox.information(self.iface.mainWindow(),"Chyba",text)
+
     def edit_one_att(self,layer,LineEdit,name_of_field,multiply_by):
         if not LineEdit.isModified():
             return
         new_value = LineEdit.text()
         if  new_value == "":#testujem ci nie je to prazdny retazec
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Nezadane udaje")
+            self.Error_message("Nezadane udaje")
             return
         else:
             try:
                 new_value = float(new_value)*multiply_by#testuje ci ej to int
             except:
-                print "got expectation"
-                msgBox = QMessageBox()
-                msgBox.setWindowTitle("chyba")
-                msgBox.setText("DESATINNE COMMON!")
-                msgBox.setWindowFlags(Qt.WindowStaysOnTopHint);
-                #msgBox.show()
-                result = msgBox.exec_()
-                if result:
-                    print "kliknute"
-                #QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                #    "Je potrebne zadat v desatinnych cislach")
+                self.Error_message("Je potrebne zadat v nezapornych cislach")
                 return
             if  new_value < 0:#testujem ci je kladne
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v nezapornych cislach")
+                self.Error_message("Je potrebne zadat v nezapornych cislach")
                 return
 
             
@@ -770,8 +762,7 @@ class Database:
         
         if  maximum_area == "" or maximum_length == "" or minimum_area == "" or\
             minimum_length == "" :
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Nezadane udaje")
+            self.Error_message("Nezadane udaje")
             self.set_ranges.close()
             return
         else:
@@ -781,14 +772,12 @@ class Database:
                 minimum_area = float(minimum_area)*10000
                 minimum_length = float(minimum_length)
             except:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v desatinnych cislach")
+                self.Error_message("Je potrebne zadat v desatinnych cislach")
                 self.set_ranges.close()
                 return
             if  maximum_area <= 0 or maximum_length <=0 or minimum_length < 0\
                 or minimum_area < 0:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Je potrebne zadat v  nezapornych cislach")
+                self.Error_message("Je potrebne zadat v nezapornych cislach")
                 self.set_ranges.close()
                 return
 
@@ -891,8 +880,7 @@ class Database:
                     list_of_wrongs.append(list_of_fields[i].name())
         
         if list_of_wrongs != []:
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                "Zle typy u poloziek "+str(list_of_wrongs))
+            self.Error_message("Zle typy u poloziek "+str(list_of_wrongs))
          
         return new_list
     
@@ -970,8 +958,7 @@ class Database:
         indexes = self.shower.etaz.selectionModel().selectedRows()
         if indexes == []:
 
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Musite vybrat etaz, aby ste mohli pridat drevinu")
+            self.Error_message("Musite vybrat etaz, aby ste mohli pridat drevinu")
             self.add_drv.close()
             return
         
@@ -1095,33 +1082,22 @@ class Database:
         lyr.startEditing()
         features = list(lyr.getFeatures())
         type_T =  type(features[list_of_ids[item.row()]][item.column()])
-        #if type_T is unicode or type_T is str:
-        #    try:
-        #        lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
-        #    except:
-        #        QMessageBox.information(self.iface.mainWindow(),"Chyba",
-        #            "Zly typ, ocakava sa retazec")
         if type_T is int:
             try:
                 lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),int(item.text()),True)
             except:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Zly typ, ocakava sa cele cislo")
+                self.Error_message("Zly typ, ocakava sa cele cislo")
         elif type_T is float:
             try:
                 lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),float(item.text()),True)
             except:
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Zly typ, ocakava sa desatinne cislo")
+                self.Error_message("Zly typ, ocakava sa desatinne cislo")
                 
         else:
             try:
                 lyr.changeAttributeValue(list_of_ids[item.row()],item.column(),str(item.text()),True)
             except:
-                print item.text()
-                print type_T
-                QMessageBox.information(self.iface.mainWindow(),"Chyba",
-                    "Zly typ, ocakava sa retazec")
+                self.Error_message("Zly typ, ocakava sa retazec")
                 #TYPE MOZE BYT NULL!!!
         lyr.commitChanges()
     
@@ -1223,8 +1199,7 @@ class Database:
 #kontorla ci naslo vsetky co treba
 #kontorla ci je aj vybrata feature
         if not lyr:
-            QMessageBox.information(self.iface.mainWindow(),"Chyba",
-            "Ziadna vybrana vrstva")
+            self.Error_message("Ziadna vybrana vrstva")
         else: 
             fields = lyr.pendingFields()#vyberieme vsetky mena atributov
             features = lyr.selectedFeatures()#vyberieme vybrate prvky
@@ -1414,25 +1389,18 @@ class Database:
 
 
                 res = convert_to_shp(pretty_name,pretty_folder)
-                if res == 0:
-                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
-                    "Uspesne doslo")
-                elif res == 2:
-                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
-                    "Nepodarilo sa otvorit subor")
+                if res == 2:
+                    self.Error_message("Nepodarilo sa otvorit subor")
                 elif res == 3:
-                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
-                    "Subor neobsahuje topograficke udaje")
+                    self.Error_message("Subor neobsahuje topograficke udaje")
+                elif res == 0:
+                    pass
                 else:
-                    QMessageBox.information(self.iface.mainWindow(),"Vysledok",
-                    "Ina chyba")
+                    self.Error_message("Ina chyba")
 
                     
                 #podla return napise vysledok...
             else:
-                QMessageBox.information(self.iface.mainWindow(),"Vysledok",
-                    "Navybrane umiestnenia")
-                #new_window = My_App()
-        #new_window.show
+                self.Error_message("Nevybrane umiestnenie")
 
 
