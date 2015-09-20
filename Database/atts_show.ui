@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1548</width>
-    <height>473</height>
+    <height>438</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -77,7 +77,7 @@
         <x>0</x>
         <y>290</y>
         <width>191</width>
-        <height>121</height>
+        <height>91</height>
        </rect>
       </property>
      </widget>
@@ -87,7 +87,7 @@
         <x>200</x>
         <y>290</y>
         <width>221</width>
-        <height>121</height>
+        <height>91</height>
        </rect>
       </property>
      </widget>
@@ -97,7 +97,7 @@
         <x>430</x>
         <y>290</y>
         <width>221</width>
-        <height>121</height>
+        <height>91</height>
        </rect>
       </property>
      </widget>
@@ -262,6 +262,29 @@
       <property name="geometry">
        <rect>
         <x>1420</x>
+        <y>330</y>
+        <width>113</width>
+        <height>27</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
+        <x>890</x>
+        <y>340</y>
+        <width>51</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Priorita</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="priorita">
+      <property name="geometry">
+       <rect>
+        <x>950</x>
         <y>330</y>
         <width>113</width>
         <height>27</height>

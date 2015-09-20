@@ -149,6 +149,7 @@ class Database:
         self.set_ranges.min_len.setText("0.0")
         self.set_ranges.set_all.clicked.connect(self.set_ranges_f)
 
+        self.shower.priorita.editingFinished.connect(self.edit_priorita)
         self.shower.area_max.editingFinished.connect(self.edit_area_max)
         self.shower.area_min.editingFinished.connect(self.edit_area_min)
         self.shower.length_max.editingFinished.connect(self.edit_length_max)
@@ -743,6 +744,8 @@ class Database:
     def edit_area_max(self):
         self.edit_one_att(iface.activeLayer(),self.shower.area_max, "max_area", 10000)
 
+    def edit_priorita(self):
+        self.edit_one_att(iface.activeLayer(),self.shower.priorita, "priorita",1)
 
     def edit_area_min(self):
         self.edit_one_att(iface.activeLayer(),self.shower.area_min, "min_area", 10000)
@@ -1239,6 +1242,7 @@ class Database:
                 id_len = lyr.fieldNameIndex("max_len") #index parametru PSK_NUM 
                 id_Marea = lyr.fieldNameIndex("min_area") #index parametru PSK_NUM 
                 id_Mlen = lyr.fieldNameIndex("min_len") #index parametru PSK_NUM 
+                id_prio = lyr.fieldNameIndex("priorita") #index parametru PSK_NUM 
 
                 try: 
                     self.shower.area_max.setText(str("%.2f"%(float(features_list[0][id_area])/10000)))
@@ -1252,6 +1256,7 @@ class Database:
                 
                 self.shower.length_max.setText(features_list[0][id_len])
                 self.shower.length_min.setText(features_list[0][id_Mlen])
+                self.shower.priorita.setText(features_list[0][id_prio])
 
                 idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
                 if idx == -1:
