@@ -20,9 +20,6 @@
  *                                                                         *
  ***************************************************************************/
 """
-#Oprava PSK
-#dat prec ten iny error pozriet ci netreba pyqt
-#volat farbenie aj pri sekvencii(dokonceni) - kazdej zmenenej
 #pyrcc4 -o resources_rc.py resources.qrc
 
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
@@ -346,6 +343,7 @@ class Database:
         self.num_of_item = 0
         self.num_of_sek += 1
         self.sekvencie.close()
+        self.colorize()
 
     def new_sek(self):
         self.sekvencie.number.setText(str(self.num_of_sek))
@@ -367,11 +365,13 @@ class Database:
         else:
             text = text+str(self.num_of_sek)+','+str(self.num_of_item)+';'
         lyr.startEditing()
-        print text
-        print fts[0].id()
-        print idx
-        lyr.changeAttributeValue(fts[0].id(),idx,text,True)
+        lyr.changeAttributeValue(fts[0].id(),idx,text)
         lyr.commitChanges()
+        #lyr.setSelectedFeatures([fts[0].id()])
+        fts = lyr.selectedFeatures()
+        print fts[0].attributes()
+        self.set_new_color(lyr,fts[0]) 
+        
 
     #tu sa nastavuje parameter pre farbenie polygonov
     def get_color(self, obj, min_a, max_a, min_l, max_l):
@@ -390,6 +390,8 @@ class Database:
             COLOR = '+'
         elif obj.attributes()[-2] != 0:
             COLOR = '-'
+        print obj.attributes()
+        print "new_color "+ COLOR
         return COLOR
    
 
@@ -692,7 +694,6 @@ class Database:
         maximum_area = ft.attributes()[id_A]
         minimum_length = ft.attributes()[id_ML]
         minimum_area = ft.attributes()[id_MA]
-        
         COLOR = self.get_color(ft, minimum_area,\
                     maximum_area, minimum_length, maximum_length)
         
@@ -725,10 +726,13 @@ class Database:
 
             
         idx = layer.fieldNameIndex(name_of_field)
+        if idx == -1:
+            return
         features = layer.selectedFeatures()
         layer.startEditing()
         layer.changeAttributeValue(features[0].id(),idx,new_value,True)
         layer.commitChanges()
+        print features[0].attributes()
         self.set_new_color(layer,features[0])
         self.colorize()               
 
