@@ -369,7 +369,6 @@ class Database:
         lyr.commitChanges()
         #lyr.setSelectedFeatures([fts[0].id()])
         fts = lyr.selectedFeatures()
-        print fts[0].attributes()
         self.set_new_color(lyr,fts[0]) 
         
 
@@ -390,8 +389,6 @@ class Database:
             COLOR = '+'
         elif obj.attributes()[-2] != 0:
             COLOR = '-'
-        print obj.attributes()
-        print "new_color "+ COLOR
         return COLOR
    
 
@@ -732,7 +729,6 @@ class Database:
         layer.startEditing()
         layer.changeAttributeValue(features[0].id(),idx,new_value,True)
         layer.commitChanges()
-        print features[0].attributes()
         self.set_new_color(layer,features[0])
         self.colorize()               
 
@@ -861,13 +857,10 @@ class Database:
         renderer = QgsCategorizedSymbolRendererV2(field, categories)
 
         layer.setRendererV2(renderer)
-        print "rendering finished"
 
     def edit_list_by_types(self,new_list,lyr_pointer):
         list_of_fields = list(lyr_pointer.pendingFields()) 
         features = list(lyr_pointer.getFeatures())
-        if features == []:
-            print "neexistuje ziadna drevina!"
         list_of_wrongs = []
         for i in range(len(new_list)):
             if new_list[i] == "":
