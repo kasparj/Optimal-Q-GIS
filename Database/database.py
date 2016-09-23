@@ -37,6 +37,7 @@ from save import Save_all
 from add_drv import Add_drv 
 from add_etz import Add_etz 
 from sekvencie import Sekvencie 
+from distance import Distance 
 from set_ranges import Set_ranges 
 from open_all import Open_all 
 import os.path
@@ -123,12 +124,13 @@ class Database:
         self.add_drv = Add_drv()
         self.add_etz = Add_etz()
         self.sekvencie = Sekvencie()
+        self.distance = Distance()
 
 
         self.sekvencie.finish.clicked.connect(self.end_sek)
         self.sekvencie.new_s.clicked.connect(self.new_sek)
 
-
+        self.distance.finish.clicked.connect(self.set_distance_to_nei)
 
         self.save_all.address.clear()
         self.save_all.lookup.clicked.connect(self.select_output_folder)
@@ -319,6 +321,13 @@ class Database:
             callback=self.sekvence,
             parent=self.iface.mainWindow())
         
+        icon_path = ':/plugins/Database/icon_set_nei.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Set distance to neighbours'),
+            callback=self.set_nei,
+            parent=self.iface.mainWindow())
+        
         icon_path = ':/plugins/Database/icon_nei.png'
         self.add_action(
             icon_path,
@@ -338,6 +347,21 @@ class Database:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+
+    def set_nei(self):
+        self.distance.show()
+
+    def set_distance_to_nei(self):
+        new_n = self.distance.number.text()
+        lyr = iface.activeLayer()
+        idx = lyr.fieldNameIndex('max_to_nei')
+        fts = lyr.getFeatures()
+        lyr.startEditing()
+        for ft in fts:
+            lyr.changeAttributeValue(ft.id(), idx, new_n, True)
+        lyr.commitChanges()
+        self.distance.close()
+
 
     def nei(self):
         self.select_neighbour()
