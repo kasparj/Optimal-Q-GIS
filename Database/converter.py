@@ -328,6 +328,7 @@ def convert_to_shp(pretty_name,folder_name):
                             QgsField("max_to_neigh" , QVariant.Double),
                             QgsField("priorita" , QVariant.Int),
                             QgsField("sekvencia" , QVariant.String),
+                            QgsField("neighbours" , QVariant.String),
                             
 
                             ])
@@ -613,7 +614,7 @@ def convert_to_shp(pretty_name,folder_name):
 
                         atts.append(my_id)
                         my_id_id = len(atts)-1
-                        atts.extend(['BW',50,10000,0,0,50,0,';'])
+                        atts.extend(['BW',50,10000,0,0,1,0,';',';'])
                         number_of_polygons = 0 
                         for psk_obraz in psk.findall('PSK_OBRAZ'):
                             for MP in psk_obraz.findall('MP'):

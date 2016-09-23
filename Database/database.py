@@ -319,6 +319,13 @@ class Database:
             callback=self.sekvence,
             parent=self.iface.mainWindow())
         
+        icon_path = ':/plugins/Database/icon_nei.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Select neighbours'),
+            callback=self.nei,
+            parent=self.iface.mainWindow())
+        
         self.handler = None
         self.selected_layer = None
 
@@ -331,6 +338,10 @@ class Database:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+
+    def nei(self):
+        self.select_neighbour()
+
    
     def sekvence(self):
         self.sekvencie.show()
@@ -631,28 +642,29 @@ class Database:
     def select_neighbour(self):
         lyr = iface.activeLayer()
         idx = lyr.fieldNameIndex('max_to_nei')
-        return_list = []
+        id_N = lyr.fieldNameIndex('neighbours')
         features = list(lyr.getFeatures())
         c = lyr.getFeatures()
-        if c == []:
-            return
+        lyr.startEditing()
         for c1 in c:
             r = c1.attributes()[idx]
-            buffered = c1.geometry().buffer(r,1)
+            buffered = c1.geometry().buffer(r, 1)
 
             ids = []
             for ft in features:
 
                 if buffered.intersects(ft.geometry()):
                     ids.append(ft.id())
-            return_list.append(ids)
-        return return_list
-
-
+            #remove itself from list
+            ids.remove(c1.id())
+            if (len(ids) >= 1):
+                lyr.changeAttributeValue(c1.id(),id_N,";".join(str(x) for x in ids), True)
+            else:
+                lyr.changeAttributeValue(c1.id(),id_N,";", True)
+        lyr.commitChanges()
 
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
-        #self.select_neighbour()
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
         self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
             #ze budem vyberat viacero riadkov naraz
