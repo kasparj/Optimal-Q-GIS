@@ -1,29 +1,29 @@
 <RCC>
     <qresource prefix="/plugins/Database" >
-        <file>icon_convert.png</file>
+        <file>icons/icon_convert.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_tables.png</file>
+        <file>icons/icon_tables.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_save.png</file>
+        <file>icons/icon_save.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_open.png</file>
+        <file>icons/icon_open.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>colorize.png</file>
+        <file>icons/colorize.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_cut.png</file>
+        <file>icons/icon_cut.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_sek.png</file>
+        <file>icons/icon_sek.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_nei.png</file>
+        <file>icons/icon_nei.png</file>
     </qresource>
     <qresource prefix="/plugins/Database" >
-        <file>icon_set_nei.png</file>
+        <file>icons/icon_set_nei.png</file>
     </qresource>
 </RCC>

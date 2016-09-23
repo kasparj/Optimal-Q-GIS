@@ -277,14 +277,14 @@ class Database:
         #tu vzdy pridat cely tento kus
         #zmenit cestu k ikonke a zmenit popis
         #zmenit aj volanu funkciu
-        icon_path = ':/plugins/Database/icon_convert.png'
+        icon_path = ':/plugins/Database/icons/icon_convert.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Convert format'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
-        icon_path = ':/plugins/Database/colorize.png'
+        icon_path = ':/plugins/Database/icons/colorize.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Color polygons'),
@@ -293,42 +293,42 @@ class Database:
             parent=self.iface.mainWindow())
         
         
-        icon_path = ':/plugins/Database/icon_save.png'
+        icon_path = ':/plugins/Database/icons/icon_save.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Save All'),
             callback=self.save_all_11,
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/Database/icon_open.png'
+        icon_path = ':/plugins/Database/icons/icon_open.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Open All'),
             callback=self.open_all_11,
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/Database/icon_cut.png'
+        icon_path = ':/plugins/Database/icons/icon_cut.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Cut polygon'),
             callback=self.cut_polygon,
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/Database/icon_sek.png'
+        icon_path = ':/plugins/Database/icons/icon_sek.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Sekvenice'),
             callback=self.sekvence,
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/Database/icon_set_nei.png'
+        icon_path = ':/plugins/Database/icons/icon_set_nei.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Set distance to neighbours'),
             callback=self.set_nei,
             parent=self.iface.mainWindow())
         
-        icon_path = ':/plugins/Database/icon_nei.png'
+        icon_path = ':/plugins/Database/icons/icon_nei.png'
         self.add_action(
             icon_path,
             text=self.tr(u'Select neighbours'),
