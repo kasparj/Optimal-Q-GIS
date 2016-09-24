@@ -466,6 +466,7 @@ class Database:
             self.iface.messageBar().pushMessage(title,  QtCore.QCoreApplication.translate("digitizingtools", "Please provide a line layer to split with."))
         else:
             passiveLayer = self.iface.activeLayer()
+            passiveLayer.startEditing()
             msgLst = dtutils.dtGetNoSelMessage()
             noSelMsg1 = msgLst[0]
 
@@ -502,10 +503,14 @@ class Database:
 
                     if splitterCRSSrsid != projectCRSSrsid:
                         splitterGeom.transform(QgsCoordinateTransform(splitterCRSSrsid,  projectCRSSrsid))
-
+                    original_id = passiveLayer.fieldNameIndex('original')
+                    
+                    if passiveLayer.selectedFeatures()[0].attributes()[original_id] == 1:
+                        self.create_copy_of_feature(passiveLayer.selectedFeatures()[0])
+                        passiveLayer.startEditing()
+                    
                     for selFeat in passiveLayer.selectedFeatures():
                         selGeom = selFeat.geometry()
-
                         if not selGeom.isGeosValid():
                             thisWarning = dtutils.dtGetInvalidGeomWarning(passiveLayer)
                             dtutils.dtShowWarning(self.iface, thisWarning)
@@ -526,6 +531,7 @@ class Database:
                                 return None
 
                             if result == 0:
+                                passiveLayer.startEditing()
                                 selFeat.setGeometry(selGeom)
                                 passiveLayer.updateFeature(selFeat)
 
@@ -543,123 +549,133 @@ class Database:
                                         featuresToAdd.append(newFeat)
 
                 if featuresBeingSplit > 0:
-                    #lyr = iface.activeLayer()
-                    lyr = passiveLayer
-                    id_C = lyr.fieldNameIndex('COLOR')
-                    id_A = lyr.fieldNameIndex('max_area')
-                    id_L = lyr.fieldNameIndex('max_len')
-                    id_MA = lyr.fieldNameIndex('min_area')
-                    id_ML = lyr.fieldNameIndex('min_len')
-                    id_PSK = lyr.fieldNameIndex('PSK_NUM')
-                    #lyr.startEditing()
-                    features = lyr.selectedFeatures()
-                    new_psk_num = len(list(lyr.getFeatures()))
-                    self.set_new_color(passiveLayer, features[0])
+                    #features = passiveLayer.selectedFeatures()
+                    #self.set_new_color(passiveLayer, features[0])
 
                     #TU MAME FEATURE!
                     for item in featuresToAdd:
-                        self.show_atts()
-                        self.shower.close()
-                        csv_drv = None
-                        csv_etz = None
-                        csv_zal = None
-                        layerMap = QgsMapLayerRegistry.instance().mapLayers()
-                        for name, lyr in layerMap.iteritems():
-                            if lyr.name() == "Dreviny":
-                                csv_drv = lyr
-                            elif lyr.name() == "Porast":
-                                csv_etz = lyr
-                            elif lyr.name() == "Zalozenie":
-                                csv_zal = lyr
-                            elif lyr.name() == "Poskodenia":
-                                csv_pos = lyr
-                            elif lyr.name() == "Kategorie":
-                                csv_kat = lyr
-
-
-
-                        etzs = self.table_to_list(self.shower.etaz)
-                        drvs = self.table_to_list(self.shower.drevina)
-                        zals = self.table_to_list(self.shower.zalozene)
-                        poss = self.table_to_list(self.shower.pos)
-                        kats = self.table_to_list(self.shower.kategoria)
-
-                        drvs = [list(x) for x in zip(*drvs)]
-                        etzs = [list(x) for x in zip(*etzs)]
-                        zals = [list(x) for x in zip(*zals)]
-                        poss = [list(x) for x in zip(*poss)]
-                        kats = [list(x) for x in zip(*kats)]
-                            
-                        new_drv_start = len(list(csv_drv.getFeatures()))
-                        new_etz_start = len(list(csv_etz.getFeatures()))
-                        for i in range(len(etzs)):
-                            orig_etz = etzs[i][-1]
-                            etzs[i][-2] = new_psk_num
-                            etzs[i][-1] = new_etz_start
-                            for j in range(len(drvs)):
-                                if drvs[j][-2] == orig_etz:
-                                    drvs[j][-2] = new_etz_start
-                                orig_drv = drvs[j][-1]
-                                drvs[j][-1] = new_drv_start
-                                for k in range(len(poss)):
-                                    if poss[k][-1] == orig_drv:
-                                        poss[k][-1] = new_drv_start
-                                new_drv_start += 1
-                            for j in range(len(zals)):
-                                if zals[j][-1] == orig_etz:
-                                    zals[j][-1] = new_etz_start
-                        
-                            new_etz_start += 1
-                        for i in range(len(kats)):
-                            kats[i][-1] = new_psk_num
-                        
-                        for kat in kats:
-                            new_ft = QgsFeature(csv_kat.pendingFields())
-                            new_ft.setAttributes(kat)
-                            csv_kat.dataProvider().addFeatures([new_ft])
-                        
-                        for etz in etzs:
-                            new_ft = QgsFeature(csv_etz.pendingFields())
-                            new_ft.setAttributes(etz)
-                            csv_etz.dataProvider().addFeatures([new_ft])
-                        
-                        for drv in drvs:
-                            new_ft = QgsFeature(csv_drv.pendingFields())
-                            new_ft.setAttributes(drv)
-                            csv_drv.dataProvider().addFeatures([new_ft])
-                        
-                        for pos in poss:
-                            new_ft = QgsFeature(csv_pos.pendingFields())
-                            new_ft.setAttributes(pos)
-                            csv_pos.dataProvider().addFeatures([new_ft])
-                            
-                        for zal in zals:
-                            new_ft = QgsFeature(csv_zal.pendingFields())
-                            new_ft.setAttributes(zal)
-                            csv_zal.dataProvider().addFeatures([new_ft])
-
-                        maximum_area = item.attributes()[id_A]
-                        maximum_length = item.attributes()[id_L]
-                        minimum_area = item.attributes()[id_MA]
-                        minimum_length = item.attributes()[id_ML]
-                        COLOR = self.get_color(item, minimum_area,\
-                                maximum_area, minimum_length, maximum_length)
-                        
-                        atts = item.attributes()
-                        atts[id_C] = COLOR
-                        atts[id_PSK] = new_psk_num
-                        item.setAttributes(atts)
-                        new_psk_num += 1
-                        #lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
+                        self.duplicate_attributes_from_selected(passiveLayer,
+                                passiveLayer.selectedFeatures()[0], item)
                     passiveLayer.startEditing()
                     passiveLayer.addFeatures(featuresToAdd,  False)
                     passiveLayer.endEditCommand()
+                    passiveLayer.commitChanges()
                     passiveLayer.removeSelection()
                 else:
                     passiveLayer.destroyEditCommand()
-                    
-        self.show_atts()
-    
+
+    def duplicate_attributes_from_selected(self, lyr, from_item, to_item):
+        id_C = lyr.fieldNameIndex('COLOR')
+        id_A = lyr.fieldNameIndex('max_area')
+        id_L = lyr.fieldNameIndex('max_len')
+        id_MA = lyr.fieldNameIndex('min_area')
+        id_ML = lyr.fieldNameIndex('min_len')
+        id_PSK = lyr.fieldNameIndex('PSK_NUM')
+        new_psk_num = len(list(lyr.getFeatures()))
+        csv_drv = None
+        csv_etz = None
+        csv_zal = None
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, lyr in layerMap.iteritems():
+            if lyr.name() == "Dreviny":
+                csv_drv = lyr
+            elif lyr.name() == "Porast":
+                csv_etz = lyr
+            elif lyr.name() == "Zalozenie":
+                csv_zal = lyr
+            elif lyr.name() == "Poskodenia":
+                csv_pos = lyr
+            elif lyr.name() == "Kategorie":
+                csv_kat = lyr
+        
+        lyr.setSelectedFeatures([from_item.id()])
+
+        etzs = self.table_to_list(self.shower.etaz)
+        drvs = self.table_to_list(self.shower.drevina)
+        zals = self.table_to_list(self.shower.zalozene)
+        poss = self.table_to_list(self.shower.pos)
+        kats = self.table_to_list(self.shower.kategoria)
+
+        drvs = [list(x) for x in zip(*drvs)]
+        etzs = [list(x) for x in zip(*etzs)]
+        zals = [list(x) for x in zip(*zals)]
+        poss = [list(x) for x in zip(*poss)]
+        kats = [list(x) for x in zip(*kats)]
+
+        new_drv_start = len(list(csv_drv.getFeatures()))
+        new_etz_start = len(list(csv_etz.getFeatures()))
+        for i in range(len(etzs)):
+            orig_etz = etzs[i][-1]
+            etzs[i][-2] = new_psk_num
+            etzs[i][-1] = new_etz_start
+            for j in range(len(drvs)):
+                if drvs[j][-2] == orig_etz:
+                    drvs[j][-2] = new_etz_start
+                orig_drv = drvs[j][-1]
+                drvs[j][-1] = new_drv_start
+                for k in range(len(poss)):
+                    if poss[k][-1] == orig_drv:
+                        poss[k][-1] = new_drv_start
+                new_drv_start += 1
+            for j in range(len(zals)):
+                if zals[j][-1] == orig_etz:
+                    zals[j][-1] = new_etz_start
+
+            new_etz_start += 1
+        for i in range(len(kats)):
+            kats[i][-1] = new_psk_num
+
+        for kat in kats:
+            new_ft = QgsFeature(csv_kat.pendingFields())
+            new_ft.setAttributes(kat)
+            csv_kat.dataProvider().addFeatures([new_ft])
+
+        for etz in etzs:
+            new_ft = QgsFeature(csv_etz.pendingFields())
+            new_ft.setAttributes(etz)
+            csv_etz.dataProvider().addFeatures([new_ft])
+
+        for drv in drvs:
+            new_ft = QgsFeature(csv_drv.pendingFields())
+            new_ft.setAttributes(drv)
+            csv_drv.dataProvider().addFeatures([new_ft])
+
+        for pos in poss:
+            new_ft = QgsFeature(csv_pos.pendingFields())
+            new_ft.setAttributes(pos)
+            csv_pos.dataProvider().addFeatures([new_ft])
+
+        for zal in zals:
+            new_ft = QgsFeature(csv_zal.pendingFields())
+            new_ft.setAttributes(zal)
+            csv_zal.dataProvider().addFeatures([new_ft])
+
+        #maximum_area = item.attributes()[id_A]
+        #maximum_length = item.attributes()[id_L]
+        #minimum_area = item.attributes()[id_MA]
+        #minimum_length = item.attributes()[id_ML]
+        #COLOR = self.get_color(item, minimum_area,
+        #                       maximum_area, minimum_length, maximum_length)
+
+        atts = from_item.attributes()
+        #atts[id_C] = COLOR
+        atts[id_PSK] = new_psk_num
+        to_item.setAttributes(atts)
+        # lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
+
+    def create_copy_of_feature(self, oldFeature):
+        lyr = self.iface.activeLayer()
+        new_feature = QgsFeature()
+        new_feature.setGeometry(oldFeature.geometry())
+        # set all values
+        self.duplicate_attributes_from_selected(lyr, oldFeature, new_feature)
+        # change the is_original to 0
+        idx = lyr.fieldNameIndex("original")
+        lyr.startEditing()
+        lyr.addFeatures([new_feature])
+        lyr.changeAttributeValue(lyr.selectedFeatures()[0].id(), idx, 0, True)
+        lyr.commitChanges()
+
 
     #Vracia list, kde index v liste je index feature a obsahuje list indexov
         #vsetkych susediacich
@@ -1209,7 +1225,7 @@ class Database:
         zal_csv = None
         pos_csv = None
         #vybrana vrstva
-        lyr = iface.activeLayer()
+        lyr = self.iface.activeLayer()
         self.shower.drevina.clearSelection()
         self.shower.etaz.clearSelection()
 
