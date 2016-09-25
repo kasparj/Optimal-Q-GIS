@@ -505,7 +505,7 @@ class Database:
                         splitterGeom.transform(QgsCoordinateTransform(splitterCRSSrsid,  projectCRSSrsid))
                     original_id = passiveLayer.fieldNameIndex('original')
                     
-                    if passiveLayer.selectedFeatures()[0].attributes()[original_id] == 1:
+                    if passiveLayer.selectedFeatures()[0].attributes()[original_id] == -1:
                         self.create_copy_of_feature(passiveLayer.selectedFeatures()[0])
                         passiveLayer.startEditing()
                     
@@ -673,7 +673,7 @@ class Database:
         idx = lyr.fieldNameIndex("original")
         lyr.startEditing()
         lyr.addFeatures([new_feature])
-        lyr.changeAttributeValue(lyr.selectedFeatures()[0].id(), idx, 0, True)
+        lyr.changeAttributeValue(lyr.selectedFeatures()[0].id(), idx, oldFeature.id(), True)
         lyr.commitChanges()
 
 
