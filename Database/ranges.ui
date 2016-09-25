@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>292</width>
-    <height>256</height>
+    <width>321</width>
+    <height>265</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>141</width>
+      <width>161</width>
       <height>17</height>
      </rect>
     </property>
@@ -30,7 +30,7 @@
    <widget class="QLineEdit" name="min_area">
     <property name="geometry">
      <rect>
-      <x>170</x>
+      <x>190</x>
       <y>0</y>
       <width>113</width>
       <height>27</height>
@@ -53,7 +53,7 @@
    <widget class="QLineEdit" name="min_len">
     <property name="geometry">
      <rect>
-      <x>170</x>
+      <x>190</x>
       <y>80</y>
       <width>113</width>
       <height>27</height>
@@ -102,7 +102,7 @@
    <widget class="QLineEdit" name="max_len">
     <property name="geometry">
      <rect>
-      <x>170</x>
+      <x>190</x>
       <y>120</y>
       <width>113</width>
       <height>27</height>
@@ -114,7 +114,7 @@
      <rect>
       <x>10</x>
       <y>50</y>
-      <width>141</width>
+      <width>161</width>
       <height>17</height>
      </rect>
     </property>
@@ -125,7 +125,7 @@
    <widget class="QLineEdit" name="max_area">
     <property name="geometry">
      <rect>
-      <x>170</x>
+      <x>190</x>
       <y>40</y>
       <width>113</width>
       <height>27</height>
@@ -138,8 +138,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>292</width>
-     <height>27</height>
+     <width>321</width>
+     <height>28</height>
     </rect>
    </property>
   </widget>
