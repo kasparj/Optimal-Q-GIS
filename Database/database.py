@@ -409,6 +409,10 @@ class Database:
 
     #tu sa nastavuje parameter pre farbenie polygonov
     def get_color(self, obj, min_a, max_a, min_l, max_l):
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, lyr in layerMap.iteritems():
+            if lyr.name() == "Lesne porasty":
+                layer = lyr
         COLOR = 'BW'
         if obj.geometry().area() <= max_a and obj.geometry().area() >= min_a:
             if self.isWideEnough(obj,min_l) and self.isntWider(obj, max_l):
@@ -417,12 +421,13 @@ class Database:
                 COLOR = 'LW'
         elif self.isWideEnough(obj, min_l) and self.isntWider(obj, max_l):
             COLOR = 'AW'
-        #tu by bolo zistit index nasledujucich atributov
-        if obj.attributes()[-1] != ';' and obj.attributes()[-2] != 0:
+        sek = layer.fieldNameIndex('sekvencia')
+        prio = layer.fieldNameIndex('priorita')
+        if obj.attributes()[sek] != ';' and obj.attributes()[prio] != 0:
             COLOR = '!+-!'
-        elif obj.attributes()[-1] != ';':
+        elif obj.attributes()[sek] != ';':
             COLOR = '+'
-        elif obj.attributes()[-2] != 0:
+        elif obj.attributes()[prio] != 0:
             COLOR = '-'
         return COLOR
    
