@@ -26,4 +26,7 @@
     <qresource prefix="/plugins/Database" >
         <file>icons/icon_set_nei.png</file>
     </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icons/icon_xml.png</file>
+    </qresource>
 </RCC>

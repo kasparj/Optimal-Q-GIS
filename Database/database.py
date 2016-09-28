@@ -45,6 +45,9 @@ from converter import convert_to_shp
 import sys 
 import dtutils
 import math
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+import codecs
 
 from qgis.core import *
 
@@ -335,6 +338,13 @@ class Database:
             callback=self.nei,
             parent=self.iface.mainWindow())
         
+        icon_path = ':/plugins/Database/icons/icon_xml.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Export XML'),
+            callback=self.export_xml,
+            parent=self.iface.mainWindow())
+        
         self.handler = None
         self.selected_layer = None
 
@@ -347,6 +357,264 @@ class Database:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+
+    def prettify(self, string):
+        return minidom.parseString(string).toprettyxml(indent="  ")
+
+    def add_list_to_dict(self, dict_, key, value):
+        if key not in dict_.keys():
+            dict_[key] = [value]
+        else:
+            dict_[key].append(value)
+
+    def fillup_attributes_dict(self, names, ids, attributes):
+        dict_ = {}
+        for name, id_ in zip(names, ids):
+            if isinstance(attributes[id_], QPyNullVariant):
+                dict_[name] = ""
+            elif isinstance(attributes[id_], (int, long, float)):
+                dict_[name] = str(attributes[id_])
+            elif isinstance(attributes[id_], (float)):
+                dict_[name] = repr(attributes[id_])
+            else:
+                dict_[name] = attributes[id_]
+        return dict_
+
+    def process_etz(self, root, etzs_list):
+        for etz in etzs_list:
+            dict_ = self.fillup_attributes_dict(self.ETZ_items, self.ETZ_ids,
+                                                etz.attributes())
+            etz_root = ET.SubElement(root, "ETZ", dict_)
+            if etz.attributes()[self.id_ETZ] in self.drvs.keys():
+                for drv in self.drvs[etz.attributes()[self.id_ETZ]]:
+                    dict_ = self.fillup_attributes_dict(self.DRV_items, self.DRV_ids,
+                                                        drv.attributes())
+                    drv_root = ET.SubElement(etz_root, "DRV", dict_)
+                    if drv[self.id_DRV] in self.poss.keys():
+                        for pos in self.poss[drv.attributes()[self.id_DRV]]:
+                            dict_ = self.fillup_attributes_dict(self.POS_items, self.POS_ids,
+                                                                pos.attributes())
+                            ET.SubElement(drv_root, "POS", dict_)
+
+            if etz.attributes()[self.id_ETZ] in self.zals.keys():
+                for zal in self.zals[etz.attributes()[self.id_ETZ]]:
+                    dict_ = self.fillup_attributes_dict(self.ZAL_items, self.ZAL_ids,
+                                                        zal.attributes())
+                    ET.SubElement(etz_root, "ZAL", dict_)
+
+    def generate_globals(self):
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Lesne porasty":
+                lyr = layer
+            elif layer.name() == "Kategorie":
+                csv_kat = layer
+            elif layer.name() == "Porast":
+                csv_por = layer
+            elif layer.name() == "Dreviny":
+                csv_drv = layer
+            elif layer.name() == "Zalozenie":
+                csv_zal = layer
+            elif layer.name() == "Poskodenia":
+                csv_pos = layer
+
+        self.PSK_id_kat = csv_kat.fieldNameIndex('PSK_NUM')
+        self.PSK_NUM_por = csv_por.fieldNameIndex('PSK_NUM')
+        self.POR_items = ['SDR_POR', 'MAJ_KOD', 'MAJ_NAZ', 'MAJ_DRUH', 'ORG_UROVEN',
+                     'PAS_OHR', 'LES_OBL', 'LES_PODOBL', 'ZVL_STATUT', 'POR',
+                     'OLH_LIC', 'OLH', 'POR_TEXT', 'HIST_LHC', 'HIST_LHPOD',
+                     'HIST_ROZD']
+        self.KAT_items = ['KATEGORIE', 'KAT_SPEC']
+        self.PSK_items = ['PSK', 'PSK_P0', 'PSK_V', 'PSK_P', 'KVAL_P', 'KRAJ',
+                     'KATUZE_KOD', 'KAT_PAR_KOD', 'SLT', 'LT', 'TER_TYP',
+                     'PRIB_VZD', 'HOSP_ZP', 'DAN', 'PSK_TEXT', 'CISLO_TEL',
+                     'ORP']
+        self.ETZ_items = [
+            'ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI', 'OBN_DOBA',
+            'POC_OBNOVY', 'MZD', 'VEK', 'ZAKM', 'HOSP_TV', 'M_TEZ_PROC',
+            'ODVOZ_TEZ', 'M_Z_ZASOBY', 'PRO_P', 'PRO_NAL', 'PRO_POC',
+            'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL', 'TO_DUVOD',
+            'TO_ZPUSOB', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH', 'ZAL_P'
+                ]
+        self.DRV_items = [
+             'DR_ZKR', 'DR_KOD', 'DR_NAZ', 'DR_PUVOD', 'ZDR_REP', 'ZAST', 'VYSKA',
+             'TLOUSTKA', 'BON_R', 'BON_A', 'GEN_KLAS', 'VYB_STR', 'DR_ZAS_TAB',
+             'DR_ZAS_HA', 'DR_ZAS_CEL', 'DR_CBP', 'DR_CPP', 'DR_PMP',
+             'HMOT', 'HK', 'IMISE', 'DR_KVAL', 'PROC_SOUS', 'DR_TV',
+             'DR_TO', 'DR_TVYB']
+        self.ZAL_items = ['ZAL_DR', 'ZAL_DR_P']
+        self.POS_items = ['POSKOZ_D', 'POSKOZ_R']
+        self.ZAL_ids = [csv_zal.fieldNameIndex(x[:10]) for x in self.ZAL_items]
+        self.POS_ids = [csv_pos.fieldNameIndex(x[:10]) for x in self.POS_items]
+        self.DRV_ids = [csv_drv.fieldNameIndex(x[:10]) for x in self.DRV_items]
+        self.ETZ_ids = [csv_por.fieldNameIndex(x[:10]) for x in self.ETZ_items]
+        self.PSK_ids = [lyr.fieldNameIndex(x[:10]) for x in self.PSK_items]
+        self.KAT_ids = [csv_kat.fieldNameIndex(x[:10]) for x in self.KAT_items]
+        self.POR_ids = [lyr.fieldNameIndex(x[:10]) for x in self.POR_items]
+        self.id_ODD = lyr.fieldNameIndex('ODD')
+        self.id_DIL = lyr.fieldNameIndex('DIL')
+        self.id_POR = lyr.fieldNameIndex('POR')
+        self.id_PSK = lyr.fieldNameIndex('PSK_NUM')
+        self.id_DRV = csv_drv.fieldNameIndex('DRV_NUM')
+        self.id_ETZ = csv_por.fieldNameIndex('ETZ_NUM')
+        self.sekvence_id = lyr.fieldNameIndex('sekvencia')
+        #self.poradi_id = lyr.fieldNameIndex('dunno')#TODO
+        self.priorita_id = lyr.fieldNameIndex('priorita')
+        self.nei_id = lyr.fieldNameIndex('neighbours')
+        self.ETZ_NUM_drv = csv_drv.fieldNameIndex('ETZ_NUM')
+        self.ETZ_NUM_zal = csv_zal.fieldNameIndex('ETZ_NUM')
+        self.DRV_NUM_pos = csv_pos.fieldNameIndex('DRV_NUM')
+        self.id_original = lyr.fieldNameIndex('original')
+        self.etzs = {}
+        etzs = self.etzs
+        for ft in csv_por.getFeatures():
+            if ft.attributes()[self.PSK_NUM_por] in etzs.keys():
+                etzs[ft.attributes()[self.PSK_NUM_por]].append(ft)
+            else:
+                etzs[ft.attributes()[self.PSK_NUM_por]] = [ft]
+
+        self.kats = {}
+        kats = self.kats
+        for ft in csv_kat.getFeatures():
+            if ft.attributes()[self.PSK_id_kat] in kats.keys():
+                kats[ft.attributes()[self.PSK_id_kat]].append(ft)
+            else:
+                kats[ft.attributes()[self.PSK_id_kat]] = [ft]
+
+        self.drvs = {}
+        drvs = self.drvs
+        for ft in csv_drv.getFeatures():
+            if ft.attributes()[self.ETZ_NUM_drv] in drvs.keys():
+                drvs[ft.attributes()[self.ETZ_NUM_drv]].append(ft)
+            else:
+                drvs[ft.attributes()[self.ETZ_NUM_drv]] = [ft]
+        
+        self.zals = {}
+        zals = self.zals
+        for ft in csv_zal.getFeatures():
+            if ft.attributes()[self.ETZ_NUM_zal] in zals.keys():
+                zals[ft.attributes()[self.ETZ_NUM_zal]].append(ft)
+            else:
+                zals[ft.attributes()[self.ETZ_NUM_zal]] = [ft]
+        
+        self.poss = {}
+        poss = self.poss
+        for ft in csv_pos.getFeatures():
+            if ft.attributes()[self.DRV_NUM_pos] in poss.keys():
+                poss[ft.attributes()[self.DRV_NUM_pos]].append(ft)
+            else:
+                poss[ft.attributes()[self.DRV_NUM_pos]] = [ft]
+
+
+    def process_psk(self, lyr, root, fts_list):
+        parents = []
+        children = []
+        #TODO chidren into dict by parent, or maybe just go throug them and find
+        # appropriate, if is_original is -1 then add implicit children
+        for ft in fts_list:
+            if ft.attributes()[self.id_original] == -1:
+                parents.append(ft)
+                children.append(ft)
+            elif ft.attributes()[self.id_original] == -2:
+                parents.append(ft)
+            else:
+                children.append(ft)
+        for ft in parents:
+            dict_ = self.fillup_attributes_dict(self.PSK_items, self.PSK_ids,
+                                                ft.attributes())
+            dict_['PSK_ID'] = str(ft.id())
+            psk = ET.SubElement(root, "PSK", dict_)
+            psk_obraz = ET.SubElement(psk, "PSK_OBRAZ")
+            p = ET.SubElement(psk_obraz, "P")
+            ml = ET.SubElement(p, "ML")
+            for ring in ft.geometry().asPolygon():
+                l = ET.SubElement(ml, "L")
+                for point in ring:
+                    ET.SubElement(l, "B", S="{0}${1}".format(point[0], point[1]))
+
+            self.process_etz(psk, self.etzs[ft.attributes()[self.id_PSK]])
+            if ft.attributes()[self.id_original] == -2:
+                # polygon was split, there must be some children
+                for child_ft in children:
+                    if child_ft.attributes()[self.id_original] == ft.id():
+                        self.process_tazebni_prvek(root, child_ft, ft.id())
+            elif ft.attributes()[self.id_original] == -1:
+                # polygon was not split, it is its own Tazebni_prvek
+                self.process_tazebni_prvek(root, ft, ft.id())
+
+    def process_tazebni_prvek(self, root, ft, parent_psk_id):
+        self.finished += 1
+        self.progress.setValue(self.finished)
+        _dict = {}
+        _dict['ID'] = str(ft.id())
+        # parent_psk_id == attributes()[is_original] !! test just for fun
+        if parent_psk_id != ft.attributes()[self.id_original]:
+            print "Holy cow"
+        _dict['ID_PSK'] = str(parent_psk_id)
+        _dict['TP_vymera'] = repr(ft.geometry().area())
+        _dict['Sekvence'] = ft.attributes()[self.sekvence_id]
+        #_dict['Poradi_sekvence'] = ft.attributes()[self.poradi_id]
+        _dict['Nalehavost'] = str(ft.attributes()[self.priorita_id])
+        taz_prv = ET.SubElement(root, "TazebniPrvek", _dict)
+        neighs = ft.attributes()[self.nei_id].split(';')
+        for nei in neighs:
+            ET.SubElement(taz_prv, "Soused", ID=nei)
+        self.process_etz(taz_prv, self.etzs[ft.attributes()[self.id_PSK]])
+
+    def export_xml(self):
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Lesne porasty":
+                lyr = layer
+        iface.messageBar().clearWidgets() 
+        self.finished = 0#percento dokoncenia pre progressBar
+        prg = iface.messageBar().createMessage('Exportujem')#pridam text konvertujem
+        progress = QProgressBar()#vytvorim progressBar
+        progress.setMaximum(lyr.featureCount())#maximum je pocet polygonov
+        progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)#zarovnam ho vlavo
+        prg.layout().addWidget(progress)#a pridam ho do hroenj listy
+        iface.messageBar().pushWidget(prg,
+                            iface.messageBar().INFO)
+
+        self.generate_globals()
+        progress.setValue(self.finished)
+        self.progress = progress
+
+        ODDs = {}
+        root = ET.Element("DATAISLH")
+        lhc = ET.SubElement(root, "LHC", LHC_KOD="missing_data....")
+        for ft in lyr.getFeatures():
+            self.add_list_to_dict(ODDs, ft.attributes()[self.id_ODD], ft)
+        for ODD_id in ODDs.keys():
+            odd = ET.SubElement(lhc, "ODD", ODD=ODD_id)
+            DILs = {}
+            for ft in ODDs[ODD_id]:
+                self.add_list_to_dict(DILs, ft.attributes()[self.id_DIL], ft)
+            for DIL_id in DILs.keys():
+                dil = ET.SubElement(odd, "DIL", DIL=DIL_id)
+                PORs = {}
+                for ft in DILs[DIL_id]:
+                    self.add_list_to_dict(PORs, ft.attributes()[self.id_POR], ft)
+                for POR_id in PORs.keys():
+                    dict_ = self.fillup_attributes_dict(self.POR_items, self.POR_ids,
+                                                        PORs[POR_id][0]
+                                                        .attributes())
+                    por = ET.SubElement(dil, "POR",  dict_)
+                    self.process_psk(lyr, por, PORs[POR_id])
+                    if PORs[POR_id][0].attributes()[self.id_PSK] in self.kats.keys():
+                        for kat in self.kats[PORs[POR_id][0].attributes()[self.id_PSK]]:
+                            dict_ = self.fillup_attributes_dict(self.KAT_items,
+                                                                self.KAT_ids,
+                                                                kat.
+                                                                attributes())
+                            ET.SubElement(por, "KAT", dict_)
+
+        str_xml = ET.tostring(root, 'utf-8')
+        with codecs.open("/home/matej/xml_out.xml", "w", "utf-8") as f:
+            res = self.prettify(str_xml)
+            f.write(res)
+        
+        iface.messageBar().clearWidgets()
 
     def set_nei(self):
         self.distance.show()
