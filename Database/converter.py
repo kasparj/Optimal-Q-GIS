@@ -673,12 +673,12 @@ def convert_to_shp(pretty_name,folder_name):
 
 
 
-                    for j in range(number_of_polygons):    
-                        for kategoria in porast.findall('KAT'):
-                            kat_atts = create_attributes(kategoria,list_of_kat)
-                            kat_atts.append(str(my_id+j))
-                            to_write = "\",\"".join(kat_atts)
-                            kat_file.write("\""+to_write+'\"\n')
+                        for j in range(number_of_polygons):    
+                            for kategoria in porast.findall('KAT'):
+                                kat_atts = create_attributes(kategoria,list_of_kat)
+                                kat_atts.append(str(my_id+j))
+                                to_write = "\",\"".join(kat_atts)
+                                kat_file.write("\""+to_write+'\"\n')
 
     
     PSK_layer.updateExtents()
