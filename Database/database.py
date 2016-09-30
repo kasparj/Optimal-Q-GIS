@@ -674,9 +674,10 @@ class Database:
         new_feature.setGeometry(oldFeature.geometry())
         # set all values
         self.duplicate_attributes_from_selected(lyr, oldFeature, new_feature)
-        # change the is_original to 0
+        # change the is_original to -2
         idx = lyr.fieldNameIndex("original")
         lyr.startEditing()
+        lyr.changeAttributeValue(oldFeature.id(), idx, -2, True)
         lyr.addFeatures([new_feature])
         lyr.changeAttributeValue(lyr.selectedFeatures()[0].id(), idx, oldFeature.id(), True)
         lyr.commitChanges()
@@ -688,6 +689,7 @@ class Database:
         lyr = iface.activeLayer()
         idx = lyr.fieldNameIndex('max_to_nei')
         id_N = lyr.fieldNameIndex('neighbours')
+        orig_id = lyr.fieldNameIndex('original')
         features = list(lyr.getFeatures())
         c = lyr.getFeatures()
         lyr.startEditing()
@@ -698,10 +700,11 @@ class Database:
             ids = []
             for ft in features:
 
-                if buffered.intersects(ft.geometry()):
+                if buffered.intersects(ft.geometry()) and ft.attributes()[orig_id] != -2:
                     ids.append(ft.id())
             #remove itself from list
-            ids.remove(c1.id())
+            if c1.id() in ids:
+                ids.remove(c1.id())
             if (len(ids) >= 1):
                 lyr.changeAttributeValue(c1.id(),id_N,";".join(str(x) for x in ids), True)
             else:
