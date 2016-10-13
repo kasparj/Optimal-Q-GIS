@@ -40,6 +40,7 @@ from sekvencie import Sekvencie
 from distance import Distance 
 from set_ranges import Set_ranges 
 from open_all import Open_all 
+from out_xml import OutXml 
 import os.path
 from converter import convert_to_shp
 import sys 
@@ -129,6 +130,10 @@ class Database:
         self.sekvencie = Sekvencie()
         self.distance = Distance()
 
+        self.out_xml = OutXml()
+        self.out_xml.address.clear()
+        self.out_xml.lookup.clicked.connect(self.select_output_folder)
+        self.out_xml.finish.clicked.connect(self.export_xml)
 
         self.sekvencie.finish.clicked.connect(self.end_sek)
         self.sekvencie.new_s.clicked.connect(self.new_sek)
@@ -342,7 +347,7 @@ class Database:
         self.add_action(
             icon_path,
             text=self.tr(u'Export XML'),
-            callback=self.export_xml,
+            callback=self.show_xml,
             parent=self.iface.mainWindow())
         
         self.handler = None
@@ -561,6 +566,9 @@ class Database:
             ET.SubElement(taz_prv, "Soused", ID=nei)
         self.process_etz(taz_prv, self.etzs[ft.attributes()[self.id_PSK]])
 
+    def show_xml(self):
+        self.out_xml.show()
+
     def export_xml(self):
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
@@ -610,10 +618,12 @@ class Database:
                             ET.SubElement(por, "KAT", dict_)
 
         str_xml = ET.tostring(root, 'utf-8')
-        with codecs.open("/home/matej/xml_out.xml", "w", "utf-8") as f:
+
+        with codecs.open(os.path.join(self.out_xml.address.text(), "output.xml"), "w", "utf-8") as f:
             res = self.prettify(str_xml)
             f.write(res)
-        
+
+        self.out_xml.close()
         iface.messageBar().clearWidgets()
 
     def set_nei(self):
@@ -1686,6 +1696,7 @@ class Database:
         pretty_folder = QFileDialog.getExistingDirectory(self.save_all, "Vyberte\
                  vystupny priecinok")
         self.save_all.address.setText(pretty_folder)
+        self.out_xml.address.setText(pretty_folder)
     
     def select_input_file(self):
         global pretty_name
