@@ -105,7 +105,7 @@ def create_points(lines):
         np =  point.get('S')
         number1 = np[:np.find("$")]#odstrihne od zaciatku po $
         number2 = np[np.find("$")+1:]#odstrihne od $ dokonca
-        points.append(QgsPoint(float(number1),float(number2)))#vytvorim bod v
+        points.append(QgsPoint(float(number2), -1 * float(number1)))#vytvorim bod v
         #priestore a ten dam nakoniec zoznamu
     return points#zoznam bodov vratim
 
