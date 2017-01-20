@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Sekvencie</string>
+   <string>Export</string>
   </property>
   <property name="layoutDirection">
    <enum>Qt::RightToLeft</enum>
@@ -27,7 +27,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Dokoncit</string>
+     <string>Dokončit</string>
     </property>
    </widget>
    <widget class="QPushButton" name="lookup">
@@ -60,7 +60,7 @@
      <x>0</x>
      <y>0</y>
      <width>403</width>
-     <height>23</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>

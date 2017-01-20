@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>156</width>
-    <height>132</height>
+    <width>276</width>
+    <height>125</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
    <widget class="QLineEdit" name="number">
     <property name="geometry">
      <rect>
-      <x>80</x>
+      <x>170</x>
       <y>10</y>
       <width>61</width>
       <height>27</height>
@@ -40,7 +40,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Distance</string>
+     <string>Vzdálenost</string>
     </property>
    </widget>
    <widget class="QPushButton" name="finish">
@@ -53,7 +53,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Dokoncit</string>
+     <string>Dokončit</string>
     </property>
    </widget>
   </widget>
@@ -62,8 +62,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>156</width>
-     <height>28</height>
+     <width>276</width>
+     <height>17</height>
     </rect>
    </property>
   </widget>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>217</width>
-    <height>152</height>
+    <width>271</width>
+    <height>181</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
    <widget class="QLineEdit" name="number">
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>150</x>
       <y>10</y>
       <width>113</width>
       <height>27</height>
@@ -40,33 +40,33 @@
      </rect>
     </property>
     <property name="text">
-     <string>Sekvencia c.</string>
+     <string>Sekvence č.</string>
     </property>
    </widget>
    <widget class="QPushButton" name="finish">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>60</y>
-      <width>85</width>
-      <height>27</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Dokoncit</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="new_s">
-    <property name="geometry">
-     <rect>
-      <x>104</x>
-      <y>60</y>
+      <y>70</y>
       <width>101</width>
       <height>27</height>
      </rect>
     </property>
     <property name="text">
-     <string>Nova sekvenica</string>
+     <string>Dokončit</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="new_s">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>70</y>
+      <width>131</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Nová sekvence</string>
     </property>
    </widget>
   </widget>
@@ -75,8 +75,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>217</width>
-     <height>27</height>
+     <width>271</width>
+     <height>17</height>
     </rect>
    </property>
   </widget>
