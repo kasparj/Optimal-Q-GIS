@@ -817,6 +817,7 @@ class Database:
                                 passiveLayer.startEditing()
                                 selFeat.setGeometry(selGeom)
                                 passiveLayer.updateFeature(selFeat)
+                                self.set_new_color(passiveLayer, selFeat)
 
                                 if len(newGeometries) > 0:
                                     featuresBeingSplit += 1
@@ -933,15 +934,17 @@ class Database:
             new_ft.setAttributes(zal)
             csv_zal.dataProvider().addFeatures([new_ft])
 
-        #maximum_area = item.attributes()[id_A]
-        #maximum_length = item.attributes()[id_L]
-        #minimum_area = item.attributes()[id_MA]
-        #minimum_length = item.attributes()[id_ML]
-        #COLOR = self.get_color(item, minimum_area,
-        #                       maximum_area, minimum_length, maximum_length)
-
         atts = from_item.attributes()
-        #atts[id_C] = COLOR
+        to_item.setAttributes(atts)
+
+        maximum_area = from_item.attributes()[id_A]
+        maximum_length = from_item.attributes()[id_L]
+        minimum_area = from_item.attributes()[id_MA]
+        minimum_length = from_item.attributes()[id_ML]
+        COLOR = self.get_color(to_item, minimum_area,
+                               maximum_area, minimum_length, maximum_length)
+
+        atts[id_C] = COLOR
         atts[id_PSK] = new_psk_num
         to_item.setAttributes(atts)
         # lyr.changeAttributeValue(item.id(),id_C,COLOR,True)
@@ -1023,12 +1026,14 @@ class Database:
         id_L = lyr.fieldNameIndex('max_len')
         id_MA = lyr.fieldNameIndex('min_area')
         id_ML = lyr.fieldNameIndex('min_len')
+
         
         lyr.startEditing()
         maximum_length = ft.attributes()[id_L]
         maximum_area = ft.attributes()[id_A]
         minimum_length = ft.attributes()[id_ML]
         minimum_area = ft.attributes()[id_MA]
+
         COLOR = self.get_color(ft, minimum_area,\
                     maximum_area, minimum_length, maximum_length)
         
