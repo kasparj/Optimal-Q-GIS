@@ -9,136 +9,134 @@ from PyQt4.QtCore import *
 from PyQt4 import QtGui
 from PyQt4.QtGui import QProgressBar
 from qgis.utils import iface
-import os
-import sys
-import ntpath
 import codecs
 
-#------------------------------------------------------------------------
-#globalne premenne
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
+#                        globalne premenne
+# ------------------------------------------------------------------------
 
 
-pt = QgsFeature()#premenna pre jedne geom. objekt
+pt = QgsFeature()  # premenna pre jedne geom. objekt
 
-#mozu sa menit, ale treba zachovat poradie
-#NEMENIT XXX_NUM, ani poradie, nepridavat nakoniec - radsej do stredu!
-#tieto nazvy sa priamo zapisu do suboru ako hlavicky
+# mozu sa menit, ale treba zachovat poradie
+# NEMENIT XXX_NUM, ani poradie, nepridavat nakoniec - radsej do stredu!
+# tieto nazvy sa priamo zapisu do suboru ako hlavicky
 
-names_of_pos = ['POSKOZ_D','POSKOZ_R','DRV_NUM']
-names_of_zal = ['ZAL_DR','ZAL_DR_P','ETZ_NUM']
-names_of_kat = ['KATEGORIE','KAT_SPEC','PSK_NUM']
-names_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
-'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
-'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
-'DR_ZAS_HA','DR_ZAS_CEL','DR_CBP','DR_CPP',
-'DR_PMP','HMOT','HK','IMISE','DR_KVAL','PROC_SOUS',
-'DR_TV','DR_TO','DR_TVYB','ETZ_NUM','DRV_NUM']
-names_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI', 
-'OBN_DOBA','POC_OBNOVY','MZD','VEK','ZAKM','HOSP_TV', 
-'M_TEZ_PROC','ODVOZ_TEZ','M_Z_ZASOBY','PRO_P','PRO_NAL', 
-'PRO_POC','TV_P','TV_NAL','TV_POC','TO_P','TO_NAL','TO_DUVOD', 
-'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P','PSK_NUM','ETZ_NUM'] 
-#------------------------------------------------------
+names_of_pos = ['POSKOZ_D',  'POSKOZ_R',  'DRV_NUM']
+names_of_zal = ['ZAL_DR', 'ZAL_DR_P', 'ETZ_NUM']
+names_of_kat = ['KATEGORIE', 'KAT_SPEC', 'PSK_NUM']
+names_of_drv = ['DR_ZKR', 'DR_KOD', 'DR_NAZ', 'DR_PUVOD',
+                'ZDR_REP', 'ZAST', 'VYSKA', 'TLOUSTKA',
+                'BON_R', 'BON_A', 'GEN_KLAS', 'VYB_STR', 'DR_ZAS_TAB',
+                'DR_ZAS_HA', 'DR_ZAS_CEL', 'DR_CBP', 'DR_CPP',
+                'DR_PMP', 'HMOT', 'HK', 'IMISE', 'DR_KVAL', 'PROC_SOUS',
+                'DR_TV', 'DR_TO', 'DR_TVYB', 'ETZ_NUM', 'DRV_NUM']
+names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
+                'OBN_DOBA', 'POC_OBNOVY', 'MZD', 'VEK', 'ZAKM', 'HOSP_TV',
+                'M_TEZ_PROC', 'ODVOZ_TEZ', 'M_Z_ZASOBY', 'PRO_P', 'PRO_NAL',
+                'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
+                'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
+                'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
 
-#Tieto listy nemenit, to su zoznamy pre parsovanie dat
-#menit iba ak sa zmeni standard, na poradi zalezi
-#ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
+# Tieto listy nemenit, to su zoznamy pre parsovanie dat
+# menit iba ak sa zmeni standard, na poradi zalezi
+# ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
 
-list_of_pos = ['POSKOZ_D','POSKOZ_R']
-list_of_zal = ['ZAL_DR','ZAL_DR_P']
-list_of_kat = ['KATEGORIE','KAT_SPEC']
-list_of_drv = ['DR_ZKR','DR_KOD','DR_NAZ','DR_PUVOD',
-'ZDR_REP','ZAST','VYSKA','TLOUSTKA',
-'BON_R','BON_A','GEN_KLAS','VYB_STR','DR_ZAS_TAB',
-'DR_ZAS_HA','DR_ZAS_CEL','DR_CBP','DR_CPP',
-'DR_PMP','HMOT','HK','IMISE','DR_KVAL','PROC_SOUS',
-'DR_TV','DR_TO','DR_TVYB']
-list_of_etz = ['ETAZ','ETAZ_PS','ETAZ_PP','HS','OBMYTI', 
-'OBN_DOBA','POC_OBNOVY','MZD','VEK','ZAKM','HOSP_TV', 
-'M_TEZ_PROC','ODVOZ_TEZ','M_Z_ZASOBY','PRO_P','PRO_NAL', 
-'PRO_POC','TV_P','TV_NAL','TV_POC','TO_P','TO_NAL','TO_DUVOD', 
-'TO_ZPUSOB ','TVYB_P','TVYB_NAL','ZAL_DRUH','ZAL_P'] 
-list_of_por = ['POR','SDR_POR','MAJ_KOD','MAJ_NAZ', 
-'MAJ_DRUH','ORG_UROVEN','PAS_OHR','LES_OBL', 
-'LES_PODOBL','ZVL_STATUT','OLH_LIC','OLH', 
-'POR_TEXT','HIST_LHC','HIST_LHPOD','HIST_ROZD']
-list_of_psk = ['PSK','PSK_P0','PSK_V','PSK_P', 
-'KVAL_P','ORP','KRAJ','KATUZE_KOD','KAT_PAR_KOD','SLT','LT',
-'TER_TYP','PRIB_VZD','HOSP_ZP','DAN','PSK_TEXT','CISLO_TEL'] 
-list_of_bzl = ['BZL','ORP','KRAJ','KATUZE_KOD','BZL_P0',
-'BZL_V','BZL_P','KVAL_P','KAT_PAR_KOD',
-'BZL_VYUZ','BZL_DRUH','CISLO_TEL']
-list_of_jp = ['JP','JP_PUPFL','ORP','KRAJ','KATUZE_KOD',
-'JP_P0','JP_V','JP_P','KVAL_P','KAT_PAR_KOD',
-'JP_VYUZ','JP_DRUH','CISLO_TEL'] 
-#list_of_kto = [ 'TEXT', 'TXT_STYL', 'TXT_UHEL', 'L_' ]
-list_of_kpo = [ 'PLO_DRUH', 'PLO_ZNACKA', 'PLO_BARVA', 'L_']
-list_of_klo = [ 'LIN_DRUH', 'LIN_ZNACKA', 'LIN_BARVA', 'L_']
-#list_of_kbo = [ 'BOD_DRUH', 'BOD_ZNACKA', 'BOD_UHELZN', 'BOD_BARVA', 'L_']
-list_of_lhc = ['LHC_KOD','LHC_NAZ','LHP_OD','LHP_DO','LHP_LIC',
-'LHP_TAX','LHP_Z_OD','LHP_Z_DO','LHP_Z_LIC','LHP_Z_TAX',
-'KU_DATUM','LHP_NEZDAR','TEZ_PROC','NOR_PAS','ETAT_TO',
-'LHC_PN_PRO','ETAT_TV','ETAT_TVYB','LHC_IND','LHC_MAX',
-'ETAT','MVYCH_DO40']
+list_of_pos = ['POSKOZ_D', 'POSKOZ_R']
+list_of_zal = ['ZAL_DR', 'ZAL_DR_P']
+list_of_kat = ['KATEGORIE', 'KAT_SPEC']
+list_of_drv = ['DR_ZKR', 'DR_KOD', 'DR_NAZ', 'DR_PUVOD',
+               'ZDR_REP', 'ZAST', 'VYSKA', 'TLOUSTKA',
+               'BON_R', 'BON_A', 'GEN_KLAS', 'VYB_STR', 'DR_ZAS_TAB',
+               'DR_ZAS_HA', 'DR_ZAS_CEL', 'DR_CBP', 'DR_CPP',
+               'DR_PMP', 'HMOT', 'HK', 'IMISE', 'DR_KVAL', 'PROC_SOUS',
+               'DR_TV', 'DR_TO', 'DR_TVYB']
+list_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
+               'OBN_DOBA', 'POC_OBNOVY', 'MZD', 'VEK', 'ZAKM', 'HOSP_TV',
+               'M_TEZ_PROC', 'ODVOZ_TEZ', 'M_Z_ZASOBY', 'PRO_P', 'PRO_NAL',
+               'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
+               'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
+               'ZAL_P']
+list_of_por = ['POR', 'SDR_POR', 'MAJ_KOD', 'MAJ_NAZ',
+               'MAJ_DRUH', 'ORG_UROVEN', 'PAS_OHR', 'LES_OBL',
+               'LES_PODOBL', 'ZVL_STATUT', 'OLH_LIC', 'OLH',
+               'POR_TEXT', 'HIST_LHC', 'HIST_LHPOD', 'HIST_ROZD']
+list_of_psk = ['PSK', 'PSK_P0', 'PSK_V', 'PSK_P',
+               'KVAL_P', 'ORP', 'KRAJ', 'KATUZE_KOD', 'KAT_PAR_KOD', 'SLT',
+               'LT', 'TER_TYP', 'PRIB_VZD', 'HOSP_ZP', 'DAN', 'PSK_TEXT',
+               'CISLO_TEL']
+list_of_bzl = ['BZL', 'ORP', 'KRAJ', 'KATUZE_KOD', 'BZL_P0',
+               'BZL_V', 'BZL_P', 'KVAL_P', 'KAT_PAR_KOD',
+               'BZL_VYUZ', 'BZL_DRUH', 'CISLO_TEL']
+list_of_jp = ['JP', 'JP_PUPFL', 'ORP', 'KRAJ', 'KATUZE_KOD',
+              'JP_P0', 'JP_V', 'JP_P', 'KVAL_P', 'KAT_PAR_KOD',
+              'JP_VYUZ', 'JP_DRUH', 'CISLO_TEL']
+# list_of_kto = [ 'TEXT',  'TXT_STYL',  'TXT_UHEL',  'L_' ]
+list_of_kpo = ['PLO_DRUH', 'PLO_ZNACKA', 'PLO_BARVA', 'L_']
+list_of_klo = ['LIN_DRUH', 'LIN_ZNACKA', 'LIN_BARVA', 'L_']
+# list_of_kbo = [ 'BOD_DRUH',  'BOD_ZNACKA',  'BOD_UHELZN',  'BOD_BARVA', 'L_']
+list_of_lhc = ['LHC_KOD', 'LHC_NAZ', 'LHP_OD', 'LHP_DO', 'LHP_LIC',
+               'LHP_TAX', 'LHP_Z_OD', 'LHP_Z_DO', 'LHP_Z_LIC', 'LHP_Z_TAX',
+               'KU_DATUM', 'LHP_NEZDAR', 'TEZ_PROC', 'NOR_PAS', 'ETAT_TO',
+               'LHC_PN_PRO', 'ETAT_TV', 'ETAT_TVYB', 'LHC_IND', 'LHC_MAX',
+               'ETAT', 'MVYCH_DO40']
+
+# ------------------------------------------------------------------------
+#                                     funkcie
+# ------------------------------------------------------------------------
 
 
-#------------------------------------------------------------------------
-#funkcie
-#------------------------------------------------------------------------
-#otvori vrstu, ktora sa zobrazi pod nazvom "name"
-#otvori sa na adrese - cela cesta
-#type_ft = ogr pre vektorove vrstvy, "delimitedText" pre csv
-def open_layer(name, address,type_ft):
-    new_ft = QgsVectorLayer(address,name,type_ft)
+def open_layer(name, address, type_ft):
+    """Otvori vrstu, ktora sa zobrazi pod nazvom "name".
+
+    otvori sa na adrese - cela cesta
+    type_ft = ogr pre vektorove vrstvy, "delimitedText" pre csv
+    """
+    new_ft = QgsVectorLayer(address, name, type_ft)
     QgsMapLayerRegistry.instance().addMapLayer(new_ft)
-    #layer = iface.addVectorLayer(address, name, type_ft)
-    caps  = new_ft.dataProvider().capabilities()
     canvas = qgis.utils.iface.mapCanvas()
     canvas.setExtent(new_ft.extent())
 
-#Vytvori list z <L>, z kazdeho bodu <B> urobi QgsPoint
-#vrati list vsetkych bodov v <L> = lines
+
 def create_points(lines):
+    """Vytvori list z <L>, z kazdeho bodu <B> urobi QgsPoint."""
     points = []
     for point in lines.findall('B'):
-        np =  point.get('S')
-        number1 = np[:np.find("$")]#odstrihne od zaciatku po $
-        number2 = np[np.find("$")+1:]#odstrihne od $ dokonca
-        points.append(QgsPoint(float(number2), -1 * float(number1)))#vytvorim bod v
-        #priestore a ten dam nakoniec zoznamu
-    return points#zoznam bodov vratim
+        np = point.get('S')
+        number1 = np[:np.find("$")]  # odstrihne od zaciatku po $
+        number2 = np[np.find("$")+1:]  # odstrihne od $ dokonca
+        points.append(QgsPoint(float(number2), -1 * float(number1)))
+    return points
 
 
-#MP = objekt <MP>, layer = vrstva do ktorej chceme pridat objekt,
-    #atts = list vsetkych atributov, ktore chceme k danemu objektu priradit
-def create_from_MP(MP, layer,atts):
+def create_from_MP(MP, layer, atts):
+    """Vytvorenie polygonu.
+
+    MP = objekt <MP>
+    layer = vrstva do ktorej chceme pridat objekt
+    atts = list vsetkych atributov, ktore chceme k danemu objektu priradit
+    """
     finished_list = []
     for lines in MP.findall('L'):
-        
-        points = create_points(lines)#ziskam zoznam bodov
+        points = create_points(lines)  # ziskam zoznam bodov
         finished_list.append(points)
-    
-    pt.setGeometry(QgsGeometry.fromPolygon(finished_list))#vytvorim geom.
-            #objekt
-    pt.setAttributes(atts)#nastavim atributy
-        
+    pt.setGeometry(QgsGeometry.fromPolygon(finished_list))  # vytvorim objekt
+    pt.setAttributes(atts)  # nastavenie atributov
     layer.addFeatures([pt])
-            #Poly_layer.updateExtents()
 
 
-#obodba pre create_from MP, ale pracuje s ML objektom
 def create_from_ML(ML, layer, atts):
+    """Obodba pre create_from_MP, ale pracuje s ML objektom."""
     for lines in ML.findall('L'):
         points = create_points(lines)
         pt.setGeometry(QgsGeometry.fromPolyline(points))
         pt.setAttributes(atts)
         layer.addFeatures([pt])
-        #Poly_layer.updateExtents()
 
 
 def parse_polygon(psk, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
                   DRV_ID, etz_file, drv_file, pos_file, zal_file, kat_file):
+    """Spracuj jeden polygon."""
     psk_atts = create_attributes(psk, list_of_psk)
     if not psk.findall('PSK_OBRAZ'):
         return None
