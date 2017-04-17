@@ -535,7 +535,7 @@ class Database:
             for ring in ft.geometry().asPolygon():
                 l = ET.SubElement(ml, "L")
                 for point in ring:
-                    ET.SubElement(l, "B", S="{0}${1}".format(point[0], point[1]))
+                    ET.SubElement(l, "B", S="{0}${1}".format(-1 * point[1], point[0]))
 
             self.process_etz(psk, self.etzs[ft.attributes()[self.id_PSK]])
             if ft.attributes()[self.id_original] == -2:
