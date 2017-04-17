@@ -136,6 +136,76 @@ def create_from_ML(ML, layer, atts):
         layer.addFeatures([pt])
         #Poly_layer.updateExtents()
 
+
+def parse_polygon(psk, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
+                  DRV_ID, etz_file, drv_file, pos_file, zal_file, kat_file):
+    psk_atts = create_attributes(psk, list_of_psk)
+    if not psk.findall('PSK_OBRAZ'):
+        return None
+    progress_count = 0
+    atts = [odd_att]
+    atts.append(dil_att)
+    for item in por_atts:
+        atts.append(item)
+    for item in psk_atts:
+        atts.append(item)
+
+    atts.append(my_id)
+    my_id_id = len(atts)-1
+    atts.extend(['BW', 50, 10000, 0, 0, 1, 0, ';', ';', -1])
+    number_of_polygons = 0
+    for psk_obraz in psk.findall('PSK_OBRAZ'):
+        for MP in psk_obraz.findall('MP'):
+            for polygon in MP.findall('P'):
+                if number_of_polygons == 0:
+                    atts[my_id_id] += 0
+                else:
+                    atts[my_id_id] += 1
+                create_from_MP(polygon, psk_poly, atts)
+                number_of_polygons += 1
+
+    for j in range(number_of_polygons):
+        for etaz in psk.findall('ETZ'):
+            etz_id = ETZ_ID
+            ETZ_ID += 1
+            etz_atts = create_attributes(etaz, list_of_etz)
+            etz_atts.append(str(my_id+j))
+            etz_atts.append(str(etz_id))
+            to_write = "\",\"".join(etz_atts)
+            etz_file.write("\""+to_write+'\"\n')
+            for drevina in etaz.findall('DRV'):
+                my_drv_id = DRV_ID
+                DRV_ID += 1
+                drv_atts = create_attributes(drevina, list_of_drv)
+                drv_atts.append(str(etz_id))
+                drv_atts.append(str(my_drv_id))
+
+                to_write = "\",\"".join(drv_atts)
+                drv_file.write("\""+to_write+'\"\n')
+
+                for poskodenie in drevina.findall('POS'):
+                    pos_atts = create_attributes(poskodenie, list_of_pos)
+                    pos_atts.append(str(my_drv_id))
+                    to_write = "\",\"".join(pos_atts)
+                    pos_file.write("\""+to_write+'\"\n')
+                    progress_count += 1
+            for zalozenie in etaz.findall('ZAL'):
+                zal_atts = create_attributes(zalozenie, list_of_zal)
+                zal_atts.append(str(etz_id))
+
+                to_write = "\",\"".join(zal_atts)
+                zal_file.write("\""+to_write+'\"\n')
+
+    for j in range(number_of_polygons):
+        for kategoria in porast.findall('KAT'):
+            kat_atts = create_attributes(kategoria, list_of_kat)
+            kat_atts.append(str(my_id+j))
+            to_write = "\",\"".join(kat_atts)
+            kat_file.write("\""+to_write+'\"\n')
+
+    return (number_of_polygons, ETZ_ID, DRV_ID, progress_count)
+
+
 #ziskam list atributov parsovanim
 #OBJ je objekt, ktory obsahuje atributy, ktorych zoznam je v list_for_obj
 #e.g. objekt je <ODD> tak k nemu dam list_of_odd
@@ -552,7 +622,7 @@ def convert_to_shp(pretty_name,folder_name):
             for KLO_obraz in KLO.findall('LIN_OBRAZ'):
                 for ML in KLO_obraz.findall('ML'):
                     create_from_ML(ML,klo_line,atts)
-        i = 24  
+        i = 24
         progress.setValue(i)
 
 
@@ -598,102 +668,39 @@ def convert_to_shp(pretty_name,folder_name):
                                     create_from_MP(polygon,jp_poly,atts)
 
                     for psk in porast.findall('PSK'):
-                        my_id = PSK_ID
-                        #PSK_ID += 1
-                        psk_atts = create_attributes(psk, list_of_psk)
-                        if not psk.findall('PSK_OBRAZ'):
-                            return 3
-                        
-#from this
-                        atts = [odd_att]
-                        atts.append(dil_att)
-                        for item in por_atts:
-                            atts.append(item)
-                        for item in psk_atts:
-                            atts.append(item)
-#to this
-
-                        atts.append(my_id)
-                        my_id_id = len(atts)-1
-                        atts.extend(['BW',50,10000,0,0,1,0,';',';',-1])
-                        number_of_polygons = 0 
-                        for psk_obraz in psk.findall('PSK_OBRAZ'):
-                            for MP in psk_obraz.findall('MP'):
-                                for polygon in MP.findall('P'):
-                                    if number_of_polygons == 0:
-                                        atts[my_id_id] += 0
-                                    else:
-                                        atts[my_id_id] += 1
-                                    #if atts[my_id_id] == 25:
-                                    #    print number_of_polygons
-                                    #+1ale ptoom uz mam cize dam +1+1...
-                                    create_from_MP(polygon,psk_poly,atts)
-                                    number_of_polygons += 1
-                        PSK_ID = PSK_ID + number_of_polygons
-                        
-                        for j in range(number_of_polygons):
-                            for etaz in psk.findall('ETZ'):
-                                etz_id = ETZ_ID
-                                ETZ_ID += 1
-                                etz_atts = create_attributes(etaz,list_of_etz)
-                                etz_atts.append(str(my_id+j))
-                                etz_atts.append(str(etz_id))
-                                to_write = "\",\"".join(etz_atts)
-                                etz_file.write("\""+to_write+'\"\n')
-                                for drevina in etaz.findall('DRV'):
-                                    my_drv_id = DRV_ID
-                                    DRV_ID += 1
-                                    drv_atts = create_attributes(drevina,list_of_drv)
-                                    drv_atts.append(str(etz_id))
-                                    drv_atts.append(str(my_drv_id))
-
-                                    to_write = "\",\"".join(drv_atts)
-                                    drv_file.write("\""+to_write+'\"\n')
-
-                                
-                                    for poskodenie in drevina.findall('POS'):
-                                        pos_atts = create_attributes(poskodenie,
-                                            list_of_pos)
-                                        pos_atts.append(str(my_drv_id))
-                                        to_write = "\",\"".join(pos_atts)
-                                        pos_file.write("\""+to_write+'\"\n')
-                                        if i < 95:
-                                            i += 1
-                                        progress.setValue(i)
+                        psk_i, etz_id, drv_id, new_i = parse_polygon(psk,
+                                                              porast,
+                                                              odd_att,
+                                                              dil_att,
+                                                              por_atts,
+                                                              PSK_ID,
+                                                              ETZ_ID,
+                                                              DRV_ID,
+                                                              etz_file,
+                                                              drv_file,
+                                                              pos_file,
+                                                              zal_file,
+                                                              kat_file)
+                        PSK_ID += psk_i
+                        ETZ_ID = etz_id
+                        DRV_ID = drv_id
+                        i += new_i
+                        if (i > 95):
+                            i = 95
+                        progress.setValue(i)
 
 
-                            
-                            
-                                for zalozenie in etaz.findall('ZAL'):
-                                    zal_atts = create_attributes(zalozenie,list_of_zal)
-                                    zal_atts.append(str(etz_id))
-
-                                    to_write = "\",\"".join(zal_atts)
-                                    zal_file.write("\""+to_write+'\"\n')
-
-
-
-                        for j in range(number_of_polygons):    
-                            for kategoria in porast.findall('KAT'):
-                                kat_atts = create_attributes(kategoria,list_of_kat)
-                                kat_atts.append(str(my_id+j))
-                                to_write = "\",\"".join(kat_atts)
-                                kat_file.write("\""+to_write+'\"\n')
-
-    
     PSK_layer.updateExtents()
     canvas = qgis.utils.iface.mapCanvas()
     canvas.setExtent(PSK_layer.extent())
     qgis.utils.iface.mapCanvas().refresh()
-
-
 
     etz_file.close()
     drv_file.close()
     kat_file.close()
     pos_file.close()
     zal_file.close()
-    
+
     #otvorim si csv ako delimitedText
     #ulozim to ako vektorovu vrstvu - vznikne mi .dbf
     #to otvorim ako vektorovu vrstvu
