@@ -93,6 +93,8 @@ def open_layer(name, address, type_ft):
     type_ft = ogr pre vektorove vrstvy, "delimitedText" pre csv
     """
     new_ft = QgsVectorLayer(address, name, type_ft)
+    if (new_ft.featureCount() < 1):
+        return
     QgsMapLayerRegistry.instance().addMapLayer(new_ft)
     canvas = qgis.utils.iface.mapCanvas()
     canvas.setExtent(new_ft.extent())

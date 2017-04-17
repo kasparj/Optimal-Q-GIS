@@ -1318,13 +1318,13 @@ class Database:
 
     def save_all_11(self):
         self.save_all.show()
-    
-    def open_layer(self, name, address,type_ft):
 
-        new_ft = QgsVectorLayer(address,name,type_ft)
+    def open_layer(self, name, address, type_ft):
+        """Open layer from file."""
+        new_ft = QgsVectorLayer(address, name, type_ft)
+        if (new_ft.featureCount() < 1):
+            return
         QgsMapLayerRegistry.instance().addMapLayer(new_ft)
-        #layer = iface.addVectorLayer(address, name, type_ft)
-        caps  = new_ft.dataProvider().capabilities()
         canvas = qgis.utils.iface.mapCanvas()
         canvas.setExtent(new_ft.extent())
 
