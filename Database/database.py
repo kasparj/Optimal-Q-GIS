@@ -530,8 +530,8 @@ class Database:
             dict_['PSK_ID'] = str(ft.id())
             psk = ET.SubElement(root, "PSK", dict_)
             psk_obraz = ET.SubElement(psk, "PSK_OBRAZ")
-            p = ET.SubElement(psk_obraz, "P")
-            ml = ET.SubElement(p, "ML")
+            p = ET.SubElement(psk_obraz, "MP")
+            ml = ET.SubElement(p, "P")
             for ring in ft.geometry().asPolygon():
                 l = ET.SubElement(ml, "L")
                 for point in ring:
