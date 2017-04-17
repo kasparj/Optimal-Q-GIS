@@ -136,7 +136,7 @@ def create_from_ML(ML, layer, atts):
         layer.addFeatures([pt])
 
 
-def parse_polygon(psk, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
+def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
                   DRV_ID, etz_file, drv_file, pos_file, zal_file, kat_file):
     """Spracuj jeden polygon."""
     psk_atts = create_attributes(psk, list_of_psk)
@@ -161,7 +161,7 @@ def parse_polygon(psk, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
                     atts[my_id_id] += 0
                 else:
                     atts[my_id_id] += 1
-                create_from_MP(polygon, psk_poly, atts)
+                create_from_MP(polygon, lyr, atts)
                 number_of_polygons += 1
 
     for j in range(number_of_polygons):
@@ -669,6 +669,7 @@ def convert_to_shp(pretty_name,folder_name):
 
                     for psk in porast.findall('PSK'):
                         psk_i, etz_id, drv_id, new_i = parse_polygon(psk,
+                                                              psk_poly,
                                                               porast,
                                                               odd_att,
                                                               dil_att,
