@@ -139,7 +139,12 @@ def create_from_ML(ML, layer, atts):
 def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
                   DRV_ID, etz_file, drv_file, pos_file, zal_file, kat_file):
     """Spracuj jeden polygon."""
+    known = False
     psk_atts = create_attributes(psk, list_of_psk)
+    try_id = psk.get("PSK_ID")
+    if try_id:
+        my_id = int(try_id)
+        known = True
     if not psk.findall('PSK_OBRAZ'):
         return None
     progress_count = 0
@@ -157,9 +162,7 @@ def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
     for psk_obraz in psk.findall('PSK_OBRAZ'):
         for MP in psk_obraz.findall('MP'):
             for polygon in MP.findall('P'):
-                if number_of_polygons == 0:
-                    atts[my_id_id] += 0
-                else:
+                if number_of_polygons != 0 and not known:
                     atts[my_id_id] += 1
                 create_from_MP(polygon, lyr, atts)
                 number_of_polygons += 1
@@ -334,193 +337,238 @@ def convert_to_shp(pretty_name,folder_name):
     if not PSK_layer.isValid():
             return 1
 
-    
-    i = 5  
+    global TAZ_layer
+    TAZ_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Lesne porasty', "memory")
+    if not TAZ_layer.isValid():
+            return 1
+
+    i = 5
     progress.setValue(i)
-#priprava vstiev, cast druha
-#format jedneho parametra :
-    #QgsField(
-    #"nazov stlpca v tabulke - moze sa menit lubovolne, ale nie poradie"
-    #tieto parametre sa zobrazia v tabulke uzivatelovi
-    #typ parametra QVariant.[String/Int/Double] - pomenit tak, aby odpovedalo
-    #NEMENIT POSLEDNY PARAMTERE - XXXX-NUMB!
-    
-    
-    #QgsMapLayerRegistry.instance().addMapLayer(PSK_layer)
+    # priprava vstiev, cast druha
+    # format jedneho parametra :
+    # QgsField(
+    # "nazov stlpca v tabulke - moze sa menit lubovolne, ale nie poradie"
+    # tieto parametre sa zobrazia v tabulke uzivatelovi
+    # typ parametra QVariant.[String/Int/Double] - pomenit tak, aby odpovedalo
+    # NEMENIT POSLEDNY PARAMTERE - XXXX-NUMB!
+
+
     global psk_poly
     psk_poly = PSK_layer.dataProvider()
     psk_poly.addAttributes([
-                            QgsField("ODD" , QVariant.String),
-                            QgsField("DIL" , QVariant.String),
+                            QgsField("ODD", QVariant.String),
+                            QgsField("DIL", QVariant.String),
 
-                            QgsField("POR" , QVariant.String),
-                            QgsField("SDR_POR" , QVariant.String),
-                            QgsField("MAJ_KOD" , QVariant.String),
-                            QgsField("MAJ_NAZ" , QVariant.String),
-                            QgsField("MAJ_DRUH" , QVariant.String),
-                            QgsField("ORG_UROVEN" , QVariant.String),
-                            QgsField("PAS_OHR" , QVariant.String),
-                            QgsField("LES_OBL" , QVariant.String),
-                            QgsField("LES_PODOBL" , QVariant.String),
-                            QgsField("ZVL_STATUT" , QVariant.String),
-                            QgsField("OLH_LIC" , QVariant.String),
-                            QgsField("OLH" , QVariant.String),
-                            QgsField("POR_TEXT" , QVariant.String),
-                            QgsField("HIST_LHC" , QVariant.String),
-                            QgsField("HIST_LHPOD" , QVariant.String),
-                            QgsField("HIST_ROZD" , QVariant.String),
+                            QgsField("POR", QVariant.String),
+                            QgsField("SDR_POR", QVariant.String),
+                            QgsField("MAJ_KOD", QVariant.String),
+                            QgsField("MAJ_NAZ", QVariant.String),
+                            QgsField("MAJ_DRUH", QVariant.String),
+                            QgsField("ORG_UROVEN", QVariant.String),
+                            QgsField("PAS_OHR", QVariant.String),
+                            QgsField("LES_OBL", QVariant.String),
+                            QgsField("LES_PODOBL", QVariant.String),
+                            QgsField("ZVL_STATUT", QVariant.String),
+                            QgsField("OLH_LIC", QVariant.String),
+                            QgsField("OLH", QVariant.String),
+                            QgsField("POR_TEXT", QVariant.String),
+                            QgsField("HIST_LHC", QVariant.String),
+                            QgsField("HIST_LHPOD", QVariant.String),
+                            QgsField("HIST_ROZD", QVariant.String),
 
-                            QgsField("PSK" , QVariant.String),
-                            QgsField("PSK_P0" , QVariant.Double),
-                            QgsField("PSK_V" , QVariant.Double),
-                            QgsField("PSK_P" , QVariant.Double),
-                            QgsField("KVAL_P" , QVariant.Int),
-                            QgsField("ORP" , QVariant.Int),
-                            QgsField("KRAJ" , QVariant.String),
-                            QgsField("KATUZE_KOD" , QVariant.Int),
-                            QgsField("KAT_PAR_KOD" , QVariant.Int),
-                            QgsField("SLT" , QVariant.String),
-                            QgsField("LT" , QVariant.String),
-                            QgsField("TER_TYP" , QVariant.Int),
-                            QgsField("PRIB_VZD" , QVariant.Int),
-                            QgsField("HOSP_ZP" , QVariant.Int),
-                            QgsField("DAN" , QVariant.String),
-                            QgsField("PSK_TEXT" , QVariant.String),
-                            QgsField("CISLO_TEL" , QVariant.Int),
-                            
+                            QgsField("PSK", QVariant.String),
+                            QgsField("PSK_P0", QVariant.Double),
+                            QgsField("PSK_V", QVariant.Double),
+                            QgsField("PSK_P", QVariant.Double),
+                            QgsField("KVAL_P", QVariant.Int),
+                            QgsField("ORP", QVariant.Int),
+                            QgsField("KRAJ", QVariant.String),
+                            QgsField("KATUZE_KOD", QVariant.Int),
+                            QgsField("KAT_PAR_KOD", QVariant.Int),
+                            QgsField("SLT", QVariant.String),
+                            QgsField("LT", QVariant.String),
+                            QgsField("TER_TYP", QVariant.Int),
+                            QgsField("PRIB_VZD", QVariant.Int),
+                            QgsField("HOSP_ZP", QVariant.Int),
+                            QgsField("DAN", QVariant.String),
+                            QgsField("PSK_TEXT", QVariant.String),
+                            QgsField("CISLO_TEL", QVariant.Int),
 
-                            QgsField("PSK_NUM" , QVariant.Int),
-                            QgsField("COLOR" , QVariant.String),
-                            QgsField("max_len" , QVariant.Double),
-                            QgsField("max_area" , QVariant.Double),
-                            QgsField("min_len" , QVariant.Double),
-                            QgsField("min_area" , QVariant.Double),
-                            QgsField("max_to_neigh" , QVariant.Double),
-                            QgsField("priorita" , QVariant.Int),
-                            QgsField("sekvencia" , QVariant.String),
-                            QgsField("neighbours" , QVariant.String),
-                            QgsField("original" , QVariant.Int),
-                            
-
+                            QgsField("PSK_NUM", QVariant.Int),
+                            QgsField("COLOR", QVariant.String),
+                            QgsField("max_len", QVariant.Double),
+                            QgsField("max_area", QVariant.Double),
+                            QgsField("min_len", QVariant.Double),
+                            QgsField("min_area", QVariant.Double),
+                            QgsField("max_to_neigh", QVariant.Double),
+                            QgsField("priorita", QVariant.Int),
+                            QgsField("sekvencia", QVariant.String),
+                            QgsField("neighbours", QVariant.String),
+                            QgsField("original", QVariant.Int),
                             ])
     PSK_layer.updateFields()
 
+    global taz_poly
+    taz_poly = TAZ_layer.dataProvider()
+    taz_poly.addAttributes([
+                            QgsField("ODD", QVariant.String),
+                            QgsField("DIL", QVariant.String),
 
-    #QgsMapLayerRegistry.instance().addMapLayer(KPO_layer)
+                            QgsField("POR", QVariant.String),
+                            QgsField("SDR_POR", QVariant.String),
+                            QgsField("MAJ_KOD", QVariant.String),
+                            QgsField("MAJ_NAZ", QVariant.String),
+                            QgsField("MAJ_DRUH", QVariant.String),
+                            QgsField("ORG_UROVEN", QVariant.String),
+                            QgsField("PAS_OHR", QVariant.String),
+                            QgsField("LES_OBL", QVariant.String),
+                            QgsField("LES_PODOBL", QVariant.String),
+                            QgsField("ZVL_STATUT", QVariant.String),
+                            QgsField("OLH_LIC", QVariant.String),
+                            QgsField("OLH", QVariant.String),
+                            QgsField("POR_TEXT", QVariant.String),
+                            QgsField("HIST_LHC", QVariant.String),
+                            QgsField("HIST_LHPOD", QVariant.String),
+                            QgsField("HIST_ROZD", QVariant.String),
+
+                            QgsField("PSK", QVariant.String),
+                            QgsField("PSK_P0", QVariant.Double),
+                            QgsField("PSK_V", QVariant.Double),
+                            QgsField("PSK_P", QVariant.Double),
+                            QgsField("KVAL_P", QVariant.Int),
+                            QgsField("ORP", QVariant.Int),
+                            QgsField("KRAJ", QVariant.String),
+                            QgsField("KATUZE_KOD", QVariant.Int),
+                            QgsField("KAT_PAR_KOD", QVariant.Int),
+                            QgsField("SLT", QVariant.String),
+                            QgsField("LT", QVariant.String),
+                            QgsField("TER_TYP", QVariant.Int),
+                            QgsField("PRIB_VZD", QVariant.Int),
+                            QgsField("HOSP_ZP", QVariant.Int),
+                            QgsField("DAN", QVariant.String),
+                            QgsField("PSK_TEXT", QVariant.String),
+                            QgsField("CISLO_TEL", QVariant.Int),
+
+                            QgsField("PSK_NUM", QVariant.Int),
+                            QgsField("COLOR", QVariant.String),
+                            QgsField("max_len", QVariant.Double),
+                            QgsField("max_area", QVariant.Double),
+                            QgsField("min_len", QVariant.Double),
+                            QgsField("min_area", QVariant.Double),
+                            QgsField("max_to_neigh", QVariant.Double),
+                            QgsField("priorita", QVariant.Int),
+                            QgsField("sekvencia", QVariant.String),
+                            QgsField("neighbours", QVariant.String),
+                            QgsField("original", QVariant.Int),
+                            ])
+    TAZ_layer.updateFields()
+
     global kpo_poly
     kpo_poly = KPO_layer.dataProvider()
     kpo_poly.addAttributes([
-                            QgsField("PLO_DRUH" , QVariant.Int),
-                            QgsField("PLO_ZNACKA" , QVariant.Int),
-                            QgsField("PLO_BARVA" , QVariant.Int),
-                            QgsField("L_" , QVariant.String)
+                            QgsField("PLO_DRUH", QVariant.Int),
+                            QgsField("PLO_ZNACKA", QVariant.Int),
+                            QgsField("PLO_BARVA", QVariant.Int),
+                            QgsField("L_", QVariant.String)
                             ])
     KPO_layer.updateFields()
 
-
-    #QgsMapLayerRegistry.instance().addMapLayer(JP_layer)
     global jp_poly
     jp_poly = JP_layer.dataProvider()
     jp_poly.addAttributes([
-                            QgsField("ODD" , QVariant.String),
-                            QgsField("DIL" , QVariant.String),
+                            QgsField("ODD", QVariant.String),
+                            QgsField("DIL", QVariant.String),
 
-                            QgsField("POR" , QVariant.String),
-                            QgsField("SDR_POR" , QVariant.String),
-                            QgsField("MAJ_KOD" , QVariant.String),
-                            QgsField("MAJ_NAZ" , QVariant.String),
-                            QgsField("MAJ_DRUH" , QVariant.String),
-                            QgsField("ORG_UROVEN" , QVariant.String),
-                            QgsField("PAS_OHR" , QVariant.String),
-                            QgsField("LES_OBL" , QVariant.String),
-                            QgsField("LES_PODOBL" , QVariant.String),
-                            QgsField("ZVL_STATUT" , QVariant.String),
-                            QgsField("OLH_LIC" , QVariant.String),
-                            QgsField("OLH" , QVariant.String),
-                            QgsField("POR_TEXT" , QVariant.String),
-                            QgsField("HIST_LHC" , QVariant.String),
-                            QgsField("HIST_LHPOD" , QVariant.String),
-                            QgsField("HIST_ROZD" , QVariant.String),
+                            QgsField("POR", QVariant.String),
+                            QgsField("SDR_POR", QVariant.String),
+                            QgsField("MAJ_KOD", QVariant.String),
+                            QgsField("MAJ_NAZ", QVariant.String),
+                            QgsField("MAJ_DRUH", QVariant.String),
+                            QgsField("ORG_UROVEN", QVariant.String),
+                            QgsField("PAS_OHR", QVariant.String),
+                            QgsField("LES_OBL", QVariant.String),
+                            QgsField("LES_PODOBL", QVariant.String),
+                            QgsField("ZVL_STATUT", QVariant.String),
+                            QgsField("OLH_LIC", QVariant.String),
+                            QgsField("OLH", QVariant.String),
+                            QgsField("POR_TEXT", QVariant.String),
+                            QgsField("HIST_LHC", QVariant.String),
+                            QgsField("HIST_LHPOD", QVariant.String),
+                            QgsField("HIST_ROZD", QVariant.String),
 
-                            QgsField("JP" , QVariant.Int),
-                            QgsField("JP_PUPFL" , QVariant.String),
-                            QgsField("ORP" , QVariant.Int),
-                            QgsField("KRAJ" , QVariant.String),
-                            QgsField("KATUZE_KOD" , QVariant.Int),
-                            QgsField("JP_PO" , QVariant.Double),
-                            QgsField("JP_V" , QVariant.Double),
-                            QgsField("JP_P" , QVariant.Double),
-                            QgsField("KVAL_P" , QVariant.Int),
-                            QgsField("KAT_PAR_KOD" , QVariant.Int),
-                            QgsField("JP_VYUZ" , QVariant.String),
-                            QgsField("JP_DRUH" , QVariant.String),
-                            QgsField("CISLO_TEL" , QVariant.Int),
+                            QgsField("JP", QVariant.Int),
+                            QgsField("JP_PUPFL", QVariant.String),
+                            QgsField("ORP", QVariant.Int),
+                            QgsField("KRAJ", QVariant.String),
+                            QgsField("KATUZE_KOD", QVariant.Int),
+                            QgsField("JP_PO", QVariant.Double),
+                            QgsField("JP_V", QVariant.Double),
+                            QgsField("JP_P", QVariant.Double),
+                            QgsField("KVAL_P", QVariant.Int),
+                            QgsField("KAT_PAR_KOD", QVariant.Int),
+                            QgsField("JP_VYUZ", QVariant.String),
+                            QgsField("JP_DRUH", QVariant.String),
+                            QgsField("CISLO_TEL", QVariant.Int),
                             ])
     JP_layer.updateFields()
 
-
-    #QgsMapLayerRegistry.instance().addMapLayer(BZL_layer)
     global bzl_poly
     bzl_poly = BZL_layer.dataProvider()
     bzl_poly.addAttributes([
-                            QgsField("ODD" , QVariant.String),
-                            QgsField("DIL" , QVariant.String),
+                            QgsField("ODD", QVariant.String),
+                            QgsField("DIL", QVariant.String),
 
-                            QgsField("POR" , QVariant.String),
-                            QgsField("SDR_POR" , QVariant.String),
-                            QgsField("MAJ_KOD" , QVariant.String),
-                            QgsField("MAJ_NAZ" , QVariant.String),
-                            QgsField("MAJ_DRUH" , QVariant.String),
-                            QgsField("ORG_UROVEN" , QVariant.String),
-                            QgsField("PAS_OHR" , QVariant.String),
-                            QgsField("LES_OBL" , QVariant.String),
-                            QgsField("LES_PODOBL" , QVariant.String),
-                            QgsField("ZVL_STATUT" , QVariant.String),
-                            QgsField("OLH_LIC" , QVariant.String),
-                            QgsField("OLH" , QVariant.String),
-                            QgsField("POR_TEXT" , QVariant.String),
-                            QgsField("HIST_LHC" , QVariant.String),
-                            QgsField("HIST_LHPOD" , QVariant.String),
-                            QgsField("HIST_ROZD" , QVariant.String),
+                            QgsField("POR", QVariant.String),
+                            QgsField("SDR_POR", QVariant.String),
+                            QgsField("MAJ_KOD", QVariant.String),
+                            QgsField("MAJ_NAZ", QVariant.String),
+                            QgsField("MAJ_DRUH", QVariant.String),
+                            QgsField("ORG_UROVEN", QVariant.String),
+                            QgsField("PAS_OHR", QVariant.String),
+                            QgsField("LES_OBL", QVariant.String),
+                            QgsField("LES_PODOBL", QVariant.String),
+                            QgsField("ZVL_STATUT", QVariant.String),
+                            QgsField("OLH_LIC", QVariant.String),
+                            QgsField("OLH", QVariant.String),
+                            QgsField("POR_TEXT", QVariant.String),
+                            QgsField("HIST_LHC", QVariant.String),
+                            QgsField("HIST_LHPOD", QVariant.String),
+                            QgsField("HIST_ROZD", QVariant.String),
 
-                            QgsField("BZL" , QVariant.Int),
-                            QgsField("ORP" , QVariant.Int),
-                            QgsField("KRAJ" , QVariant.String),
-                            QgsField("KATUZE_KOD" , QVariant.Int),
-                            QgsField("BZL_PO" , QVariant.Double),
-                            QgsField("BZL_V" , QVariant.Double),
-                            QgsField("BZL_P" , QVariant.Double),
-                            QgsField("KVAL_P" , QVariant.Int),
-                            QgsField("KAT_PAR_KOD" , QVariant.Int),
-                            QgsField("BZL_VYUZ" , QVariant.String),
-                            QgsField("BZL_DRUH" , QVariant.String),
-                            QgsField("CISLO_TEL" , QVariant.Int),
+                            QgsField("BZL", QVariant.Int),
+                            QgsField("ORP", QVariant.Int),
+                            QgsField("KRAJ", QVariant.String),
+                            QgsField("KATUZE_KOD", QVariant.Int),
+                            QgsField("BZL_PO", QVariant.Double),
+                            QgsField("BZL_V", QVariant.Double),
+                            QgsField("BZL_P", QVariant.Double),
+                            QgsField("KVAL_P", QVariant.Int),
+                            QgsField("KAT_PAR_KOD", QVariant.Int),
+                            QgsField("BZL_VYUZ", QVariant.String),
+                            QgsField("BZL_DRUH", QVariant.String),
+                            QgsField("CISLO_TEL", QVariant.Int),
                             ])
     BZL_layer.updateFields()
 
-
-    #QgsMapLayerRegistry.instance().addMapLayer(KLO_layer)
     global klo_line
     klo_line = KLO_layer.dataProvider()
     klo_line.addAttributes([
-                            QgsField("LIN_DRUH" , QVariant.Int),
-                            QgsField("LIN_ZNACKA" , QVariant.Int),
-                            QgsField("LIN_BARVA" , QVariant.Int),
-                            QgsField("L_" , QVariant.String),
+                            QgsField("LIN_DRUH", QVariant.Int),
+                            QgsField("LIN_ZNACKA", QVariant.Int),
+                            QgsField("LIN_BARVA", QVariant.Int),
+                            QgsField("L_", QVariant.String),
                             ])
     KLO_layer.updateFields()
 
-
-    #QgsMapLayerRegistry.instance().addMapLayer(KBO_layer)
     """
     global kbo_line
     kbo_line = KBO_layer.dataProvider()
     kbo_line.addAttributes([
-                            QgsField("BOD_DRUH" , QVariant.Int),
-                            QgsField("BOD_ZNACKA" , QVariant.Int),
-                            QgsField("BOD_UHELZN" , QVariant.Double),
-                            QgsField("BOD_BARVA" , QVariant.Int),
-                            QgsField("L_" , QVariant.String),
+                            QgsField("BOD_DRUH", QVariant.Int),
+                            QgsField("BOD_ZNACKA", QVariant.Int),
+                            QgsField("BOD_UHELZN", QVariant.Double),
+                            QgsField("BOD_BARVA", QVariant.Int),
+                            QgsField("L_", QVariant.String),
                             ])
     KBO_layer.updateFields()
 
@@ -529,36 +577,36 @@ def convert_to_shp(pretty_name,folder_name):
     global kto_line
     kto_line = KTO_layer.dataProvider()
     kto_line.addAttributes([
-                            QgsField("text" , QVariant.String),
+                            QgsField("text", QVariant.String),
                             QgsField("TXT_STYL", QVariant.Int),
                             QgsField("TXT_UHEL", QVariant.Double),
                             QgsField("L_",QVariant.String)
                             ])
     KTO_layer.updateFields()
     """
-    
-    i = 7  
-    progress.setValue(i)
-#------------------------------------------------------------------------
-#parser xml + samotne ukladanie
-#------------------------------------------------------------------------
 
-    tree = ET.parse(pretty_name)#pripravime si vstupn subor
+    i = 7
+    progress.setValue(i)
+
+# ------------------------------------------------------------------------
+#                        parser xml + samotne ukladanie
+# ------------------------------------------------------------------------
+
+    tree = ET.parse(pretty_name)  # pripravime si vstupn subor
     if not tree:
         return 2
     root = tree.getroot()
 
-    PSK_ID = 0#pocitadla etazi, porastov...
+    PSK_ID = 0
+    TAZ_ID = 0
     ETZ_ID = 0
     DRV_ID = 0
-    LAST_COUNT = 0
 
-    
     for child in root:
-        #save_LHC(child.attrib)!
-        #for HS,OU1,OU2,MZD!
-                
-        i = 15  
+        # TODO save_LHC(child.attrib)
+        # TODO HS,OU1,OU2,MZD
+
+        i = 15
         progress.setValue(i)
         """
         for KBO in child.findall('KBO'):
@@ -690,10 +738,23 @@ def convert_to_shp(pretty_name,folder_name):
                             i = 95
                         progress.setValue(i)
 
+                    for taz in porast.findall('TazebniPrvek'):
+                        PSK_layer.updateExtents()
+                        psk_id = taz.get("ID_PSK")
+                        request = QgsFeatureRequest()
+                        request.setFilterExpression(u'"PSK_NUM" = %s' % psk_id)
+                        psk_ft = psk_poly.getFeatures(request).next()
+                        pt.setGeometry(psk_ft.geometry())
+                        pt.setAttributes(psk_ft.attributes())
+                        taz_poly.addFeatures([pt])
 
     PSK_layer.updateExtents()
+    TAZ_layer.updateExtents()
     canvas = qgis.utils.iface.mapCanvas()
-    canvas.setExtent(PSK_layer.extent())
+    if (TAZ_layer.featureCount() > 1):
+        canvas.setExtent(TAZ_layer.extent())
+    else:
+        canvas.setExtent(PSK_layer.extent())
     qgis.utils.iface.mapCanvas().refresh()
 
     etz_file.close()
@@ -755,7 +816,11 @@ def convert_to_shp(pretty_name,folder_name):
     err_stat = save_layer(PSK_layer,folder_name+'/PSK')
     if err_stat != 0:
         err_code = err_stat
-    
+
+    err_stat = save_layer(TAZ_layer,folder_name+'/TAZ')
+    if err_stat != 0:
+        err_code = err_stat
+
     err_stat = save_layer(KPO_layer,folder_name+'/KPO')
     if err_stat != 0:
         err_code = err_stat
@@ -767,7 +832,7 @@ def convert_to_shp(pretty_name,folder_name):
     err_stat = save_layer(BZL_layer,folder_name+'/BZL')
     if err_stat != 0:
         err_code = err_stat
-    
+
     err_stat = save_layer(KLO_layer,folder_name+'/KLO')
     if err_stat != 0:
         err_code = err_stat
@@ -796,8 +861,8 @@ def convert_to_shp(pretty_name,folder_name):
     open_layer("Ine plochy",folder_name+'/JP.shp',"ogr")
     open_layer("KPO",folder_name+'/KPO.shp',"ogr")
     open_layer("Lesne porasty",folder_name+'/PSK.shp',"ogr")
+    open_layer("Tazobne prvky",folder_name+'/TAZ.shp',"ogr")
 
-    
     return 0
 
 
