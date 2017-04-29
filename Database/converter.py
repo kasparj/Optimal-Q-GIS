@@ -37,11 +37,13 @@ names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
                 'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
                 'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
                 'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
+names_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA', 'PSK_ID']
 
 # Tieto listy nemenit, to su zoznamy pre parsovanie dat
 # menit iba ak sa zmeni standard, na poradi zalezi
 # ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
 
+list_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA']
 list_of_pos = ['POSKOZ_D', 'POSKOZ_R']
 list_of_zal = ['ZAL_DR', 'ZAL_DR_P']
 list_of_kat = ['KATEGORIE', 'KAT_SPEC']
@@ -260,8 +262,13 @@ def convert_to_shp(pretty_name,folder_name):
         etz_file.write(",".join(names_of_etz)+'\n')
     except:
         return 1
-   
-    
+
+    try:
+        vys_vych_file = codecs.open(folder_name+'/vys_vych_file.csv','w',encoding='utf-8')
+        vys_vych_file.write(",".join(names_of_vys_vych)+'\n')
+    except:
+        return 1
+
     try:
         drv_file = codecs.open(folder_name+'/drv_file.csv','w',encoding='utf-8')
         drv_file.write(",".join(names_of_drv)+'\n')
@@ -741,6 +748,14 @@ def convert_to_shp(pretty_name,folder_name):
                     for taz in porast.findall('TazebniPrvek'):
                         PSK_layer.updateExtents()
                         psk_id = taz.get("ID_PSK")
+
+                        for vys_vych in taz.findall('VYSLEDEK_VYCHOVA'):
+                            vys_vych_atts = create_attributes(vys_vych,
+                                                              list_of_vys_vych)
+                            vys_vych_atts.append(psk_id)
+                            to_write = "\",\"".join(vys_vych_atts)
+                            vys_vych_file.write("\""+to_write+'\"\n')
+
                         request = QgsFeatureRequest()
                         request.setFilterExpression(u'"PSK_NUM" = %s' % psk_id)
                         psk_ft = psk_poly.getFeatures(request).next()
@@ -757,6 +772,7 @@ def convert_to_shp(pretty_name,folder_name):
         canvas.setExtent(PSK_layer.extent())
     qgis.utils.iface.mapCanvas().refresh()
 
+    vys_vych_file.close()
     etz_file.close()
     drv_file.close()
     kat_file.close()
@@ -773,37 +789,31 @@ def convert_to_shp(pretty_name,folder_name):
     new_etz = QgsVectorLayer(folder_name+'/etz.dbf',"Porast","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_etz)
 
-
     drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
     save_layer(drv_csv,folder_name+'/drv')
     new_drv = QgsVectorLayer(folder_name+'/drv.dbf',"Dreviny","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_drv)
-
-
 
     kat_csv = QgsVectorLayer("file:///"+folder_name+'/kat_file.csv',"Kategorie","delimitedtext")
     save_layer(kat_csv,folder_name+'/kat')
     new_kat = QgsVectorLayer(folder_name+'/kat.dbf',"Kategorie","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_kat)
 
-
-
     zal_csv = QgsVectorLayer("file:///"+folder_name+'/zal_file.csv',"Zalozenie","delimitedtext")
     save_layer(zal_csv,folder_name+'/zal')
     new_zal = QgsVectorLayer(folder_name+'/zal.dbf',"Zalozenie","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_zal)
 
-
-    
     pos_csv = QgsVectorLayer("file:///"+folder_name+'/pos_file.csv',"Poskodenia","delimitedtext")
     save_layer(pos_csv,folder_name+'/pos')
     new_pos = QgsVectorLayer(folder_name+'/pos.dbf',"Poskodenia","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_pos)
 
-    
+    vys_vych_csv = QgsVectorLayer("file:///"+folder_name+'/vys_vych_file.csv',"VysledkyVychova","delimitedtext")
+    save_layer(vys_vych_csv,folder_name+'/vys_vych')
+    new_vys_vych = QgsVectorLayer(folder_name+'/vys_vych.dbf',"VysledkyVychova","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_vys_vych)
 
-
-    
     #etz1=qgis.utils.iface.addVectorLayer("file:///"+folder_name+'/etz.dbf',"Porast1","ogr")
     #joinObject = QgsVectorJoinInfo()
     #joinObject.joinLayerId = por_csv.id()
