@@ -38,11 +38,17 @@ names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
                 'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
                 'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
 names_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA', 'PSK_ID']
+names_of_vys_obn = ['DR', 'INTENZITA', 'ODSTUP', 'TYP', 'PRIRAZENI',
+                    'ZAHAJENI', 'ETZ_NUM', 'PSK_NUM']
 
 # Tieto listy nemenit, to su zoznamy pre parsovanie dat
 # menit iba ak sa zmeni standard, na poradi zalezi
 # ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
 
+list_of_vys_obn = ['ID_TAZ_TYP', 'ZAHAJENI', 'ID_ETAZ']
+list_of_taz_typ = ['ID', 'TYP', 'PRIRAZENI']
+list_of_sec = ['ID', 'ODSTUP']
+list_of_zasah = ['DR', 'INTENZITA']
 list_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA']
 list_of_pos = ['POSKOZ_D', 'POSKOZ_R']
 list_of_zal = ['ZAL_DR', 'ZAL_DR_P']
@@ -225,6 +231,21 @@ def create_attributes(OBJ, list_for_obj):
     return atts#vratim list
 
 
+def parse_taz_type(taz_typ, atts, file_to_write):
+    """Parse TAZ_TYP."""
+    atts.insert(0, taz_typ.get('PRIRAZENI'))
+    atts.insert(0, taz_typ.get('TYP'))
+    for sec in taz_typ.findall('SEC'):
+        tmp_atts = atts[:]
+        tmp_atts.insert(0, sec.get('ODSTUP'))
+        for zasah in sec.findall('ZASAH'):
+            tmp_atts1 = tmp_atts[:]
+            tmp_atts1.insert(0, zasah.get('INTENZITA'))
+            tmp_atts1.insert(0, zasah.get('DR'))
+            to_write = "\",\"".join(tmp_atts1)
+            file_to_write.write("\""+to_write+'\"\n')
+
+
 #funkcia na ulozenie .shp vrstvy
 #layer je platny ukazatel na vrstvu
 #address je cesta aj s menom suboru kde sa ma ulozit
@@ -257,6 +278,12 @@ def convert_to_shp(pretty_name,folder_name):
     #praca s CSV - otvorim si vsetky potrebne .csv subory a rovno do nich
         #zapisem aj hlavicku - mohlo by sa to vytiahnut nejako do funckie...
     #otvorim kazdy subor a zapisem tam aj hlavicky tabuliek
+    try:
+        vys_obn_file = codecs.open(folder_name+'/vys_obn_file.csv','w',encoding='utf-8')
+        vys_obn_file.write(",".join(names_of_vys_obn)+'\n')
+    except:
+        return 1
+
     try:
         etz_file = codecs.open(folder_name+'/etz_file.csv','w',encoding='utf-8')
         etz_file.write(",".join(names_of_etz)+'\n')
@@ -756,6 +783,20 @@ def convert_to_shp(pretty_name,folder_name):
                             to_write = "\",\"".join(vys_vych_atts)
                             vys_vych_file.write("\""+to_write+'\"\n')
 
+                        id_tt = None
+                        for vys_obn in taz.findall('VYSLEDEK_OBNOVA'):
+                            vys_obn_atts = create_attributes(vys_obn,
+                                                             list_of_vys_obn)
+                            id_tt = vys_obn_atts[0]
+                            vys_obn_atts.append(psk_id)
+
+                        if id_tt:
+                            for taz_typ in taz.findall('TAZ_TYP'):
+                                if taz_typ.get('ID') == id_tt:
+                                    parse_taz_type(taz_typ,
+                                                   vys_obn_atts[1:],
+                                                   vys_obn_file)
+
                         request = QgsFeatureRequest()
                         request.setFilterExpression(u'"PSK_NUM" = %s' % psk_id)
                         psk_ft = psk_poly.getFeatures(request).next()
@@ -773,6 +814,7 @@ def convert_to_shp(pretty_name,folder_name):
     qgis.utils.iface.mapCanvas().refresh()
 
     vys_vych_file.close()
+    vys_obn_file.close()
     etz_file.close()
     drv_file.close()
     kat_file.close()
@@ -813,6 +855,11 @@ def convert_to_shp(pretty_name,folder_name):
     save_layer(vys_vych_csv,folder_name+'/vys_vych')
     new_vys_vych = QgsVectorLayer(folder_name+'/vys_vych.dbf',"VysledkyVychova","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_vys_vych)
+
+    vys_obn_csv = QgsVectorLayer("file:///"+folder_name+'/vys_obn_file.csv',"VysledkyObnova","delimitedtext")
+    save_layer(vys_obn_csv,folder_name+'/vys_obn')
+    new_vys_obn = QgsVectorLayer(folder_name+'/vys_obn.dbf',"VysledkyObnova","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_vys_obn)
 
     #etz1=qgis.utils.iface.addVectorLayer("file:///"+folder_name+'/etz.dbf',"Porast1","ogr")
     #joinObject = QgsVectorJoinInfo()
