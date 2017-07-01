@@ -39,13 +39,13 @@ names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
                 'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
 names_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA', 'PSK_ID']
 names_of_vys_obn = ['DR', 'INTENZITA', 'ODSTUP', 'TYP', 'PRIRAZENI',
-                    'ZAHAJENI', 'ETZ_NUM', 'PSK_NUM']
+                    'ZAHAJENI', 'PSK_NUM']
 
 # Tieto listy nemenit, to su zoznamy pre parsovanie dat
 # menit iba ak sa zmeni standard, na poradi zalezi
 # ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
 
-list_of_vys_obn = ['ID_TAZ_TYP', 'ZAHAJENI', 'ID_ETAZ']
+list_of_vys_obn = ['ID_TAZ_TYP', 'ZAHAJENI']
 list_of_taz_typ = ['ID', 'TYP', 'PRIRAZENI']
 list_of_sec = ['ID', 'ODSTUP']
 list_of_zasah = ['DR', 'INTENZITA']
