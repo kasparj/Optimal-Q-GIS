@@ -37,7 +37,7 @@ names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
                 'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
                 'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
                 'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
-names_of_vys_vych = ['PER', 'VAL', 'ID_ETAZ', 'DREVINA_ZKR', 'TEZBA_CELKEM', 'ID_VYCHOVA', 'PSK_ID']
+names_of_vys_vych = ['PER', 'VAL', 'ID_ETAZ', 'DREVINA_ZKR', 'TEZBA_CELKEM', 'ID_VYCHOVA', 'PSK_NUM']
 names_of_vys_obn = ['DR', 'INTENZITA', 'ODSTUP', 'TYP', 'PRIRAZENI',
                     'ZAHAJENI', 'TEZBA_CELKEM', 'PSK_NUM']
 

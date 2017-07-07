@@ -60,6 +60,7 @@ edit_pos = 0#povoluje editovanie - aby si nemyslelo ze editujem, ked len
     #nastavujem hodnoty do tabulky
 list_of_kats_ids = []#globalne uloziska pre id  prave vypisanych hodnot
 list_of_etzs_ids = []#sluzi na rychjesiu editaciu parametrov
+list_of_vys_vych_ids = []
 list_of_drvs_ids = []
 list_of_zals_ids = []
 list_of_poss_ids = []
@@ -1538,6 +1539,8 @@ class Database:
                 zal_csv = layer
             elif layer.name() == "Poskodenia":
                 pos_csv = layer
+            elif layer.name() == "VysledkyVychova":
+                vys_vych_csv = layer
         if not etz_csv or not drv_csv or not kat_csv or not zal_csv or not pos_csv:
             return
 #kontorla ci naslo vsetky co treba
@@ -1591,6 +1594,7 @@ class Database:
             expr = QgsExpression("PSK_NUM ="+ str(psk_numb))
             selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
             selected_kats = kat_csv.getFeatures(QgsFeatureRequest(expr))
+            selected_vys_vych = vys_vych_csv.getFeatures(QgsFeatureRequest(expr))
             
 
             fields_etz = etz_csv.pendingFields()
@@ -1600,8 +1604,16 @@ class Database:
             features_list_etz = self.convert_to_strings(features_list_etz)
             for fit in selected_etzs:
                 list_of_etzs_ids.append(fit.id())
-            
-            
+
+            fields_vys_vych = vys_vych_csv.pendingFields()
+            field_names_vys_vych = [field.name() for field in fields_vys_vych]
+            selected_vys_vych = list(selected_vys_vych)
+            features_list_vys_vych = [feature.attributes() for feature in selected_vys_vych]
+            features_list_vys_vych.sort(key=lambda x: x[0])
+            features_list_vys_vych = self.convert_to_strings(features_list_vys_vych)
+            for fit in selected_vys_vych:
+                list_of_vys_vych_ids.append(fit.id())
+
             fields_kat = kat_csv.pendingFields()
             field_names_kat = [field.name() for field in fields_kat]
             selected_kats =list(selected_kats)
@@ -1689,6 +1701,8 @@ class Database:
                     features_list_zal,self.shower.zalozene)
             self.shower.set_data(field_names_pos,
                     features_list_pos,self.shower.pos)
+            self.shower.set_data(field_names_vys_vych,
+                    features_list_vys_vych,self.shower.vychova)
             self.shower.area.setText(str("%.2f" % (area/10000)))
             #self.shower.length.setText(str(round(length*2)/2))
 
