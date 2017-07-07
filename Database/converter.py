@@ -780,8 +780,13 @@ def convert_to_shp(pretty_name,folder_name):
                             vys_vych_atts = create_attributes(vys_vych,
                                                               list_of_vys_vych)
                             vys_vych_atts.append(psk_id)
-                            to_write = "\",\"".join(vys_vych_atts)
-                            vys_vych_file.write("\""+to_write+'\"\n')
+                            for per in vys_vych.findall('TEZBA_PERIODA'):
+                                tmp_atts = vys_vych_atts[:]
+                                tmp_atts.insert(0, per.get('VAL'))
+                                tmp_atts.insert(0, per.get('PER'))
+
+                                to_write = "\",\"".join(tmp_atts)
+                                vys_vych_file.write("\""+to_write+'\"\n')
 
                         id_tt = None
                         for vys_obn in taz.findall('VYSLEDEK_OBNOVA'):
