@@ -37,7 +37,7 @@ names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
                 'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
                 'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
                 'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
-names_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA', 'PSK_ID']
+names_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA', 'TEZBA_CELKEM', 'PSK_ID']
 names_of_vys_obn = ['DR', 'INTENZITA', 'ODSTUP', 'TYP', 'PRIRAZENI',
                     'ZAHAJENI', 'TEZBA_CELKEM', 'PSK_NUM']
 
@@ -49,7 +49,7 @@ list_of_vys_obn = ['ID_TAZ_TYP', 'ZAHAJENI', 'TEZBA_CELKEM']
 list_of_taz_typ = ['ID', 'TYP', 'PRIRAZENI']
 list_of_sec = ['ID', 'ODSTUP']
 list_of_zasah = ['DR', 'INTENZITA']
-list_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'ID_VYCHOVA']
+list_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'TEZBA_CELKEM', 'ID_VYCHOVA']
 list_of_pos = ['POSKOZ_D', 'POSKOZ_R']
 list_of_zal = ['ZAL_DR', 'ZAL_DR_P']
 list_of_kat = ['KATEGORIE', 'KAT_SPEC']
