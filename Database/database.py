@@ -1338,7 +1338,8 @@ class Database:
         self.open_layer("Kategorie", input_folder+'/kat.dbf',"ogr")
         self.open_layer("Zalozenie", input_folder+'/zal.dbf',"ogr")
         self.open_layer("Poskodenia", input_folder+'/pos.dbf',"ogr")
-        
+        self.open_layer("VysledkyObnova", input_folder+'/vys_obn.dbf',"ogr")
+        self.open_layer("VysledkyVychova", input_folder+'/vys_vych.dbf',"ogr")
         #self.open_layer("KTO",input_folder+'/KTO.shp',"ogr")
         #self.open_layer("Body",input_folder+'/KBO.shp',"ogr")
         self.open_layer("KLO",input_folder+'/KLO.shp',"ogr")
@@ -1373,6 +1374,10 @@ class Database:
                 self.save_layer(layer,pretty_folder+'/zal')
             elif layer.name() == "Poskodenia":
                 self.save_layer(layer,pretty_folder+'/pos')
+            elif layer.name() == "VysledkyObnova":
+                self.save_layer(layer,pretty_folder+'/vys_obn')
+            elif layer.name() == "VysledkyVychova":
+                self.save_layer(layer,pretty_folder+'/vys_vych')
             #elif layer.name() == "KTO":
             #    self.save_layer(layer,pretty_folder+'/KTO')
             #elif layer.name() == "Body":
@@ -1387,10 +1392,9 @@ class Database:
                 self.save_layer(layer,pretty_folder+'/KPO')
             elif layer.name() == "Lesne porasty":
                 self.save_layer(layer,pretty_folder+'/PSK')
-            
+
         self.save_all.close()
-    
-    
+
     def convert_to_strings(self,old_list):
         new_list_list = []
         new_list = []
