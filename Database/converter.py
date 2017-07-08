@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import xml.etree.ElementTree as ET
+import codecs
 import qgis
 from qgis.core import *
 from qgis.gui import *
@@ -9,89 +10,10 @@ from PyQt4.QtCore import *
 from PyQt4 import QtGui
 from PyQt4.QtGui import QProgressBar
 from qgis.utils import iface
-import codecs
-
-# ------------------------------------------------------------------------
-#                        globalne premenne
-# ------------------------------------------------------------------------
+from names import *
 
 
-pt = QgsFeature()  # premenna pre jedne geom. objekt
-
-# mozu sa menit, ale treba zachovat poradie
-# NEMENIT XXX_NUM, ani poradie, nepridavat nakoniec - radsej do stredu!
-# tieto nazvy sa priamo zapisu do suboru ako hlavicky
-
-names_of_pos = ['POSKOZ_D',  'POSKOZ_R',  'DRV_NUM']
-names_of_zal = ['ZAL_DR', 'ZAL_DR_P', 'ETZ_NUM']
-names_of_kat = ['KATEGORIE', 'KAT_SPEC', 'PSK_NUM']
-names_of_drv = ['DR_ZKR', 'DR_KOD', 'DR_NAZ', 'DR_PUVOD',
-                'ZDR_REP', 'ZAST', 'VYSKA', 'TLOUSTKA',
-                'BON_R', 'BON_A', 'GEN_KLAS', 'VYB_STR', 'DR_ZAS_TAB',
-                'DR_ZAS_HA', 'DR_ZAS_CEL', 'DR_CBP', 'DR_CPP',
-                'DR_PMP', 'HMOT', 'HK', 'IMISE', 'DR_KVAL', 'PROC_SOUS',
-                'DR_TV', 'DR_TO', 'DR_TVYB', 'ETZ_NUM', 'DRV_NUM']
-names_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
-                'OBN_DOBA', 'POC_OBNOVY', 'MZD', 'VEK', 'ZAKM', 'HOSP_TV',
-                'M_TEZ_PROC', 'ODVOZ_TEZ', 'M_Z_ZASOBY', 'PRO_P', 'PRO_NAL',
-                'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
-                'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
-                'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
-names_of_vys_vych = ['PER', 'VAL', 'ID_ETAZ', 'DREVINA_ZKR', 'TEZBA_CELKEM', 'ID_VYCHOVA', 'PSK_NUM']
-names_of_vys_obn = ['DR', 'INTENZITA', 'ODSTUP', 'TYP', 'PRIRAZENI',
-                    'ZAHAJENI', 'TEZBA_CELKEM', 'PSK_NUM']
-
-# Tieto listy nemenit, to su zoznamy pre parsovanie dat
-# menit iba ak sa zmeni standard, na poradi zalezi
-# ak sa nenajde dany parameter, nic sa nedeje, ulozi ako prazdny retazec
-
-list_of_vys_obn = ['ID_TAZ_TYP', 'ZAHAJENI', 'TEZBA_CELKEM']
-list_of_taz_typ = ['ID', 'TYP', 'PRIRAZENI']
-list_of_sec = ['ID', 'ODSTUP']
-list_of_zasah = ['DR', 'INTENZITA']
-list_of_vys_vych = ['ID_ETAZ', 'DREVINA_ZKR', 'TEZBA_CELKEM', 'ID_VYCHOVA']
-list_of_pos = ['POSKOZ_D', 'POSKOZ_R']
-list_of_zal = ['ZAL_DR', 'ZAL_DR_P']
-list_of_kat = ['KATEGORIE', 'KAT_SPEC']
-list_of_drv = ['DR_ZKR', 'DR_KOD', 'DR_NAZ', 'DR_PUVOD',
-               'ZDR_REP', 'ZAST', 'VYSKA', 'TLOUSTKA',
-               'BON_R', 'BON_A', 'GEN_KLAS', 'VYB_STR', 'DR_ZAS_TAB',
-               'DR_ZAS_HA', 'DR_ZAS_CEL', 'DR_CBP', 'DR_CPP',
-               'DR_PMP', 'HMOT', 'HK', 'IMISE', 'DR_KVAL', 'PROC_SOUS',
-               'DR_TV', 'DR_TO', 'DR_TVYB']
-list_of_etz = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
-               'OBN_DOBA', 'POC_OBNOVY', 'MZD', 'VEK', 'ZAKM', 'HOSP_TV',
-               'M_TEZ_PROC', 'ODVOZ_TEZ', 'M_Z_ZASOBY', 'PRO_P', 'PRO_NAL',
-               'PRO_POC', 'TV_P', 'TV_NAL', 'TV_POC', 'TO_P', 'TO_NAL',
-               'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
-               'ZAL_P']
-list_of_por = ['POR', 'SDR_POR', 'MAJ_KOD', 'MAJ_NAZ',
-               'MAJ_DRUH', 'ORG_UROVEN', 'PAS_OHR', 'LES_OBL',
-               'LES_PODOBL', 'ZVL_STATUT', 'OLH_LIC', 'OLH',
-               'POR_TEXT', 'HIST_LHC', 'HIST_LHPOD', 'HIST_ROZD']
-list_of_psk = ['PSK', 'PSK_P0', 'PSK_V', 'PSK_P',
-               'KVAL_P', 'ORP', 'KRAJ', 'KATUZE_KOD', 'KAT_PAR_KOD', 'SLT',
-               'LT', 'TER_TYP', 'PRIB_VZD', 'HOSP_ZP', 'DAN', 'PSK_TEXT',
-               'CISLO_TEL']
-list_of_bzl = ['BZL', 'ORP', 'KRAJ', 'KATUZE_KOD', 'BZL_P0',
-               'BZL_V', 'BZL_P', 'KVAL_P', 'KAT_PAR_KOD',
-               'BZL_VYUZ', 'BZL_DRUH', 'CISLO_TEL']
-list_of_jp = ['JP', 'JP_PUPFL', 'ORP', 'KRAJ', 'KATUZE_KOD',
-              'JP_P0', 'JP_V', 'JP_P', 'KVAL_P', 'KAT_PAR_KOD',
-              'JP_VYUZ', 'JP_DRUH', 'CISLO_TEL']
-# list_of_kto = [ 'TEXT',  'TXT_STYL',  'TXT_UHEL',  'L_' ]
-list_of_kpo = ['PLO_DRUH', 'PLO_ZNACKA', 'PLO_BARVA', 'L_']
-list_of_klo = ['LIN_DRUH', 'LIN_ZNACKA', 'LIN_BARVA', 'L_']
-# list_of_kbo = [ 'BOD_DRUH',  'BOD_ZNACKA',  'BOD_UHELZN',  'BOD_BARVA', 'L_']
-list_of_lhc = ['LHC_KOD', 'LHC_NAZ', 'LHP_OD', 'LHP_DO', 'LHP_LIC',
-               'LHP_TAX', 'LHP_Z_OD', 'LHP_Z_DO', 'LHP_Z_LIC', 'LHP_Z_TAX',
-               'KU_DATUM', 'LHP_NEZDAR', 'TEZ_PROC', 'NOR_PAS', 'ETAT_TO',
-               'LHC_PN_PRO', 'ETAT_TV', 'ETAT_TVYB', 'LHC_IND', 'LHC_MAX',
-               'ETAT', 'MVYCH_DO40']
-
-# ------------------------------------------------------------------------
-#                                     funkcie
-# ------------------------------------------------------------------------
+POLY = QgsFeature()  # premenna pre jedne geom. objekt
 
 
 def open_layer(name, address, type_ft):
@@ -130,25 +52,25 @@ def create_from_MP(MP, layer, atts):
     for lines in MP.findall('L'):
         points = create_points(lines)  # ziskam zoznam bodov
         finished_list.append(points)
-    pt.setGeometry(QgsGeometry.fromPolygon(finished_list))  # vytvorim objekt
-    pt.setAttributes(atts)  # nastavenie atributov
-    layer.addFeatures([pt])
+    POLY.setGeometry(QgsGeometry.fromPolygon(finished_list))  # vytvorim objekt
+    POLY.setAttributes(atts)  # nastavenie atributov
+    layer.addFeatures([POLY])
 
 
 def create_from_ML(ML, layer, atts):
     """Obodba pre create_from_MP, ale pracuje s ML objektom."""
     for lines in ML.findall('L'):
         points = create_points(lines)
-        pt.setGeometry(QgsGeometry.fromPolyline(points))
-        pt.setAttributes(atts)
-        layer.addFeatures([pt])
+        POLY.setGeometry(QgsGeometry.fromPolyline(points))
+        POLY.setAttributes(atts)
+        layer.addFeatures([POLY])
 
 
 def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
                   DRV_ID, etz_file, drv_file, pos_file, zal_file, kat_file):
     """Spracuj jeden polygon."""
     known = False
-    psk_atts = create_attributes(psk, list_of_psk)
+    psk_atts = create_attributes(psk, LIST_PSK)
     try_id = psk.get("PSK_ID")
     if try_id:
         my_id = int(try_id)
@@ -179,7 +101,7 @@ def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
         for etaz in psk.findall('ETZ'):
             etz_id = ETZ_ID
             ETZ_ID += 1
-            etz_atts = create_attributes(etaz, list_of_etz)
+            etz_atts = create_attributes(etaz, LIST_ETZ)
             etz_atts.append(str(my_id+j))
             etz_atts.append(str(etz_id))
             to_write = "\",\"".join(etz_atts)
@@ -187,7 +109,7 @@ def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
             for drevina in etaz.findall('DRV'):
                 my_drv_id = DRV_ID
                 DRV_ID += 1
-                drv_atts = create_attributes(drevina, list_of_drv)
+                drv_atts = create_attributes(drevina, LIST_DRV)
                 drv_atts.append(str(etz_id))
                 drv_atts.append(str(my_drv_id))
 
@@ -195,13 +117,13 @@ def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
                 drv_file.write("\""+to_write+'\"\n')
 
                 for poskodenie in drevina.findall('POS'):
-                    pos_atts = create_attributes(poskodenie, list_of_pos)
+                    pos_atts = create_attributes(poskodenie, LIST_POS)
                     pos_atts.append(str(my_drv_id))
                     to_write = "\",\"".join(pos_atts)
                     pos_file.write("\""+to_write+'\"\n')
                     progress_count += 1
             for zalozenie in etaz.findall('ZAL'):
-                zal_atts = create_attributes(zalozenie, list_of_zal)
+                zal_atts = create_attributes(zalozenie, LIST_ZAL)
                 zal_atts.append(str(etz_id))
 
                 to_write = "\",\"".join(zal_atts)
@@ -209,7 +131,7 @@ def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
 
     for j in range(number_of_polygons):
         for kategoria in porast.findall('KAT'):
-            kat_atts = create_attributes(kategoria, list_of_kat)
+            kat_atts = create_attributes(kategoria, LIST_KAT)
             kat_atts.append(str(my_id+j))
             to_write = "\",\"".join(kat_atts)
             kat_file.write("\""+to_write+'\"\n')
@@ -280,46 +202,46 @@ def convert_to_shp(pretty_name,folder_name):
     #otvorim kazdy subor a zapisem tam aj hlavicky tabuliek
     try:
         vys_obn_file = codecs.open(folder_name+'/vys_obn_file.csv','w',encoding='utf-8')
-        vys_obn_file.write(",".join(names_of_vys_obn)+'\n')
+        vys_obn_file.write(",".join(NAMES_OBN)+'\n')
     except:
         return 1
 
     try:
         etz_file = codecs.open(folder_name+'/etz_file.csv','w',encoding='utf-8')
-        etz_file.write(",".join(names_of_etz)+'\n')
+        etz_file.write(",".join(NAMES_ETZ)+'\n')
     except:
         return 1
 
     try:
         vys_vych_file = codecs.open(folder_name+'/vys_vych_file.csv','w',encoding='utf-8')
-        vys_vych_file.write(",".join(names_of_vys_vych)+'\n')
+        vys_vych_file.write(",".join(NAMES_VYCH)+'\n')
     except:
         return 1
 
     try:
         drv_file = codecs.open(folder_name+'/drv_file.csv','w',encoding='utf-8')
-        drv_file.write(",".join(names_of_drv)+'\n')
+        drv_file.write(",".join(NAMES_DRV)+'\n')
     except:
         return 1
 
 
     try:
         kat_file = codecs.open(folder_name+'/kat_file.csv','w',encoding='utf-8')
-        kat_file.write(",".join(names_of_kat)+'\n')
+        kat_file.write(",".join(NAMES_KAT)+'\n')
     except:
         return 1
 
 
     try:
         zal_file = codecs.open(folder_name+'/zal_file.csv','w',encoding='utf-8')
-        zal_file.write(",".join(names_of_zal)+'\n')
+        zal_file.write(",".join(NAMES_ZAL)+'\n')
     except:
         return 1
 
 
     try:
         pos_file = codecs.open(folder_name+'/pos_file.csv','w',encoding='utf-8')
-        pos_file.write(",".join(names_of_pos)+'\n')
+        pos_file.write(",".join(NAMES_POS)+'\n')
     except:
         return 1
 #------------------------------------------------------------------------
@@ -644,7 +566,7 @@ def convert_to_shp(pretty_name,folder_name):
         progress.setValue(i)
         """
         for KBO in child.findall('KBO'):
-            atts = create_attributes(KBO, list_of_kbo)
+            atts = create_attributes(KBO, LIST_KBO)
             if not KBO.findall('BOD_OBRAZ'):
                 return 3
             for BOD_obraz in KBO.findall('BOD_OBRAZ'):
@@ -654,15 +576,15 @@ def convert_to_shp(pretty_name,folder_name):
                         np =  point.get('S')
                         number1 = np[:np.find("$")]
                         number2 = np[np.find("$")+1:]
-                        pt.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
-                        pt.setAttributes(atts)
-                        kbo_line.addFeatures([pt])
+                        POLY.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
+                        POLY.setAttributes(atts)
+                        kbo_line.addFeatures([POLY])
 
         i = 22  
         progress.setValue(i)
 
         for KTO in child.findall('KTO'):
-            atts = create_attributes(KTO,list_of_kto)
+            atts = create_attributes(KTO,LIST_KTO)
             if not KTO.findall('TXT_OBRAZ'):
                 return 3
             for TXT_obraz in KTO.findall('TXT_OBRAZ'):
@@ -670,9 +592,9 @@ def convert_to_shp(pretty_name,folder_name):
                     np= B.get('S')
                     number1 = np[:np.find("$")]
                     number2 = np[np.find("$")+1:]
-                    pt.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
-                    pt.setAttributes(atts)
-                    kto_line.addFeatures([pt])
+                    POLY.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
+                    POLY.setAttributes(atts)
+                    kto_line.addFeatures([POLY])
 
         i = 29  
         progress.setValue(i)
@@ -686,7 +608,7 @@ def convert_to_shp(pretty_name,folder_name):
         for KPO in child.findall('KPO'):
             if not KPO.findall('PLO_OBRAZ'):
                 return 3
-            atts = create_attributes(KPO, list_of_kpo)
+            atts = create_attributes(KPO, LIST_KPO)
             for KPO_obraz in KPO.findall('PLO_OBRAZ'):
                 for MP in KPO_obraz.findall('MP'):
 
@@ -698,7 +620,7 @@ def convert_to_shp(pretty_name,folder_name):
         i = 19  
         progress.setValue(i)
         for KLO in child.findall('KLO'):
-            atts = create_attributes(KLO, list_of_klo)
+            atts = create_attributes(KLO, LIST_KLO)
             if not KLO.findall('LIN_OBRAZ'):
                 return 3
             for KLO_obraz in KLO.findall('LIN_OBRAZ'):
@@ -713,11 +635,11 @@ def convert_to_shp(pretty_name,folder_name):
             for diel in oddiel.findall('DIL'):
                 dil_att =  diel.get('DIL')
                 for porast in diel.findall('POR'):
-                    por_atts = create_attributes(porast,list_of_por)
+                    por_atts = create_attributes(porast,LIST_POR)
                     for bezlesie in porast.findall('BZL'):
                         if not bezlesie.findall('BZL_OBRAZ'):
                             return 3
-                        bzl_atts = create_attributes(bezlesie, list_of_bzl)
+                        bzl_atts = create_attributes(bezlesie, LIST_BZL)
 #from this
                         atts = [odd_att]
                         atts.append(dil_att)
@@ -732,7 +654,7 @@ def convert_to_shp(pretty_name,folder_name):
                                     create_from_MP(polygon,bzl_poly,atts)
 
                     for jine in porast.findall('JP'):
-                        jp_atts = create_attributes(jine, list_of_jp)
+                        jp_atts = create_attributes(jine, LIST_JP)
                         if not jine.findall('JP_OBRAZ'):
                             return 3
 #from this
@@ -778,7 +700,7 @@ def convert_to_shp(pretty_name,folder_name):
 
                         for vys_vych in taz.findall('VYSLEDEK_VYCHOVA'):
                             vys_vych_atts = create_attributes(vys_vych,
-                                                              list_of_vys_vych)
+                                                              LIST_VYCH)
                             vys_vych_atts.append(psk_id)
                             for per in vys_vych.findall('TEZBA_PERIODA'):
                                 tmp_atts = vys_vych_atts[:]
@@ -791,7 +713,7 @@ def convert_to_shp(pretty_name,folder_name):
                         id_tt = None
                         for vys_obn in taz.findall('VYSLEDEK_OBNOVA'):
                             vys_obn_atts = create_attributes(vys_obn,
-                                                             list_of_vys_obn)
+                                                             LIST_OBN)
                             id_tt = vys_obn_atts[0]
                             vys_obn_atts.append(psk_id)
 
@@ -805,9 +727,9 @@ def convert_to_shp(pretty_name,folder_name):
                         request = QgsFeatureRequest()
                         request.setFilterExpression(u'"PSK_NUM" = %s' % psk_id)
                         psk_ft = psk_poly.getFeatures(request).next()
-                        pt.setGeometry(psk_ft.geometry())
-                        pt.setAttributes(psk_ft.attributes())
-                        taz_poly.addFeatures([pt])
+                        POLY.setGeometry(psk_ft.geometry())
+                        POLY.setAttributes(psk_ft.attributes())
+                        taz_poly.addFeatures([POLY])
 
     PSK_layer.updateExtents()
     TAZ_layer.updateExtents()
