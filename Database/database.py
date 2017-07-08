@@ -61,6 +61,7 @@ edit_pos = 0#povoluje editovanie - aby si nemyslelo ze editujem, ked len
 list_of_kats_ids = []#globalne uloziska pre id  prave vypisanych hodnot
 list_of_etzs_ids = []#sluzi na rychjesiu editaciu parametrov
 list_of_vys_vych_ids = []
+list_of_vys_obn_ids = []
 list_of_drvs_ids = []
 list_of_zals_ids = []
 list_of_poss_ids = []
@@ -1541,6 +1542,8 @@ class Database:
                 pos_csv = layer
             elif layer.name() == "VysledkyVychova":
                 vys_vych_csv = layer
+            elif layer.name() == "VysledkyObnova":
+                vys_obn_csv = layer
         if not etz_csv or not drv_csv or not kat_csv or not zal_csv or not pos_csv:
             return
 #kontorla ci naslo vsetky co treba
@@ -1595,7 +1598,7 @@ class Database:
             selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
             selected_kats = kat_csv.getFeatures(QgsFeatureRequest(expr))
             selected_vys_vych = vys_vych_csv.getFeatures(QgsFeatureRequest(expr))
-            
+            selected_vys_obn = vys_obn_csv.getFeatures(QgsFeatureRequest(expr))
 
             fields_etz = etz_csv.pendingFields()
             field_names_etz = [field.name() for field in fields_etz]
@@ -1613,6 +1616,15 @@ class Database:
             features_list_vys_vych = self.convert_to_strings(features_list_vys_vych)
             for fit in selected_vys_vych:
                 list_of_vys_vych_ids.append(fit.id())
+
+            fields_vys_obn = vys_obn_csv.pendingFields()
+            field_names_vys_obn = [field.name() for field in fields_vys_obn]
+            selected_vys_obn = list(selected_vys_obn)
+            features_list_vys_obn = [feature.attributes() for feature in selected_vys_obn]
+            features_list_vys_obn.sort(key=lambda x: x[0])
+            features_list_vys_obn = self.convert_to_strings(features_list_vys_obn)
+            for fit in selected_vys_obn:
+                list_of_vys_obn_ids.append(fit.id())
 
             fields_kat = kat_csv.pendingFields()
             field_names_kat = [field.name() for field in fields_kat]
@@ -1703,6 +1715,8 @@ class Database:
                     features_list_pos,self.shower.pos)
             self.shower.set_data(field_names_vys_vych,
                     features_list_vys_vych,self.shower.vychova)
+            self.shower.set_data(field_names_vys_obn,
+                    features_list_vys_obn,self.shower.obnova)
             self.shower.area.setText(str("%.2f" % (area/10000)))
             #self.shower.length.setText(str(round(length*2)/2))
 
