@@ -23,7 +23,7 @@ NAMES_ETZ = ['ETAZ', 'ETAZ_PS', 'ETAZ_PP', 'HS', 'OBMYTI',
              'TO_DUVOD', 'TO_ZPUSOB ', 'TVYB_P', 'TVYB_NAL', 'ZAL_DRUH',
              'ZAL_P', 'PSK_NUM', 'ETZ_NUM']
 NAMES_VYCH = ['PER', 'VAL', 'ID_ETAZ', 'DREVINA_ZKR', 'TEZBA_CELKEM',
-              'ID_VYCHOVA', 'PSK_NUM']
+              'VYCHOVA_NAME', 'PSK_NUM']
 NAMES_OBN = ['DR', 'INTENZITA', 'ODSTUP', 'TYP', 'PRIRAZENI', 'ZAHAJENI',
              'TEZBA_CELKEM', 'PSK_NUM']
 

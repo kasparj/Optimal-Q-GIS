@@ -11,6 +11,7 @@ from PyQt4 import QtGui
 from PyQt4.QtGui import QProgressBar
 from qgis.utils import iface
 from names import *
+from vychova_strings import vychova_strings
 
 
 POLY = QgsFeature()  # premenna pre jedne geom. objekt
@@ -692,6 +693,7 @@ def convert_to_shp(pretty_name,folder_name):
                         for vys_vych in taz.findall('VYSLEDEK_VYCHOVA'):
                             vys_vych_atts = create_attributes(vys_vych,
                                                               LIST_VYCH)
+                            vys_vych_atts[-1] = vychova_strings[int(vys_vych_atts[-1])]
                             vys_vych_atts.append(psk_id)
                             for per in vys_vych.findall('TEZBA_PERIODA'):
                                 tmp_atts = vys_vych_atts[:]
