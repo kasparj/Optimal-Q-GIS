@@ -29,4 +29,7 @@
     <qresource prefix="/plugins/Database" >
         <file>icons/icon_xml.png</file>
     </qresource>
+    <qresource prefix="/plugins/Database" >
+        <file>icons/create_processes.png</file>
+    </qresource>
 </RCC>

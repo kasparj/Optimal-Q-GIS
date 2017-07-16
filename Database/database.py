@@ -40,7 +40,8 @@ from sekvencie import Sekvencie
 from distance import Distance 
 from set_ranges import Set_ranges 
 from open_all import Open_all 
-from out_xml import OutXml 
+from out_xml import OutXml
+from create_processes import CreateProcesses
 import os.path
 from converter import convert_to_shp
 import sys 
@@ -125,7 +126,7 @@ class Database:
         self.shower.zalozene.itemChanged.connect(self.edit_zals)
         self.shower.pos.itemChanged.connect(self.edit_poss)
         self.shower.drevina.itemChanged.connect(self.edit_drvs)
-            
+
         self.save_all = Save_all()
         self.add_drv = Add_drv()
         self.add_etz = Add_etz()
@@ -136,6 +137,10 @@ class Database:
         self.out_xml.address.clear()
         self.out_xml.lookup.clicked.connect(self.select_output_folder)
         self.out_xml.finish.clicked.connect(self.export_xml)
+
+        self.create_processes = CreateProcesses()
+        self.create_processes.pridat.clicked.connect(self.add_new_process)
+        self.create_processes.etaz.currentIndexChanged.connect(self.update_drv_in_processes)
 
         self.sekvencie.finish.clicked.connect(self.end_sek)
         self.sekvencie.new_s.clicked.connect(self.new_sek)
@@ -301,8 +306,14 @@ class Database:
             #callback=self.show_atts,
             callback=self.open_ranges,
             parent=self.iface.mainWindow())
-        
-        
+
+        icon_path = ':/plugins/Database/icons/create_processes.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Create processes'),
+            callback=self.open_processes,
+            parent=self.iface.mainWindow())
+
         icon_path = ':/plugins/Database/icons/icon_save.png'
         self.add_action(
             icon_path,
@@ -1341,6 +1352,46 @@ class Database:
         canvas = qgis.utils.iface.mapCanvas()
         canvas.setExtent(new_ft.extent())
 
+    def open_processes(self):
+        lyr = iface.activeLayer()
+        fts = lyr.selectedFeatures()
+        if fts == []:
+            return
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                etz_csv = layer
+
+        idx = lyr.fieldNameIndex('PSK_NUM')
+        psk_id = fts[0].attributes()[idx]
+
+        self.create_processes.etaz.clear()
+
+        expr = QgsExpression("PSK_NUM ="+ str(psk_id))
+        selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
+        for etaz in selected_etzs:
+            self.create_processes.etaz.addItem(etaz.attributes()[0],
+                                               etaz.attributes()[-1])
+        self.create_processes.show()
+
+    def update_drv_in_processes(self, nth):
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Dreviny":
+                drv_csv = layer
+
+        self.create_processes.drevina.clear()
+
+        expr = QgsExpression('ETZ_NUM =' + str(self.create_processes.etaz.itemData(nth)))
+        drvs = drv_csv.getFeatures(QgsFeatureRequest(expr))
+        for drevina in drvs:
+            self.create_processes.drevina.addItem(drevina.attributes()[0])
+
+    def add_new_process(self):
+        pass
+        #TODO
+
     def open_all_11(self):
         self.open_all.show()
 
@@ -1510,7 +1561,8 @@ class Database:
             self.edit_attribute(lyr, item, list_of_zals_ids)
     
     def show_atts(self):
-        
+        if self.create_processes.isVisible():
+            self.open_processes()
         if self.edit_sek:
             self.edit_new_sek()
         global edit_pos
