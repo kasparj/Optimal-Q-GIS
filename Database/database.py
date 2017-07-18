@@ -1343,11 +1343,12 @@ class Database:
     def save_all_11(self):
         self.save_all.show()
 
-    def open_layer(self, name, address, type_ft):
+    def open_layer(self, name, address, type_ft, empty=False):
         """Open layer from file."""
         new_ft = QgsVectorLayer(address, name, type_ft)
         if (new_ft.featureCount() < 1):
-            return
+            if not empty:
+                return
         QgsMapLayerRegistry.instance().addMapLayer(new_ft)
         canvas = qgis.utils.iface.mapCanvas()
         canvas.setExtent(new_ft.extent())
