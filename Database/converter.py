@@ -204,6 +204,12 @@ def convert_to_shp(pretty_name,folder_name):
         return 1
 
     try:
+        taz_typ_file = codecs.open(folder_name+'/taz_typ_file.csv','w',encoding='utf-8')
+        taz_typ_file.write(",".join(NAMES_TAZ_TYP)+'\n')
+    except:
+        return 1
+
+    try:
         etz_file = codecs.open(folder_name+'/etz_file.csv','w',encoding='utf-8')
         etz_file.write(",".join(NAMES_ETZ)+'\n')
     except:
@@ -703,19 +709,27 @@ def convert_to_shp(pretty_name,folder_name):
                                 to_write = "\",\"".join(tmp_atts)
                                 vys_vych_file.write("\""+to_write+'\"\n')
 
-                        id_tt = None
                         for vys_obn in taz.findall('VYSLEDEK_OBNOVA'):
                             vys_obn_atts = create_attributes(vys_obn,
                                                              LIST_OBN)
-                            id_tt = vys_obn_atts[0]
                             vys_obn_atts.append(psk_id)
+                            to_write = "\",\"".join(vys_obn_atts)
+                            vys_obn_file.write("\""+to_write+'\"\n')
 
-                        if id_tt:
-                            for taz_typ in taz.findall('TAZ_TYP'):
-                                if taz_typ.get('ID') == id_tt:
-                                    parse_taz_type(taz_typ,
-                                                   vys_obn_atts[1:],
-                                                   vys_obn_file)
+                        for taz_typ in taz.findall('TAZ_TYP'):
+                            atts = [taz_typ.get('ID')]
+                            atts.append(psk_id)
+                            atts.insert(0, taz_typ.get('PRIRAZENI'))
+                            atts.insert(0, taz_typ.get('TYP'))
+                            for sec in taz_typ.findall('SEC'):
+                                tmp_atts = atts[:]
+                                tmp_atts.insert(0, sec.get('ODSTUP'))
+                                for zasah in sec.findall('ZASAH'):
+                                    tmp_atts1 = tmp_atts[:]
+                                    tmp_atts1.insert(0, zasah.get('INTENZITA'))
+                                    tmp_atts1.insert(0, zasah.get('DR'))
+                                    to_write = "\",\"".join(tmp_atts1)
+                                    taz_typ_file.write("\""+to_write+'\"\n')
 
                         request = QgsFeatureRequest()
                         request.setFilterExpression(u'"PSK_NUM" = %s' % psk_id)
@@ -735,6 +749,7 @@ def convert_to_shp(pretty_name,folder_name):
 
     vys_vych_file.close()
     vys_obn_file.close()
+    taz_typ_file.close()
     etz_file.close()
     drv_file.close()
     kat_file.close()
@@ -750,6 +765,11 @@ def convert_to_shp(pretty_name,folder_name):
     save_layer(etz_csv,folder_name+'/etz')
     new_etz = QgsVectorLayer(folder_name+'/etz.dbf',"Porast","ogr")
     QgsMapLayerRegistry.instance().addMapLayer(new_etz)
+
+    taz_typ_csv = QgsVectorLayer("file:///"+folder_name+'/taz_typ_file.csv',"Tazobne typy","delimitedtext")
+    save_layer(taz_typ_csv,folder_name+'/taz_typ')
+    new_taz_typ = QgsVectorLayer(folder_name+'/taz_typ.dbf',"Tazobne typy","ogr")
+    QgsMapLayerRegistry.instance().addMapLayer(new_taz_typ)
 
     drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
     save_layer(drv_csv,folder_name+'/drv')

@@ -52,7 +52,7 @@ from xml.dom import minidom
 import codecs
 
 from qgis.core import *
-
+from names import NAMES_TAZ_TYP
 
 pretty_name = ""#nazov pre vstupny subor
 pretty_folder = ""#nazov priecinku pre ukladanie
@@ -577,8 +577,6 @@ class Database:
         _dict = {}
         _dict['ID'] = str(ft.id())
         # parent_psk_id == attributes()[is_original] !! test just for fun
-        if parent_psk_id != ft.attributes()[self.id_original]:
-            print "Holy cow"
         _dict['ID_PSK'] = str(parent_psk_id)
         _dict['TP_vymera'] = repr(ft.geometry().area())
         _dict['Sekvence'] = ft.attributes()[self.sekvence_id]
@@ -1363,6 +1361,8 @@ class Database:
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
+            if layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
 
         idx = lyr.fieldNameIndex('PSK_NUM')
         psk_id = fts[0].attributes()[idx]
@@ -1399,12 +1399,13 @@ class Database:
     def open_all_1(self):
 
         self.open_layer("Porast", input_folder+'/etz.dbf',"ogr")
+        self.open_layer("Tazobne typy", input_folder+'/taz_typ.dbf',"ogr", True)
         self.open_layer("Dreviny", input_folder+'/drv.dbf',"ogr")
         self.open_layer("Kategorie", input_folder+'/kat.dbf',"ogr")
         self.open_layer("Zalozenie", input_folder+'/zal.dbf',"ogr")
         self.open_layer("Poskodenia", input_folder+'/pos.dbf',"ogr")
-        self.open_layer("VysledkyObnova", input_folder+'/vys_obn.dbf',"ogr")
-        self.open_layer("VysledkyVychova", input_folder+'/vys_vych.dbf',"ogr")
+        self.open_layer("VysledkyObnova", input_folder+'/vys_obn.dbf',"ogr", True)
+        self.open_layer("VysledkyVychova", input_folder+'/vys_vych.dbf',"ogr", True)
         #self.open_layer("KTO",input_folder+'/KTO.shp',"ogr")
         #self.open_layer("Body",input_folder+'/KBO.shp',"ogr")
         self.open_layer("KLO",input_folder+'/KLO.shp',"ogr")
@@ -1431,6 +1432,8 @@ class Database:
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 self.save_layer(layer,pretty_folder+'/etz')
+            elif layer.name() == "Tazbne typy":
+                self.save_layer(layer,pretty_folder+'/taz_typ')
             elif layer.name() == "Dreviny":
                 self.save_layer(layer,pretty_folder+'/drv')
             elif layer.name() == "Kategorie":
@@ -1608,6 +1611,8 @@ class Database:
                 vys_vych_csv = layer
             elif layer.name() == "VysledkyObnova":
                 vys_obn_csv = layer
+            elif layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
         if not etz_csv or not drv_csv or not kat_csv or not zal_csv or not pos_csv:
             return
 #kontorla ci naslo vsetky co treba
@@ -1625,7 +1630,6 @@ class Database:
                 #vytvorim tabulku vlastnosti
                 features_list = [feature.attributes() for feature in features]
                 features_list = self.convert_to_strings(features_list)
-                
 
                 id_area = lyr.fieldNameIndex("max_area") #index parametru PSK_NUM 
                 id_len = lyr.fieldNameIndex("max_len") #index parametru PSK_NUM 
@@ -1633,16 +1637,16 @@ class Database:
                 id_Mlen = lyr.fieldNameIndex("min_len") #index parametru PSK_NUM 
                 id_prio = lyr.fieldNameIndex("priorita") #index parametru PSK_NUM 
 
-                try: 
+                try:
                     self.shower.area_max.setText(str("%.2f"%(float(features_list[0][id_area])/10000)))
                 except:
                     self.shower.area_max.setText("0")
-                
-                try: 
+
+                try:
                     self.shower.area_min.setText(str("%.2f"%(float(features_list[0][id_Marea])/10000)))
                 except:
                     self.shower.area_min.setText("0")
-                
+
                 self.shower.length_max.setText(features_list[0][id_len])
                 self.shower.length_min.setText(features_list[0][id_Mlen])
                 self.shower.priorita.setText(features_list[0][id_prio])
@@ -1656,13 +1660,13 @@ class Database:
                 psk_numb = -1
                 field_names = []
                 features_list = []
-            
-            
+
             expr = QgsExpression("PSK_NUM ="+ str(psk_numb))
             selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
             selected_kats = kat_csv.getFeatures(QgsFeatureRequest(expr))
-            selected_vys_vych = vys_vych_csv.getFeatures(QgsFeatureRequest(expr))
             selected_vys_obn = vys_obn_csv.getFeatures(QgsFeatureRequest(expr))
+            selected_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
+            selected_vys_vych = vys_vych_csv.getFeatures(QgsFeatureRequest(expr))
 
             fields_etz = etz_csv.pendingFields()
             field_names_etz = [field.name() for field in fields_etz]
@@ -1681,14 +1685,16 @@ class Database:
             for fit in selected_vys_vych:
                 list_of_vys_vych_ids.append(fit.id())
 
-            fields_vys_obn = vys_obn_csv.pendingFields()
-            field_names_vys_obn = [field.name() for field in fields_vys_obn]
-            selected_vys_obn = list(selected_vys_obn)
-            features_list_vys_obn = [feature.attributes() for feature in selected_vys_obn]
-            features_list_vys_obn.sort(key=lambda x: x[0])
+            field_names_vys_obn = NAMES_TAZ_TYP[:-2] + ['ZAHAJENI', 'TEZBA_CELKEM']
+            features_list_vys_obn = []
+            id_taz_typ = vys_obn_csv.fieldNameIndex("ID_TAZ_TYP")
+            taz_typ_id = taz_typ_csv.fieldNameIndex("ID")
+            for feature in selected_vys_obn:
+                for taz_typ in selected_taz_typ:
+                    if taz_typ.attributes()[taz_typ_id] == feature.attributes()[id_taz_typ]:
+                        features_list_vys_obn.append(taz_typ.attributes()[:-2] +
+                                                     feature.attributes()[1:3])
             features_list_vys_obn = self.convert_to_strings(features_list_vys_obn)
-            for fit in selected_vys_obn:
-                list_of_vys_obn_ids.append(fit.id())
 
             fields_kat = kat_csv.pendingFields()
             field_names_kat = [field.name() for field in fields_kat]
