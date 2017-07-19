@@ -1371,9 +1371,19 @@ class Database:
 
         expr = QgsExpression("PSK_NUM ="+ str(psk_id))
         selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
+        selected_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
         for etaz in selected_etzs:
             self.create_processes.etaz.addItem(etaz.attributes()[0],
                                                etaz.attributes()[-1])
+
+        self.create_processes.definovane.clear()
+        for taz_typ in selected_taz_typ:
+            one_taz_typ = ""
+            atts = taz_typ.attributes()
+            for index in [3, 4, 0, 1, 2]:
+                one_taz_typ += " {0}".format(atts[index])
+            self.create_processes.definovane.addItem(one_taz_typ)
+
         self.create_processes.show()
 
     def update_drv_in_processes(self, nth):
