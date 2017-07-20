@@ -1400,8 +1400,54 @@ class Database:
             self.create_processes.drevina.addItem(drevina.attributes()[0])
 
     def add_new_process(self):
-        pass
-        #TODO
+        lyr = iface.activeLayer()
+        fts = lyr.selectedFeatures()
+        if fts == []:
+            return
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                etz_csv = layer
+            if layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
+
+        idx = lyr.fieldNameIndex('PSK_NUM')
+        psk_id = fts[0].attributes()[idx]
+
+        expr = QgsExpression("PSK_NUM ="+ str(psk_id))
+        all_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
+
+        etaz = self.create_processes.etaz.currentText()
+        if self.create_processes.holosec.isChecked():
+            typ = "holosec"
+        else:
+            typ = "podrostni"
+
+        expr = QgsExpression("\"PRIRAZENI\" = '{0}' AND \"TYP\" = '{1}'".format(etaz, typ))
+        known_id = None
+        for feature in taz_typ_csv.getFeatures(QgsFeatureRequest(expr)):
+            known_id = feature.attributes()[-2]
+        if known_id is None:
+            known_id = 1
+            for feature in all_taz_typ:
+                if feature.attributes()[-2] > known_id:
+                    known_id = feature.attributes()[-2] + 1
+
+        new_taz_typ = []
+        new_taz_typ.append(self.create_processes.drevina.currentText())
+        # TODO verify the following two, that they make sense
+        new_taz_typ.append(self.create_processes.intenzita.text())
+        new_taz_typ.append(self.create_processes.odstup.text())
+        new_taz_typ.append(typ)
+        new_taz_typ.append(etaz)
+        new_taz_typ.append(known_id)
+        new_taz_typ.append(psk_id)
+
+        new_ft = QgsFeature(taz_typ_csv.pendingFields())
+        new_ft.setAttributes(new_taz_typ)
+        taz_typ_csv.dataProvider().addFeatures([new_ft])
+        self.open_processes()
 
     def open_all_11(self):
         self.open_all.show()
