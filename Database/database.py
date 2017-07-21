@@ -586,6 +586,48 @@ class Database:
         neighs = ft.attributes()[self.nei_id].split(';')
         for nei in neighs:
             ET.SubElement(taz_prv, "Soused", ID=nei)
+
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
+
+        id_typ = taz_typ_csv.fieldNameIndex('TYP')
+        id_prirazeni = taz_typ_csv.fieldNameIndex('PRIRAZENI')
+        id_odstup = taz_typ_csv.fieldNameIndex('ODSTUP')
+        id_drevina = taz_typ_csv.fieldNameIndex('DR')
+        id_intenzita = taz_typ_csv.fieldNameIndex('INTENZITA')
+        expr = QgsExpression("PSK_NUM ="+ str(ft.id()))
+        suitable_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
+
+        taz_typ_groups = {}
+        for taz_typ in suitable_taz_typ:
+            taz_typ_id = taz_typ.attributes()[-2]
+            if taz_typ_id in taz_typ_groups.keys():
+                taz_typ_groups[taz_typ_id].append(taz_typ)
+            else:
+                taz_typ_groups[taz_typ_id] = [taz_typ]
+
+        for taz_typ_id in taz_typ_groups.keys():
+            _dict = {'ID': str(taz_typ_id)}
+            _dict['TYP'] = str(taz_typ_groups[taz_typ_id][0].attributes()[id_typ])
+            _dict['PRIRAZENI'] = str(taz_typ_groups[taz_typ_id][0].attributes()[id_prirazeni])
+            taz_typ = ET.SubElement(taz_prv, "TAZ_TYP", _dict)
+            sec_groups = {}
+            for sec in taz_typ_groups[taz_typ_id]:
+                odstup = sec.attributes()[id_odstup]
+                if odstup in sec_groups.keys():
+                    sec_groups[odstup].append(sec)
+                else:
+                    sec_groups[odstup] = [sec]
+            for sec in sec_groups.keys():
+                sec_element = ET.SubElement(taz_typ, "SEC", ODSTUP=str(sec))
+                for zasah in sec_groups[sec]:
+                    _dict = {'DR': str(zasah.attributes()[id_drevina])}
+                    _dict['INTENZITA'] = str(zasah.attributes()[id_intenzita])
+                    ET.SubElement(sec_element, "ZASAH", _dict)
+
         self.process_etz(taz_prv, self.etzs[ft.attributes()[self.id_PSK]])
 
     def show_xml(self):
