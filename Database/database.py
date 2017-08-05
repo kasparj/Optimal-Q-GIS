@@ -136,7 +136,7 @@ class Database:
         self.out_xml = OutXml()
         self.out_xml.address.clear()
         self.out_xml.lookup.clicked.connect(self.select_output_folder)
-        self.out_xml.finish.clicked.connect(self.export_xml)
+        self.out_xml.save.clicked.connect(self.export_xml)
 
         self.create_processes = CreateProcesses()
         self.create_processes.pridat.clicked.connect(self.add_new_process)
@@ -633,7 +633,50 @@ class Database:
     def show_xml(self):
         self.out_xml.show()
 
+
+    def get_int(self, value, name):
+        if value.isdigit():
+            return value
+        else:
+            text = "{0} musi byt cislo".format(name)
+            QMessageBox.information(self.iface.mainWindow(),"Chyba",text)
+            raise
+
+
+    def parse_project_settings(self):
+        vals = {}
+        vals['planHor'] = self.get_int(self.out_xml.planHor.text(), 'Delka planovaciho horizontu')
+        vals['pocetPer'] = self.get_int(self.out_xml.pocetPer.text(), 'Pocet period')
+        vals['typPodmPlyn'] = str(self.out_xml.typPodmPlyn.currentText())
+        vals['urokMira'] = self.get_int(self.out_xml.urokMira.text(), 'Urokova Mira')
+        vals['procePlyn'] = self.get_int(self.out_xml.procePlyn.text(), 'Procento Plynulosti')
+        if self.out_xml.globalni.isChecked():
+            vals['typOptVych'] = "global"
+        else:
+            vals['typOptVych'] = "individual"
+
+        cile = {'tezba': [self.out_xml.tezba, self.out_xml.tezbaval],
+                'zasoba': [self.out_xml.zasoba, self.out_xml.zasobaval],
+                'sdi': [self.out_xml.sdi, self.out_xml.sdival],
+                'rekreace': [self.out_xml.rekreace, self.out_xml.rekreaceval],
+                'biodiverzita': [self.out_xml.biodiverzita, self.out_xml.biodiverzitaval]}
+
+        for ciel in cile.keys():
+            if cile[ciel][0].isChecked():
+                vals[ciel + "Vyber"] = "1"
+                vals[ciel + "Vaha"] = self.get_int(cile[ciel][1].text(), ciel)
+            else:
+                vals[ciel + "Vyber"] = "0"
+                vals[ciel + "Vaha"] = "0"
+
+        return vals
+
     def export_xml(self):
+        try:
+            params = self.parse_project_settings()
+        except:
+            return
+        root = ET.Element("Projekt", params)
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Lesne porasty":
@@ -653,7 +696,6 @@ class Database:
         self.progress = progress
 
         ODDs = {}
-        root = ET.Element("DATAISLH")
         lhc = ET.SubElement(root, "LHC", LHC_KOD="missing_data....")
         for ft in lyr.getFeatures():
             self.add_list_to_dict(ODDs, ft.attributes()[self.id_ODD], ft)

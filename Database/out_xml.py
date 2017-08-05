@@ -28,7 +28,7 @@ from PyQt4.QtGui import QTableWidgetItem
 from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
 
 FORM_CLASS_11, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'out_xml.ui'))
+    os.path.dirname(__file__), 'setting_opt.ui'))
 class OutXml(QtGui.QMainWindow, FORM_CLASS_11):
     def __init__(self, parent=None):
         """Constructor."""
