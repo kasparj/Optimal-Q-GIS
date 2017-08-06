@@ -297,7 +297,7 @@ def convert_to_shp(pretty_name,folder_name):
             return 1
 
     global TAZ_layer
-    TAZ_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Lesne porasty', "memory")
+    TAZ_layer = QgsVectorLayer("MultiPolygon?crs=EPSG:5514", 'Tazobne typy', "memory")
     if not TAZ_layer.isValid():
             return 1
 

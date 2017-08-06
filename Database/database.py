@@ -141,6 +141,7 @@ class Database:
         self.create_processes = CreateProcesses()
         self.create_processes.pridat.clicked.connect(self.add_new_process)
         self.create_processes.etaz.currentIndexChanged.connect(self.update_drv_in_processes)
+        self.create_processes.holosec.toggled.connect(self.toggle_holosec)
 
         self.sekvencie.finish.clicked.connect(self.end_sek)
         self.sekvencie.new_s.clicked.connect(self.new_sek)
@@ -1435,6 +1436,18 @@ class Database:
         canvas = qgis.utils.iface.mapCanvas()
         canvas.setExtent(new_ft.extent())
 
+    def toggle_holosec(self):
+        if self.create_processes.holosec.isChecked():
+            self.create_processes.etaz.setEnabled(False)
+            self.create_processes.drevina.setEnabled(False)
+            self.create_processes.intenzita.setEnabled(False)
+            self.create_processes.odstup.setEnabled(False)
+        else:
+            self.create_processes.etaz.setEnabled(True)
+            self.create_processes.drevina.setEnabled(True)
+            self.create_processes.intenzita.setEnabled(True)
+            self.create_processes.odstup.setEnabled(True)
+
     def open_processes(self):
         lyr = iface.activeLayer()
         fts = lyr.selectedFeatures()
@@ -1452,6 +1465,7 @@ class Database:
         psk_id = fts[0].attributes()[idx]
 
         self.create_processes.etaz.clear()
+        self.toggle_holosec()
 
         expr = QgsExpression("PSK_NUM ="+ str(psk_id))
         selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
@@ -1515,14 +1529,20 @@ class Database:
         if known_id is None:
             known_id = 1
             for feature in all_taz_typ:
-                if feature.attributes()[-2] > known_id:
-                    known_id = feature.attributes()[-2] + 1
+                old_id = int(feature.attributes()[-2])
+                if old_id > known_id:
+                    known_id = old_id + 1
+        elif typ == "holosec":
+            return
 
         new_taz_typ = []
-        new_taz_typ.append(self.create_processes.drevina.currentText())
-        # TODO verify the following two, that they make sense
-        new_taz_typ.append(self.create_processes.intenzita.text())
-        new_taz_typ.append(self.create_processes.odstup.text())
+        if typ == 'holosec':
+            new_taz_typ = ["", "", ""]
+        else:
+            new_taz_typ.append(self.create_processes.drevina.currentText())
+            # TODO verify the following two, that they make sense
+            new_taz_typ.append(self.create_processes.intenzita.text())
+            new_taz_typ.append(self.create_processes.odstup.text())
         new_taz_typ.append(typ)
         new_taz_typ.append(etaz)
         new_taz_typ.append(known_id)
