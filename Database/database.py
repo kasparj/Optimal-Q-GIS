@@ -142,6 +142,8 @@ class Database:
         self.create_processes.pridat.clicked.connect(self.add_new_process)
         self.create_processes.etaz.currentIndexChanged.connect(self.update_drv_in_processes)
         self.create_processes.holosec.toggled.connect(self.toggle_holosec)
+        self.create_processes.definovane.itemSelectionChanged.connect(self.toggle_definovane_zasahy)
+        self.create_processes.remove.clicked.connect(self.remove_zasahy)
 
         self.sekvencie.finish.clicked.connect(self.end_sek)
         self.sekvencie.new_s.clicked.connect(self.new_sek)
@@ -1447,6 +1449,57 @@ class Database:
             self.create_processes.drevina.setEnabled(True)
             self.create_processes.intenzita.setEnabled(True)
             self.create_processes.odstup.setEnabled(True)
+
+    def toggle_definovane_zasahy(self):
+        if self.create_processes.definovane.selectedItems():
+            self.create_processes.remove.setEnabled(True)
+        else:
+            self.create_processes.remove.setEnabled(False)
+
+    def remove_zasahy(self):
+        lyr = iface.activeLayer()
+        fts = lyr.selectedFeatures()
+        if fts == []:
+            return
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Porast":
+                etz_csv = layer
+            if layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
+
+        taz_typ_csv.startEditing()
+
+        idx = lyr.fieldNameIndex('PSK_NUM')
+        psk_id = fts[0].attributes()[idx]
+
+        to_delete = self.create_processes.definovane.selectedItems()
+        expr_str = ""
+        for item in to_delete:
+            fields = item.text().split(' ')
+            expr_str += "\"PSK_NUM\" = '{0}'".format(psk_id)
+            expr_str += " AND \"PRIRAZENI\" = '{0}'".format(fields[2])
+            expr_str += " AND \"TYP\" = '{0}'".format(fields[1])
+            if fields[3] == "NULL":
+                expr_str += " AND \"DR\" IS NULL"
+            else:
+                expr_str += " AND \"DR\" = '{0}'".format(fields[3])
+
+            if fields[4] == "NULL":
+                expr_str += " AND \"INTENZITA\" IS NULL"
+            else:
+                expr_str += " AND \"INTENZITA\" = '{0}'".format(fields[4])
+            if fields[5] == "NULL":
+                expr_str += " AND \"ODSTUP\" IS NULL"
+            else:
+                expr_str += " AND \"ODSTUP\" = '{0}'".format(fields[5])
+            expr = QgsExpression(expr_str)
+            found = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
+            for found_item in found:
+                taz_typ_csv.deleteFeature(found_item.id())
+        taz_typ_csv.commitChanges()
+        self.open_processes()
 
     def open_processes(self):
         lyr = iface.activeLayer()

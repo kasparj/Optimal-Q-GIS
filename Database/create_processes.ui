@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>283</width>
-    <height>386</height>
+    <height>426</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -203,8 +203,30 @@
       <property name="layoutDirection">
        <enum>Qt::LeftToRight</enum>
       </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::MultiSelection</enum>
+      </property>
      </widget>
     </widget>
+   </widget>
+   <widget class="QPushButton" name="remove">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>380</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Zmazať vybrané</string>
+    </property>
+    <property name="default">
+     <bool>false</bool>
+    </property>
    </widget>
   </widget>
  </widget>
