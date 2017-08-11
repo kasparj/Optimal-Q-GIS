@@ -1531,7 +1531,7 @@ class Database:
         for taz_typ in selected_taz_typ:
             one_taz_typ = ""
             atts = taz_typ.attributes()
-            for index in [3, 4, 0, 1, 2]:
+            for index in [4, 3, 0, 1, 2]:
                 one_taz_typ += " {0}".format(atts[index])
             self.create_processes.definovane.addItem(one_taz_typ)
 
@@ -1569,13 +1569,13 @@ class Database:
         expr = QgsExpression("PSK_NUM ="+ str(psk_id))
         all_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
 
-        etaz = self.create_processes.etaz.currentText()
+        prirazeni = self.create_processes.prirazeni.text()
         if self.create_processes.holosec.isChecked():
             typ = "holosec"
         else:
             typ = "podrostni"
 
-        expr = QgsExpression("\"PRIRAZENI\" = '{0}' AND \"TYP\" = '{1}'".format(etaz, typ))
+        expr = QgsExpression("\"PRIRAZENI\" = '{0}' AND \"TYP\" = '{1}'".format(prirazeni, typ))
         known_id = None
         for feature in taz_typ_csv.getFeatures(QgsFeatureRequest(expr)):
             known_id = feature.attributes()[-2]
@@ -1597,7 +1597,7 @@ class Database:
             new_taz_typ.append(self.create_processes.intenzita.text())
             new_taz_typ.append(self.create_processes.odstup.text())
         new_taz_typ.append(typ)
-        new_taz_typ.append(etaz)
+        new_taz_typ.append(prirazeni)
         new_taz_typ.append(known_id)
         new_taz_typ.append(psk_id)
 
