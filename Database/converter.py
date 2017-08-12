@@ -161,6 +161,7 @@ def parse_taz_type(taz_typ, atts, file_to_write):
             tmp_atts1 = tmp_atts[:]
             tmp_atts1.insert(0, zasah.get('INTENZITA'))
             tmp_atts1.insert(0, zasah.get('DR'))
+            tmp_atts1.insert(0, zasah.get('ETAZ'))
             to_write = "\",\"".join(tmp_atts1)
             file_to_write.write("\""+to_write+'\"\n')
 
@@ -728,6 +729,7 @@ def convert_to_shp(pretty_name,folder_name):
                                     tmp_atts1 = tmp_atts[:]
                                     tmp_atts1.insert(0, zasah.get('INTENZITA'))
                                     tmp_atts1.insert(0, zasah.get('DR'))
+                                    tmp_atts1.insert(0, zasah.get('ETAZ'))
                                     to_write = "\",\"".join(tmp_atts1)
                                     taz_typ_file.write("\""+to_write+'\"\n')
 

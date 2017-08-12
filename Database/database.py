@@ -1479,8 +1479,13 @@ class Database:
         for item in to_delete:
             fields = item.text().split(' ')
             expr_str += "\"PSK_NUM\" = '{0}'".format(psk_id)
-            expr_str += " AND \"PRIRAZENI\" = '{0}'".format(fields[2])
+            expr_str += " AND \"PRIRAZENI\" = '{0}'".format(fields[0])
             expr_str += " AND \"TYP\" = '{0}'".format(fields[1])
+            if fields[2] == "NULL":
+                expr_str += " AND \"ETAZ\" IS NULL"
+            else:
+                expr_str += " AND \"ETAZ\" = '{0}'".format(fields[2])
+
             if fields[3] == "NULL":
                 expr_str += " AND \"DR\" IS NULL"
             else:
@@ -1494,6 +1499,7 @@ class Database:
                 expr_str += " AND \"ODSTUP\" IS NULL"
             else:
                 expr_str += " AND \"ODSTUP\" = '{0}'".format(fields[5])
+            print expr_str
             expr = QgsExpression(expr_str)
             found = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
             for found_item in found:
@@ -1531,7 +1537,8 @@ class Database:
         for taz_typ in selected_taz_typ:
             one_taz_typ = ""
             atts = taz_typ.attributes()
-            for index in [4, 3, 0, 1, 2]:
+            one_taz_typ += "{0}".format(atts[5])
+            for index in [4, 0, 1, 2, 3]:
                 one_taz_typ += " {0}".format(atts[index])
             self.create_processes.definovane.addItem(one_taz_typ)
 
@@ -1590,8 +1597,9 @@ class Database:
 
         new_taz_typ = []
         if typ == 'holosec':
-            new_taz_typ = ["", "", ""]
+            new_taz_typ = ["", "", "", ""]
         else:
+            new_taz_typ.append(self.create_processes.etaz.currentText())
             new_taz_typ.append(self.create_processes.drevina.currentText())
             # TODO verify the following two, that they make sense
             new_taz_typ.append(self.create_processes.intenzita.text())
