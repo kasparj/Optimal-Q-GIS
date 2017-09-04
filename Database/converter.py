@@ -724,6 +724,7 @@ def convert_to_shp(pretty_name,folder_name):
                             atts.insert(0, taz_typ.get('TYP'))
                             for sec in taz_typ.findall('SEC'):
                                 tmp_atts = atts[:]
+                                tmp_atts.insert(0, sec.get('ID'))
                                 tmp_atts.insert(0, sec.get('ODSTUP'))
                                 for zasah in sec.findall('ZASAH'):
                                     tmp_atts1 = tmp_atts[:]

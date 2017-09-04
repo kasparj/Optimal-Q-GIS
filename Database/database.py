@@ -143,7 +143,11 @@ class Database:
         self.create_processes.etaz.currentIndexChanged.connect(self.update_drv_in_processes)
         self.create_processes.holosec.toggled.connect(self.toggle_holosec)
         self.create_processes.definovane.itemSelectionChanged.connect(self.toggle_definovane_zasahy)
+        self.create_processes.sec_id.currentIndexChanged.connect(self.toggle_sec)
+        self.create_processes.typ_id.currentIndexChanged.connect(self.toggle_typ)
         self.create_processes.remove.clicked.connect(self.remove_zasahy)
+        self.create_processes.new_id.clicked.connect(self.new_typ_id)
+        self.create_processes.new_sec.clicked.connect(self.new_sec_id)
 
         self.sekvencie.finish.clicked.connect(self.end_sek)
         self.sekvencie.new_s.clicked.connect(self.new_sek)
@@ -1444,11 +1448,73 @@ class Database:
             self.create_processes.drevina.setEnabled(False)
             self.create_processes.intenzita.setEnabled(False)
             self.create_processes.odstup.setEnabled(False)
+            self.create_processes.sec_id.setEnabled(False)
+            self.create_processes.new_sec.setEnabled(False)
         else:
             self.create_processes.etaz.setEnabled(True)
             self.create_processes.drevina.setEnabled(True)
             self.create_processes.intenzita.setEnabled(True)
             self.create_processes.odstup.setEnabled(True)
+            self.create_processes.sec_id.setEnabled(True)
+            self.create_processes.new_sec.setEnabled(True)
+            if not self.create_processes.sec_id.count():
+                self.create_processes.sec_id.addItem('1')
+
+    def toggle_sec(self):
+        lyr = iface.activeLayer()
+        fts = lyr.selectedFeatures()
+        if fts == []:
+            return
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
+
+        id_psk = lyr.fieldNameIndex('PSK_NUM')
+        id_odstup = taz_typ_csv.fieldNameIndex('ODSTUP')
+        psk_id = fts[0].attributes()[id_psk]
+
+        sec_id = self.create_processes.sec_id.currentText()
+        expr_str = ""
+        expr_str += "\"PSK_NUM\" = '{0}'".format(psk_id)
+        expr_str += " AND \"SEC_ID\" = '{0}'".format(sec_id)
+        expr = QgsExpression(expr_str)
+        found = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
+        for found_item in found:
+            self.create_processes.odstup.setText(found_item.attributes()[id_odstup])
+        self.create_processes.odstup.setEnabled(False)
+
+    def toggle_typ(self):
+        lyr = iface.activeLayer()
+        fts = lyr.selectedFeatures()
+        if fts == []:
+            return
+
+        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        for name, layer in layerMap.iteritems():
+            if layer.name() == "Tazobne typy":
+                taz_typ_csv = layer
+
+        id_psk = lyr.fieldNameIndex('PSK_NUM')
+        id_prirazeni = taz_typ_csv.fieldNameIndex('PRIRAZENI')
+        id_typ = taz_typ_csv.fieldNameIndex('TYP')
+        psk_id = fts[0].attributes()[id_psk]
+
+        typ_id = self.create_processes.typ_id.currentText()
+        expr_str = ""
+        expr_str += "\"PSK_NUM\" = '{0}'".format(psk_id)
+        expr_str += " AND \"ID\" = '{0}'".format(typ_id)
+        expr = QgsExpression(expr_str)
+        found = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
+        for found_item in found:
+            if found_item.attributes()[id_typ] == 'holosec':
+                self.create_processes.holosec.setChecked(True)
+                self.create_processes.podrostne.setChecked(False)
+            else:
+                self.create_processes.holosec.setChecked(False)
+                self.create_processes.podrostne.setChecked(True)
+            self.create_processes.prirazeni.setText(found_item.attributes()[id_prirazeni])
 
     def toggle_definovane_zasahy(self):
         if self.create_processes.definovane.selectedItems():
@@ -1480,7 +1546,12 @@ class Database:
             fields = item.text().split(' ')
             expr_str += "\"PSK_NUM\" = '{0}'".format(psk_id)
             expr_str += " AND \"PRIRAZENI\" = '{0}'".format(fields[0])
+            expr_str += " AND \"ID\" = '{0}'".format(fields[6])
             expr_str += " AND \"TYP\" = '{0}'".format(fields[1])
+            if fields[7] == "NULL":
+                expr_str += " AND \"SEC_ID\" IS NULL"
+            else:
+                expr_str += " AND \"SEC_ID\" = '{0}'".format(fields[7])
             if fields[2] == "NULL":
                 expr_str += " AND \"ETAZ\" IS NULL"
             else:
@@ -1534,15 +1605,54 @@ class Database:
                                                etaz.attributes()[-1])
 
         self.create_processes.definovane.clear()
+        self.create_processes.typ_id.clear()
+        self.create_processes.sec_id.clear()
         for taz_typ in selected_taz_typ:
             one_taz_typ = ""
             atts = taz_typ.attributes()
-            one_taz_typ += "{0}".format(atts[5])
-            for index in [4, 0, 1, 2, 3]:
+            one_taz_typ += "{0}".format(atts[6])
+            for index in [5, 0, 1, 2, 3, 7, 4]:
                 one_taz_typ += " {0}".format(atts[index])
             self.create_processes.definovane.addItem(one_taz_typ)
+            self.create_processes.typ_id.addItem(atts[7])
+            if atts[3]:
+                self.create_processes.sec_id.addItem(atts[4])
+        if self.create_processes.typ_id.count():
+            self.create_processes.prirazeni.setEnabled(False)
+            self.create_processes.holosec.setEnabled(False)
+            self.create_processes.podrostne.setEnabled(False)
+            self.create_processes.odstup.setEnabled(False)
+        else:
+            self.create_processes.prirazeni.setEnabled(True)
+            self.create_processes.holosec.setEnabled(True)
+            self.create_processes.podrostne.setEnabled(True)
+            self.create_processes.odstup.setEnabled(True)
+            self.create_processes.sec_id.setEnabled(False)
+            self.create_processes.new_sec.setEnabled(False)
+            self.create_processes.typ_id.addItem('1')
+            self.create_processes.sec_id.addItem('1')
 
         self.create_processes.show()
+
+    def new_sec_id(self):
+        sec_id = self.create_processes.sec_id
+        if self.create_processes.sec_id.count():
+            biggest = max([int(sec_id.itemText(i)) for i in range(sec_id.count())])
+            biggest += 1
+            sec_id.addItem(str(biggest))
+            sec_id.setCurrentIndex(sec_id.findText(str(biggest), QtCore.Qt.MatchFixedString))
+        self.create_processes.odstup.setEnabled(True)
+
+    def new_typ_id(self):
+        typ_id = self.create_processes.typ_id
+        if self.create_processes.typ_id.count():
+            biggest = max([int(typ_id.itemText(i)) for i in range(typ_id.count())])
+            biggest += 1
+            typ_id.addItem(str(biggest))
+            typ_id.setCurrentIndex(typ_id.findText(str(biggest), QtCore.Qt.MatchFixedString))
+        self.create_processes.prirazeni.setEnabled(True)
+        self.create_processes.holosec.setEnabled(True)
+        self.create_processes.podrostne.setEnabled(True)
 
     def update_drv_in_processes(self, nth):
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
@@ -1583,30 +1693,20 @@ class Database:
             typ = "podrostni"
 
         expr = QgsExpression("\"PRIRAZENI\" = '{0}' AND \"TYP\" = '{1}'".format(prirazeni, typ))
-        known_id = None
-        for feature in taz_typ_csv.getFeatures(QgsFeatureRequest(expr)):
-            known_id = feature.attributes()[-2]
-        if known_id is None:
-            known_id = 1
-            for feature in all_taz_typ:
-                old_id = int(feature.attributes()[-2])
-                if old_id > known_id:
-                    known_id = old_id + 1
-        elif typ == "holosec":
-            return
 
         new_taz_typ = []
         if typ == 'holosec':
-            new_taz_typ = ["", "", "", ""]
+            new_taz_typ = ["", "", "", "", ""]
         else:
             new_taz_typ.append(self.create_processes.etaz.currentText())
             new_taz_typ.append(self.create_processes.drevina.currentText())
             # TODO verify the following two, that they make sense
             new_taz_typ.append(self.create_processes.intenzita.text())
             new_taz_typ.append(self.create_processes.odstup.text())
+            new_taz_typ.append(self.create_processes.sec_id.currentText())
         new_taz_typ.append(typ)
         new_taz_typ.append(prirazeni)
-        new_taz_typ.append(known_id)
+        new_taz_typ.append(self.create_processes.typ_id.currentText())
         new_taz_typ.append(psk_id)
 
         new_ft = QgsFeature(taz_typ_csv.pendingFields())
