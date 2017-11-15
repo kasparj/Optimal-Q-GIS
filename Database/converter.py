@@ -38,7 +38,7 @@ def create_points(lines):
         np = point.get('S')
         number1 = np[:np.find("$")]  # odstrihne od zaciatku po $
         number2 = np[np.find("$")+1:]  # odstrihne od $ dokonca
-        points.append(QgsPoint(float(number2), -1 * float(number1)))
+        points.append(QgsPoint(-1 * float(number2), -1 * float(number1)))
     return points
 
 
