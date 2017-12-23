@@ -551,22 +551,11 @@ class Database:
             psk = ET.SubElement(root, "PSK", dict_)
             psk_obraz = ET.SubElement(psk, "PSK_OBRAZ")
             p = ET.SubElement(psk_obraz, "MP")
-            full_poly = ft.geometry().asMultiPolygon()
-            if full_poly:
-                for poly in full_poly:
-                    ml = ET.SubElement(p, "P")
-                    for ring in poly:
-                        l = ET.SubElement(ml, "L")
-                        for point in ring:
-                            ET.SubElement(l, "B", S="{0}${1}".format(-1 * point[1], point[0]))
-            else:
-                full_poly = ft.geometry().asPolygon()
-                ml = ET.SubElement(p, "P")
-                for ring in ft.geometry().asPolygon():
-                    l = ET.SubElement(ml, "L")
-                    for point in ring:
-                        ET.SubElement(l, "B", S="{0}${1}".format(-1 * point[1], point[0]))
-
+            ml = ET.SubElement(p, "P")
+            for ring in ft.geometry().asPolygon():
+                l = ET.SubElement(ml, "L")
+                for point in ring:
+                    ET.SubElement(l, "B", S="{0}${1}".format(-1 * point[1], point[0]))
 
             self.process_etz(psk, self.etzs[ft.attributes()[self.id_PSK]])
             if ft.attributes()[self.id_original] == -2:
