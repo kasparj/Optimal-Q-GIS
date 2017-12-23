@@ -50,13 +50,10 @@ def create_from_MP(MP, layer, atts):
     atts = list vsetkych atributov, ktore chceme k danemu objektu priradit
     """
     finished_list = []
-    for polygons in MP.findall('P'):
-        one_poly = []
-        for lines in polygons.findall('L'):
-            points = create_points(lines)  # ziskam zoznam bodov
-            one_poly.append(points)
-        finished_list.append(one_poly)
-    POLY.setGeometry(QgsGeometry.fromMultiPolygon(finished_list))  # vytvorim objekt
+    for lines in MP.findall('L'):
+        points = create_points(lines)  # ziskam zoznam bodov
+        finished_list.append(points)
+    POLY.setGeometry(QgsGeometry.fromPolygon(finished_list))  # vytvorim objekt
     POLY.setAttributes(atts)  # nastavenie atributov
     layer.addFeatures([POLY])
 
@@ -92,48 +89,55 @@ def parse_polygon(psk, lyr, porast, odd_att, dil_att, por_atts, my_id, ETZ_ID,
     atts.append(my_id)
     my_id_id = len(atts)-1
     atts.extend(['BW', 50, 10000, 0, 0, 1, 0, ';', ';', -1])
+    number_of_polygons = 0
     for psk_obraz in psk.findall('PSK_OBRAZ'):
         for MP in psk_obraz.findall('MP'):
-            create_from_MP(MP, lyr, atts)
+            for polygon in MP.findall('P'):
+                if number_of_polygons != 0 and not known:
+                    atts[my_id_id] += 1
+                create_from_MP(polygon, lyr, atts)
+                number_of_polygons += 1
 
-    for etaz in psk.findall('ETZ'):
-        etz_id = ETZ_ID
-        ETZ_ID += 1
-        etz_atts = create_attributes(etaz, LIST_ETZ)
-        etz_atts.append(str(my_id))
-        etz_atts.append(str(etz_id))
-        to_write = "\",\"".join(etz_atts)
-        etz_file.write("\""+to_write+'\"\n')
-        for drevina in etaz.findall('DRV'):
-            my_drv_id = DRV_ID
-            DRV_ID += 1
-            drv_atts = create_attributes(drevina, LIST_DRV)
-            drv_atts.append(str(etz_id))
-            drv_atts.append(str(my_drv_id))
+    for j in range(number_of_polygons):
+        for etaz in psk.findall('ETZ'):
+            etz_id = ETZ_ID
+            ETZ_ID += 1
+            etz_atts = create_attributes(etaz, LIST_ETZ)
+            etz_atts.append(str(my_id+j))
+            etz_atts.append(str(etz_id))
+            to_write = "\",\"".join(etz_atts)
+            etz_file.write("\""+to_write+'\"\n')
+            for drevina in etaz.findall('DRV'):
+                my_drv_id = DRV_ID
+                DRV_ID += 1
+                drv_atts = create_attributes(drevina, LIST_DRV)
+                drv_atts.append(str(etz_id))
+                drv_atts.append(str(my_drv_id))
 
-            to_write = "\",\"".join(drv_atts)
-            drv_file.write("\""+to_write+'\"\n')
+                to_write = "\",\"".join(drv_atts)
+                drv_file.write("\""+to_write+'\"\n')
 
-            for poskodenie in drevina.findall('POS'):
-                pos_atts = create_attributes(poskodenie, LIST_POS)
-                pos_atts.append(str(my_drv_id))
-                to_write = "\",\"".join(pos_atts)
-                pos_file.write("\""+to_write+'\"\n')
-                progress_count += 1
-        for zalozenie in etaz.findall('ZAL'):
-            zal_atts = create_attributes(zalozenie, LIST_ZAL)
-            zal_atts.append(str(etz_id))
+                for poskodenie in drevina.findall('POS'):
+                    pos_atts = create_attributes(poskodenie, LIST_POS)
+                    pos_atts.append(str(my_drv_id))
+                    to_write = "\",\"".join(pos_atts)
+                    pos_file.write("\""+to_write+'\"\n')
+                    progress_count += 1
+            for zalozenie in etaz.findall('ZAL'):
+                zal_atts = create_attributes(zalozenie, LIST_ZAL)
+                zal_atts.append(str(etz_id))
 
-            to_write = "\",\"".join(zal_atts)
-            zal_file.write("\""+to_write+'\"\n')
+                to_write = "\",\"".join(zal_atts)
+                zal_file.write("\""+to_write+'\"\n')
 
-    for kategoria in porast.findall('KAT'):
-        kat_atts = create_attributes(kategoria, LIST_KAT)
-        kat_atts.append(str(my_id))
-        to_write = "\",\"".join(kat_atts)
-        kat_file.write("\""+to_write+'\"\n')
+    for j in range(number_of_polygons):
+        for kategoria in porast.findall('KAT'):
+            kat_atts = create_attributes(kategoria, LIST_KAT)
+            kat_atts.append(str(my_id+j))
+            to_write = "\",\"".join(kat_atts)
+            kat_file.write("\""+to_write+'\"\n')
 
-    return (ETZ_ID, DRV_ID, progress_count)
+    return (number_of_polygons, ETZ_ID, DRV_ID, progress_count)
 
 
 #ziskam list atributov parsovanim
@@ -615,7 +619,9 @@ def convert_to_shp(pretty_name,folder_name):
             atts = create_attributes(KPO, LIST_KPO)
             for KPO_obraz in KPO.findall('PLO_OBRAZ'):
                 for MP in KPO_obraz.findall('MP'):
-                    create_from_MP(MP, kpo_poly, atts)
+
+                    for polygon in MP.findall('P'):
+                        create_from_MP(polygon,kpo_poly,atts)
 
 
 
@@ -652,7 +658,8 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for bzl_obraz in bezlesie.findall('BZL_OBRAZ'):
                             for MP in bzl_obraz.findall('MP'):
-                                create_from_MP(MP, bzl_poly, atts)
+                                for polygon in MP.findall('P'):
+                                    create_from_MP(polygon,bzl_poly,atts)
 
                     for jine in porast.findall('JP'):
                         jp_atts = create_attributes(jine, LIST_JP)
@@ -668,10 +675,12 @@ def convert_to_shp(pretty_name,folder_name):
 #to this
                         for jp_obraz in jine.findall('JP_OBRAZ'):
                             for MP in jp_obraz.findall('MP'):
-                                create_from_MP(MP, jp_poly, atts)
+
+                                for polygon in MP.findall('P'):
+                                    create_from_MP(polygon,jp_poly,atts)
 
                     for psk in porast.findall('PSK'):
-                        etz_id, drv_id, new_i = parse_polygon(psk,
+                        psk_i, etz_id, drv_id, new_i = parse_polygon(psk,
                                                               psk_poly,
                                                               porast,
                                                               odd_att,
@@ -685,7 +694,7 @@ def convert_to_shp(pretty_name,folder_name):
                                                               pos_file,
                                                               zal_file,
                                                               kat_file)
-                        PSK_ID += 1
+                        PSK_ID += psk_i
                         ETZ_ID = etz_id
                         DRV_ID = drv_id
                         i += new_i
