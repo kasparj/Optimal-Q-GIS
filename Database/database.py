@@ -428,6 +428,13 @@ class Database:
                     ET.SubElement(etz_root, "ZAL", dict_)
 
     def generate_globals(self):
+        lyr = None
+        csv_kat = None
+        csv_por = None
+        csv_drv = None
+        csv_zal = None
+        csv_pos = None
+
         layerMap = QgsMapLayerRegistry.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Lesne porasty":
@@ -443,8 +450,6 @@ class Database:
             elif layer.name() == "Poskodenia":
                 csv_pos = layer
 
-        self.PSK_id_kat = csv_kat.fieldNameIndex('PSK_NUM')
-        self.PSK_NUM_por = csv_por.fieldNameIndex('PSK_NUM')
         self.POR_items = ['SDR_POR', 'MAJ_KOD', 'MAJ_NAZ', 'MAJ_DRUH', 'ORG_UROVEN',
                      'PAS_OHR', 'LES_OBL', 'LES_PODOBL', 'ZVL_STATUT', 'POR',
                      'OLH_LIC', 'OLH', 'POR_TEXT', 'HIST_LHC', 'HIST_LHPOD',
@@ -469,67 +474,80 @@ class Database:
              'DR_TO', 'DR_TVYB']
         self.ZAL_items = ['ZAL_DR', 'ZAL_DR_P']
         self.POS_items = ['POSKOZ_D', 'POSKOZ_R']
-        self.ZAL_ids = [csv_zal.fieldNameIndex(x[:10]) for x in self.ZAL_items]
-        self.POS_ids = [csv_pos.fieldNameIndex(x[:10]) for x in self.POS_items]
-        self.DRV_ids = [csv_drv.fieldNameIndex(x[:10]) for x in self.DRV_items]
-        self.ETZ_ids = [csv_por.fieldNameIndex(x[:10]) for x in self.ETZ_items]
-        self.PSK_ids = [lyr.fieldNameIndex(x[:10]) for x in self.PSK_items]
-        self.KAT_ids = [csv_kat.fieldNameIndex(x[:10]) for x in self.KAT_items]
-        self.POR_ids = [lyr.fieldNameIndex(x[:10]) for x in self.POR_items]
-        self.id_ODD = lyr.fieldNameIndex('ODD')
-        self.id_DIL = lyr.fieldNameIndex('DIL')
-        self.id_POR = lyr.fieldNameIndex('POR')
-        self.id_PSK = lyr.fieldNameIndex('PSK_NUM')
-        self.id_DRV = csv_drv.fieldNameIndex('DRV_NUM')
-        self.id_ETZ = csv_por.fieldNameIndex('ETZ_NUM')
-        self.sekvence_id = lyr.fieldNameIndex('sekvencia')
-        #self.poradi_id = lyr.fieldNameIndex('dunno')#TODO
-        self.priorita_id = lyr.fieldNameIndex('priorita')
-        self.nei_id = lyr.fieldNameIndex('neighbours')
-        self.ETZ_NUM_drv = csv_drv.fieldNameIndex('ETZ_NUM')
-        self.ETZ_NUM_zal = csv_zal.fieldNameIndex('ETZ_NUM')
-        self.DRV_NUM_pos = csv_pos.fieldNameIndex('DRV_NUM')
-        self.id_original = lyr.fieldNameIndex('original')
+
+        self.zals = {}
+        self.ZAL_ids = []
+        if csv_zal:
+            self.ZAL_ids = [csv_zal.fieldNameIndex(x[:10]) for x in self.ZAL_items]
+            self.ETZ_NUM_zal = csv_zal.fieldNameIndex('ETZ_NUM')
+            zals = self.zals
+            for ft in csv_zal.getFeatures():
+                if ft.attributes()[self.ETZ_NUM_zal] in zals.keys():
+                    zals[ft.attributes()[self.ETZ_NUM_zal]].append(ft)
+                else:
+                    zals[ft.attributes()[self.ETZ_NUM_zal]] = [ft]
+
+        self.poss = {}
+        self.POS_ids = []
+        if csv_pos:
+            self.POS_ids = [csv_pos.fieldNameIndex(x[:10]) for x in self.POS_items]
+            self.DRV_NUM_pos = csv_pos.fieldNameIndex('DRV_NUM')
+            poss = self.poss
+            for ft in csv_pos.getFeatures():
+                if ft.attributes()[self.DRV_NUM_pos] in poss.keys():
+                    poss[ft.attributes()[self.DRV_NUM_pos]].append(ft)
+                else:
+                    poss[ft.attributes()[self.DRV_NUM_pos]] = [ft]
+
+        self.drvs = {}
+        self.DRV_ids = []
+        if csv_drv:
+            self.DRV_ids = [csv_drv.fieldNameIndex(x[:10]) for x in self.DRV_items]
+            self.id_DRV = csv_drv.fieldNameIndex('DRV_NUM')
+            self.ETZ_NUM_drv = csv_drv.fieldNameIndex('ETZ_NUM')
+            drvs = self.drvs
+            for ft in csv_drv.getFeatures():
+                if ft.attributes()[self.ETZ_NUM_drv] in drvs.keys():
+                    drvs[ft.attributes()[self.ETZ_NUM_drv]].append(ft)
+                else:
+                    drvs[ft.attributes()[self.ETZ_NUM_drv]] = [ft]
+
         self.etzs = {}
-        etzs = self.etzs
-        for ft in csv_por.getFeatures():
-            if ft.attributes()[self.PSK_NUM_por] in etzs.keys():
-                etzs[ft.attributes()[self.PSK_NUM_por]].append(ft)
+        self.ETZ_ids = []
+        if csv_por:
+            self.ETZ_ids = [csv_por.fieldNameIndex(x[:10]) for x in self.ETZ_items]
+            self.id_ETZ = csv_por.fieldNameIndex('ETZ_NUM')
+            self.PSK_NUM_por = csv_por.fieldNameIndex('PSK_NUM')
+            etzs = self.etzs
+            for ft in csv_por.getFeatures():
+                if ft.attributes()[self.PSK_NUM_por] in etzs.keys():
+                    etzs[ft.attributes()[self.PSK_NUM_por]].append(ft)
             else:
                 etzs[ft.attributes()[self.PSK_NUM_por]] = [ft]
 
         self.kats = {}
-        kats = self.kats
-        for ft in csv_kat.getFeatures():
-            if ft.attributes()[self.PSK_id_kat] in kats.keys():
-                kats[ft.attributes()[self.PSK_id_kat]].append(ft)
-            else:
-                kats[ft.attributes()[self.PSK_id_kat]] = [ft]
+        self.KAT_ids = []
+        if csv_kat:
+            self.KAT_ids = [csv_kat.fieldNameIndex(x[:10]) for x in self.KAT_items]
+            self.PSK_id_kat = csv_kat.fieldNameIndex('PSK_NUM')
+            kats = self.kats
+            for ft in csv_kat.getFeatures():
+                if ft.attributes()[self.PSK_id_kat] in kats.keys():
+                    kats[ft.attributes()[self.PSK_id_kat]].append(ft)
+                else:
+                    kats[ft.attributes()[self.PSK_id_kat]] = [ft]
 
-        self.drvs = {}
-        drvs = self.drvs
-        for ft in csv_drv.getFeatures():
-            if ft.attributes()[self.ETZ_NUM_drv] in drvs.keys():
-                drvs[ft.attributes()[self.ETZ_NUM_drv]].append(ft)
-            else:
-                drvs[ft.attributes()[self.ETZ_NUM_drv]] = [ft]
-        
-        self.zals = {}
-        zals = self.zals
-        for ft in csv_zal.getFeatures():
-            if ft.attributes()[self.ETZ_NUM_zal] in zals.keys():
-                zals[ft.attributes()[self.ETZ_NUM_zal]].append(ft)
-            else:
-                zals[ft.attributes()[self.ETZ_NUM_zal]] = [ft]
-        
-        self.poss = {}
-        poss = self.poss
-        for ft in csv_pos.getFeatures():
-            if ft.attributes()[self.DRV_NUM_pos] in poss.keys():
-                poss[ft.attributes()[self.DRV_NUM_pos]].append(ft)
-            else:
-                poss[ft.attributes()[self.DRV_NUM_pos]] = [ft]
-
+        if lyr:
+            self.PSK_ids = [lyr.fieldNameIndex(x[:10]) for x in self.PSK_items]
+            self.POR_ids = [lyr.fieldNameIndex(x[:10]) for x in self.POR_items]
+            self.id_ODD = lyr.fieldNameIndex('ODD')
+            self.id_DIL = lyr.fieldNameIndex('DIL')
+            self.id_POR = lyr.fieldNameIndex('POR')
+            self.id_PSK = lyr.fieldNameIndex('PSK_NUM')
+            self.sekvence_id = lyr.fieldNameIndex('sekvencia')
+            self.priorita_id = lyr.fieldNameIndex('priorita')
+            self.nei_id = lyr.fieldNameIndex('neighbours')
+            self.id_original = lyr.fieldNameIndex('original')
 
     def process_psk(self, lyr, root, fts_list):
         parents = []
