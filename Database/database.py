@@ -1760,7 +1760,7 @@ class Database:
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 self.save_layer(layer,pretty_folder+'/etz')
-            elif layer.name() == "Tazbne typy":
+            elif layer.name() == "Tazobne typy":
                 self.save_layer(layer,pretty_folder+'/taz_typ')
             elif layer.name() == "Dreviny":
                 self.save_layer(layer,pretty_folder+'/drv')
