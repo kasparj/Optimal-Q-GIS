@@ -1891,7 +1891,7 @@ class Database:
                 if layer.name() == "Zalozenie":
                     lyr = layer
             self.edit_attribute(lyr, item, list_of_zals_ids)
-    
+
     def show_atts(self):
         if self.create_processes.isVisible():
             self.open_processes()
@@ -1941,10 +1941,6 @@ class Database:
                 vys_obn_csv = layer
             elif layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
-        if not etz_csv or not drv_csv or not kat_csv or not zal_csv or not pos_csv:
-            return
-#kontorla ci naslo vsetky co treba
-#kontorla ci je aj vybrata feature
         if not lyr:
             self.Error_message("Ziadna vybrana vrstva")
         else: 
@@ -1989,14 +1985,24 @@ class Database:
                 field_names = []
                 features_list = []
 
+            selected_etzs = []
+            fields_etz = []
+
             expr = QgsExpression("PSK_NUM ="+ str(psk_numb))
-            selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
-            selected_kats = kat_csv.getFeatures(QgsFeatureRequest(expr))
+
+            if etz_csv:
+                selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
+                fields_etz = etz_csv.pendingFields()
+                id_etz = etz_csv.fieldNameIndex('ETZ_NUM')
+
+            selected_kats = []
+            if kat_csv:
+                selected_kats = kat_csv.getFeatures(QgsFeatureRequest(expr))
+
             selected_vys_obn = vys_obn_csv.getFeatures(QgsFeatureRequest(expr))
             selected_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
             selected_vys_vych = vys_vych_csv.getFeatures(QgsFeatureRequest(expr))
 
-            fields_etz = etz_csv.pendingFields()
             field_names_etz = [field.name() for field in fields_etz]
             selected_etzs = list(selected_etzs)
             features_list_etz = [feature.attributes() for feature in selected_etzs]
@@ -2024,7 +2030,9 @@ class Database:
                                                      feature.attributes()[1:3])
             features_list_vys_obn = self.convert_to_strings(features_list_vys_obn)
 
-            fields_kat = kat_csv.pendingFields()
+            fields_kat = []
+            if kat_csv:
+                fields_kat = kat_csv.pendingFields()
             field_names_kat = [field.name() for field in fields_kat]
             selected_kats =list(selected_kats)
             features_list_kat = [feature.attributes() for feature in
@@ -2032,18 +2040,17 @@ class Database:
             features_list_kat = self.convert_to_strings(features_list_kat)
             for fit in selected_kats:
                 list_of_kats_ids.append(fit.id())
-            
-            
+
             etz_numbers = []
-            idx = etz_csv.fieldNameIndex('ETZ_NUM')
             for item in features_list_etz:
-                etz_numbers.append(item[idx])
-           
-            
+                etz_numbers.append(item[id_etz])
+
             features_list_drv = []
             for index in etz_numbers:
                 expr = QgsExpression('ETZ_NUM ='+str(index))
-                one_list = drv_csv.getFeatures(QgsFeatureRequest(expr))
+                one_list = []
+                if drv_csv:
+                    one_list = drv_csv.getFeatures(QgsFeatureRequest(expr))
 
                 one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
@@ -2052,52 +2059,58 @@ class Database:
                     features_list_drv.append(one_ft)
                 for each_item in one_list:
                     list_of_drvs_ids.append(each_item.id())
-            
+
             features_list_drv = self.convert_to_strings(features_list_drv)
             #print features_list_drv
-            fields_drv = drv_csv.pendingFields()
+            fields_drv = []
+            if drv_csv:
+                fields_drv = drv_csv.pendingFields()
             field_names_drv = [field.name() for field in fields_drv]
-            
-                
+
             drv_numbers = []
-            idx = drv_csv.fieldNameIndex('DRV_NUM')
+            if drv_csv:
+                idx = drv_csv.fieldNameIndex('DRV_NUM')
             for item in features_list_drv:
                 drv_numbers.append(item[idx])
-            
-            
+
             features_list_pos = []
             for index in drv_numbers:
                 expr = QgsExpression('DRV_NUM ='+str(index))
-                one_list = pos_csv.getFeatures(QgsFeatureRequest(expr))
+                one_list = []
+                if pos_csv:
+                    one_list = pos_csv.getFeatures(QgsFeatureRequest(expr))
                 one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
                 for one_ft in another_list:
                     features_list_pos.append(one_ft)
                 for each_item in one_list:
                     list_of_poss_ids.append(each_item.id())
-            
+
             features_list_pos = self.convert_to_strings(features_list_pos)
-            fields_pos = pos_csv.pendingFields()
+            fields_pos = []
+            if pos_csv:
+                fields_pos = pos_csv.pendingFields()
             field_names_pos = [field.name() for field in fields_pos]
-            
-            
-            
+
             features_list_zal = []
             for index in etz_numbers:
                 expr = QgsExpression('ETZ_NUM ='+str(index))
-                one_list = zal_csv.getFeatures(QgsFeatureRequest(expr))
+                one_list = []
+                if zal_csv:
+                    one_list = zal_csv.getFeatures(QgsFeatureRequest(expr))
                 one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
                 for one_ft in another_list:
                     features_list_zal.append(one_ft)
                 for each_item in one_list:
                     list_of_zals_ids.append(each_item.id())
-            
+
             features_list_zal = self.convert_to_strings(features_list_zal)
-            fields_zal = zal_csv.pendingFields()
+            fields_zal = []
+            if zal_csv:
+                fields_zal = zal_csv.pendingFields()
             field_names_zal = [field.name() for field in fields_zal]
-            
-           
+
             self.shower.show()
             self.shower.set_data(field_names, features_list,self.shower.tableWidget)
             self.shower.set_data(field_names_etz,
@@ -2117,9 +2130,8 @@ class Database:
                     features_list_vys_obn,self.shower.obnova)
             self.shower.area.setText(str("%.2f" % (area/10000)))
             #self.shower.length.setText(str(round(length*2)/2))
-
         edit_pos = 0
-   
+
     def select_output_folder_c(self):
         global pretty_folder
         pretty_folder = QFileDialog.getExistingDirectory(self.dlg, "Vyberte\
