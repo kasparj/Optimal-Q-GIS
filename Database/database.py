@@ -522,8 +522,8 @@ class Database:
             for ft in csv_por.getFeatures():
                 if ft.attributes()[self.PSK_NUM_por] in etzs.keys():
                     etzs[ft.attributes()[self.PSK_NUM_por]].append(ft)
-            else:
-                etzs[ft.attributes()[self.PSK_NUM_por]] = [ft]
+                else:
+                    etzs[ft.attributes()[self.PSK_NUM_por]] = [ft]
 
         self.kats = {}
         self.KAT_ids = []
