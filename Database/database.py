@@ -50,6 +50,7 @@ import math
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import codecs
+import time
 
 from qgis.core import *
 from names import NAMES_TAZ_TYP
@@ -1184,7 +1185,6 @@ class Database:
                 self.Error_message("Je potrebne zadat v nezapornych cislach")
                 return
 
-            
         idx = layer.fieldNameIndex(name_of_field)
         if idx == -1:
             return
@@ -1192,8 +1192,11 @@ class Database:
         layer.startEditing()
         layer.changeAttributeValue(features[0].id(),idx,new_value,True)
         layer.commitChanges()
+        # HACK - wait while, until value is written into memory
+        # Should be done with signal `committedAttributeValuesChanges`
+        time.sleep(2)
         self.set_new_color(layer,features[0])
-        self.colorize()               
+        self.colorize()
 
     #funkcia na editovanie maximalnej plochy
     def edit_area_max(self):
