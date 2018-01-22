@@ -41,6 +41,7 @@ from distance import Distance
 from set_ranges import Set_ranges 
 from open_all import Open_all 
 from out_xml import OutXml
+from download_xml import DownloadXml
 from create_processes import CreateProcesses
 import os.path
 from converter import convert_to_shp
@@ -51,6 +52,7 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import codecs
 import time
+from zeep import Client
 
 from qgis.core import *
 from names import NAMES_TAZ_TYP
@@ -138,6 +140,11 @@ class Database:
         self.out_xml.address.clear()
         self.out_xml.lookup.clicked.connect(self.select_output_folder)
         self.out_xml.save.clicked.connect(self.export_xml)
+
+        self.download_xml = DownloadXml()
+        self.download_xml.taskid.clear()
+        self.download_xml.download.clicked.connect(self.download_xml_from_server)
+        self.download_xml.select.clicked.connect(self.download_xml_folder_select)
 
         self.create_processes = CreateProcesses()
         self.create_processes.pridat.clicked.connect(self.add_new_process)
@@ -370,7 +377,14 @@ class Database:
             text=self.tr(u'Export XML'),
             callback=self.show_xml,
             parent=self.iface.mainWindow())
-        
+
+        icon_path = ':/plugins/Database/icons/icon_download_xml.png'
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Stiahni XML'),
+            callback=self.download_xml_a,
+            parent=self.iface.mainWindow())
+
         self.handler = None
         self.selected_layer = None
 
@@ -427,6 +441,47 @@ class Database:
                     dict_ = self.fillup_attributes_dict(self.ZAL_items, self.ZAL_ids,
                                                         zal.attributes())
                     ET.SubElement(etz_root, "ZAL", dict_)
+
+    def download_xml_a(self):
+        self.download_xml.show()
+
+    def download_xml_folder_select(self):
+        pretty_folder = QFileDialog.getExistingDirectory(self.dlg, "Vyberte\
+                 vystupny priecinok")
+        self.download_xml.result_folder.setText(pretty_folder)
+
+    def download_xml_from_server(self):
+        task_id = self.download_xml.taskid.text()
+
+        pretty_folder = self.download_xml.result_folder.text()
+
+        try:
+            client = Client('http://petrvones.azurewebsites.net/Client.svc?singleWsdl')
+        except:
+            self.Error_message("Neda sa pripojit na server")
+            return
+
+        try:
+            res = client.service.GetFileInformation(task_id)
+            if res['State'] != 'Done':
+                self.Error_message("Uloha este nebola spracovana")
+                return
+        except Exception as ex:
+            if "not found" in str(ex):
+                self.Error_message("Uloha nenajdena")
+            else:
+                self.Error_message("Chyba serveru")
+            return
+
+        xml = client.service.GetData(task_id)
+        res = convert_to_shp(xml.encode('utf-8'), pretty_folder, True)
+        if res == 2:
+            self.Error_message("Nepodarilo sa otvorit subor")
+        elif res == 3:
+            self.Error_message("Subor neobsahuje topograficke udaje")
+        elif res == 1:
+            self.Error_message("Ina chyba")
+        self.download_xml.close()
 
     def generate_globals(self):
         lyr = None
@@ -2172,8 +2227,6 @@ class Database:
         # See if OK was pressed
         if result:
             if pretty_name != "" and pretty_folder != "":        
-
-
                 res = convert_to_shp(pretty_name,pretty_folder)
                 if res == 2:
                     self.Error_message("Nepodarilo sa otvorit subor")

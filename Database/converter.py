@@ -185,7 +185,7 @@ def save_layer(layer,address):
 #Tuto funkciu volat externe!
 #pretty_name = adresa vstupneho suboru
 #folder_name = adresa, kam sa bude ukladat vysledok
-def convert_to_shp(pretty_name,folder_name):
+def convert_to_shp(pretty_name, folder_name, in_string=False):
 
     i = 0#percento dokoncenia pre progressBar
     progressMessageBar =\
@@ -556,10 +556,13 @@ def convert_to_shp(pretty_name,folder_name):
 #                        parser xml + samotne ukladanie
 # ------------------------------------------------------------------------
 
-    tree = ET.parse(pretty_name)  # pripravime si vstupn subor
-    if not tree:
-        return 2
-    root = tree.getroot()
+    if in_string:
+        root = ET.fromstring(pretty_name)
+    else:
+        tree = ET.parse(pretty_name)  # pripravime si vstupn subor
+        if not tree:
+            return 2
+        root = tree.getroot()
 
     PSK_ID = 0
     TAZ_ID = 0
