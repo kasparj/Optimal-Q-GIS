@@ -22,12 +22,14 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
 
-from PyQt5 import QtCore,  QtGui
+from builtins import range
+from builtins import str
+from qgis.PyQt import QtCore,  QtGui, QtWidgets
 from qgis.core import *
 from qgis.gui import *
 
 def debug(msg):
-    QtGui.QMessageBox.information(None, "debug",  unicode(msg))
+    QtWidgets.QMessageBox.information(None, "debug",  str(msg))
 
 def dtGetFeatureForId(layer,  fid):
     '''Function that returns the QgsFeature with FeatureId *fid* in QgsVectorLayer *layer*'''
@@ -41,14 +43,7 @@ def dtGetFeatureForId(layer,  fid):
 def dtCreateFeature(layer):
     '''Create an empty feature for the *layer*'''
     if isinstance(layer, QgsVectorLayer):
-        newFeature = QgsFeature()
-        provider = layer.dataProvider()
-        fields = layer.pendingFields()
-
-        newFeature.initAttributes(fields.count())
-
-        for i in range(fields.count()):
-            newFeature.setAttribute(i, provider.defaultValue(i))
+        newFeature = QgsVectorLayerUtils.createFeature(layer)
 
         return newFeature
     else:
@@ -65,7 +60,7 @@ def dtCopyFeature(layer, srcFeature = None,   srcFid = None):
 
         #copy the attribute values#
         pkFields = layer.dataProvider().pkAttributeIndexes()
-        fields = layer.pendingFields()
+        fields = layer.fields()
         for i in range(fields.count()):
             # do not copy the PK value if there is a PK field
             if i in pkFields:
@@ -93,17 +88,17 @@ def dtGetVectorLayersByType(iface,  geomType = None,  skipActive = False):
     *geomType*; geomTypes are 0: point, 1: line, 2: polygon
     If *skipActive* is True the active Layer is not included.'''
     layerList = {}
-    for aLayer in iface.legendInterface().layers():
+    for anId, aLayer in QgsProject.instance().mapLayers().items():
         if 0 == aLayer.type():   # vectorLayer
-            if  skipActive and (iface.mapCanvas().currentLayer().id() == aLayer.id()):
+            if  skipActive and (iface.mapCanvas().currentLayer().id() == anId):
                 continue
             else:
                 if geomType:
                     if isinstance(geomType,  int):
                         if aLayer.geometryType() == geomType:
-                            layerList[aLayer.name()] =  aLayer.id()
+                            layerList[aLayer.name()] =  [anId,  aLayer]
                     else:
-                        layerList[aLayer.name()] =  aLayer.id()
+                        layerList[aLayer.name()] =  [anId,  aLayer]
     return layerList
 
 def dtChooseVectorLayer(iface, geomType = None,   skipActive = True,  msg = None):
@@ -120,15 +115,12 @@ def dtChooseVectorLayer(iface, geomType = None,   skipActive = True,  msg = None
         if not msg:
             msg = ""
 
-        selectedLayer,  ok = QtGui.QInputDialog.getItem(None,  QtGui.QApplication.translate("dtutils",  "Choose Layer"),
-                                                        msg,  chooseFrom,  editable = False)
+        selectedLayer,  ok = QtWidgets.QInputDialog.getItem(None,
+            QtWidgets.QApplication.translate("dtutils",  "Choose Layer"),
+            msg,  chooseFrom,  editable = False)
 
         if ok:
-            for aLayer in iface.legendInterface().layers():
-                if 0 == aLayer.type():
-                    if aLayer.id() == layerList[selectedLayer]:
-                        retValue = aLayer
-                        break
+            retValue = layerList[selectedLayer][1]
 
     return retValue
 
@@ -151,6 +143,14 @@ def dtGetInvalidGeomWarning(layer):
     invalidGeomMsg += layer.name()
     return invalidGeomMsg
 
+def dtGetNotMatchingGeomWarning(layer):
+    notMatchingGeomMsg = QtCore.QCoreApplication.translate(
+        "digitizingtools", "Geometry's type is not compatible with the following layer: ")
+    notMatchingGeomMsg += layer.name() + ". "
+    notMatchingGeomMsg +=  QtCore.QCoreApplication.translate(
+        "digitizingtools", "Fix geometries before commiting changes.")
+    return notMatchingGeomMsg
+
 def showSnapSettingsWarning(iface):
     title = QtCore.QCoreApplication.translate("digitizingtools", "Snap Tolerance")
     msg1 = QtCore.QCoreApplication.translate(
@@ -158,12 +158,10 @@ def showSnapSettingsWarning(iface):
     msg2 = QtCore.QCoreApplication.translate("digitizingtools",
         "Have you set the tolerance in Settings > Snapping Options?")
 
-    iface.messageBar().pushMessage(title, msg1 + " " + msg2,
-        level=QgsMessageBar.WARNING, duration = 10)
+    dtShowWarning(iface, msg1 + " " + msg2, title)
 
-def dtShowWarning(iface, msg):
-    iface.messageBar().pushMessage(msg,
-        level=QgsMessageBar.WARNING, duration = 10)
+def dtShowWarning(iface, msg, title = None):
+    iface.messageBar().pushWarning(title, msg)
 
 def dtGetErrorMessage():
     '''Returns the default error message which can be appended'''
@@ -209,12 +207,12 @@ def dtExtractRings(geom):
             for poly in multi_geom:
                 if len(poly) > 1:
                     for aRing in poly[1:]:
-                        rings.append(QgsGeometry.fromPolygon([aRing]))
+                        rings.append(QgsGeometry.fromPolygonXY([aRing]))
         else:
             poly = geom.asPolygon()
             if len(poly) > 1:
                 for aRing in poly[1:]:
-                    rings.append(QgsGeometry.fromPolygon([aRing]))
+                    rings.append(QgsGeometry.fromPolygonXY([aRing]))
 
     return rings
 
@@ -224,7 +222,7 @@ def dtCombineSelectedPolygons(layer, iface, multiGeom = None, fillRings = True):
     all rings contained in the input polygons
     '''
     for aFeat in layer.selectedFeatures():
-        aGeom = aFeat.geometry()
+        aGeom = QgsGeometry(aFeat.geometry())
 
         if not aGeom.isGeosValid():
             thisWarning = dtGetInvalidGeomWarning(layer)
@@ -268,7 +266,7 @@ def dtSpatialindex(layer):
     return idx
 
 def dtDeleteRings(poly):
-    outGeom = QgsGeometry.fromPolygon(poly)
+    outGeom = QgsGeometry.fromPolygonXY(poly)
 
     if len(poly) > 1:
         # we have rings
@@ -282,7 +280,25 @@ def dtGetDefaultAttributeMap(layer):
     attributeMap = {}
     dp = layer.dataProvider()
 
-    for i in range(len(layer.pendingFields())):
+    for i in range(len(layer.fields())):
         attributeMap[i] = dp.defaultValue(i)
 
     return attributeMap
+
+def dtGetHighlightSettings():
+    '''highlight a geom in a layer with highlight color from settings'''
+    s = QtCore.QSettings()
+    s.beginGroup("Map/highlight")
+    buffer = s.value("buffer",  "0.5")
+    hexColor = s.value("color",  "#ff0000")
+    colorAlpha = s.value("colorAlpha", "128")
+    minWidth = s.value("minWidth", "1")
+    s.endGroup()
+    color = QtGui.QColor()
+    color.setNamedColor(hexColor)
+    fillColor = QtGui.QColor()
+    r, g, b, a = color.getRgb()
+    fillColor.setRgb(r, g, b, int(colorAlpha))
+
+    return [color, fillColor, float(buffer), float(minWidth)]
+

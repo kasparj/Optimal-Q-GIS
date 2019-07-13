@@ -17,16 +17,17 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
 
-from PyQt5 import QtCore,  QtGui
+from builtins import str
+from qgis.PyQt import QtCore,  QtGui
 from qgis.core import *
-import icons_rc
+import dt_icons_rc
 import dtutils
 from dttools import DtSingleButton
 
 class DtSplitWithLine(DtSingleButton):
     '''Split selected features in active editable layer with selected line from another layer'''
     def __init__(self, iface,  toolBar):
-        DtSingleButton.__init__(self,  iface,  toolBar,
+        super().__init__(iface,  toolBar,
             QtGui.QIcon(":/splitter.png"),
             QtCore.QCoreApplication.translate("digitizingtools", "Split selected features with selected line from another layer"),
             geometryTypes = [2, 3, 5, 6],  dtName = "dtSplitWithLine")
@@ -61,15 +62,13 @@ class DtSplitWithLine(DtSingleButton):
                # determine srs, we work in the project's srs
                 splitterCRSSrsid = splitterLayer.crs().srsid()
                 passiveCRSSrsid = passiveLayer.crs().srsid()
-                mc = self.iface.mapCanvas()
-                renderer = mc.mapRenderer()
-                projectCRSSrsid = renderer.destinationCrs().srsid()
+                projectCRSSrsid = QgsProject.instance().crs().srsid()
                 passiveLayer.beginEditCommand(QtCore.QCoreApplication.translate("editcommand", "Split features"))
                 featuresBeingSplit = 0
                 featuresToAdd = []
 
                 for feat in splitterLayer.selectedFeatures():
-                    splitterGeom = feat.geometry()
+                    splitterGeom = QgsGeometry(feat.geometry())
 
                     if not splitterGeom.isGeosValid():
                         thisWarning = dtutils.dtGetInvalidGeomWarning(splitterLayer)
@@ -77,10 +76,13 @@ class DtSplitWithLine(DtSingleButton):
                         continue
 
                     if splitterCRSSrsid != projectCRSSrsid:
-                        splitterGeom.transform(QgsCoordinateTransform(splitterCRSSrsid,  projectCRSSrsid))
+                        splitterGeom.transform(QgsCoordinateTransform(
+                            splitterLayer.crs(),  QgsProject.instance().crs(),
+                            QgsProject.instance()
+                        ))
 
                     for selFeat in passiveLayer.selectedFeatures():
-                        selGeom = selFeat.geometry()
+                        selGeom = QgsGeometry(selFeat.geometry())
 
                         if not selGeom.isGeosValid():
                             thisWarning = dtutils.dtGetInvalidGeomWarning(passiveLayer)
@@ -88,7 +90,10 @@ class DtSplitWithLine(DtSingleButton):
                             continue
 
                         if passiveCRSSrsid != projectCRSSrsid:
-                            selGeom.transform(QgsCoordinateTransform(passiveCRSSrsid,  projectCRSSrsid))
+                            selGeom.transform(QgsCoordinateTransform(
+                                passiveLayer.crs(),  QgsProject.instance().crs(),
+                                QgsProject.instance()
+                            ))
 
                         if splitterGeom.intersects(selGeom): # we have a candidate
                             splitterPList = dtutils.dtExtractPoints(splitterGeom)
@@ -96,12 +101,18 @@ class DtSplitWithLine(DtSingleButton):
                             try:
                                 result,  newGeometries,  topoTestPoints = selGeom.splitGeometry(splitterPList,  False) #QgsProject.instance().topologicalEditing())
                             except:
-                                self.iface.messageBar().pushMessage(title,
-                                    dtutils.dtGetErrorMessage() + QtCore.QCoreApplication.translate("digitizingtools", "splitting of feature") + " " + str(selFeat.id()),
-                                    level=QgsMessageBar.CRITICAL)
+                                self.iface.messageBar().pushCritical(title,
+                                    dtutils.dtGetErrorMessage() + QtCore.QCoreApplication.translate(
+                                        "digitizingtools", "splitting of feature") + " " + str(selFeat.id()))
                                 return None
 
                             if result == 0:
+                                if passiveCRSSrsid != projectCRSSrsid:
+                                    selGeom.transform(QgsCoordinateTransform(
+                                        QgsProject.instance().crs(),  passiveLayer.crs(),
+                                        QgsProject.instance()
+                                    ))
+
                                 selFeat.setGeometry(selGeom)
                                 passiveLayer.updateFeature(selFeat)
 
@@ -110,16 +121,18 @@ class DtSplitWithLine(DtSingleButton):
                                     newFeatures = dtutils.dtMakeFeaturesFromGeometries(passiveLayer,  selFeat,  newGeometries)
 
                                     for newFeat in newFeatures:
-                                        newGeom = newFeat.geometry()
-
+                                        newGeom = QgsGeometry(newFeat.geometry())
                                         if passiveCRSSrsid != projectCRSSrsid:
-                                            newGeom.transform(QgsCoordinateTransform( projectCRSSrsid,  passiveCRSSrsid))
+                                            newGeom.transform(QgsCoordinateTransform(
+                                                QgsProject.instance().crs(),  passiveLayer.crs(),
+                                                QgsProject.instance()
+                                            ))
                                             newFeat.setGeometry(newGeom)
 
                                         featuresToAdd.append(newFeat)
 
                 if featuresBeingSplit > 0:
-                    passiveLayer.addFeatures(featuresToAdd,  False)
+                    passiveLayer.addFeatures(featuresToAdd)
                     passiveLayer.endEditCommand()
                     passiveLayer.removeSelection()
                 else:
