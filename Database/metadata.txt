@@ -8,7 +8,7 @@
 
 [general]
 name=Optimal
-qgisMinimumVersion=2.2
+qgisMinimumVersion=3.0
 description=Optimal for QGis
 version=0.8
 author=M. Marusak

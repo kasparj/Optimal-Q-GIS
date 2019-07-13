@@ -23,13 +23,13 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QTableWidgetItem 
-from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow
+from PyQt5.QtCore import Qt
 
 FORM_CLASS_1, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'atts_show.ui'))
-class ShowAtts(QtGui.QMainWindow, FORM_CLASS_1):
+class ShowAtts(QMainWindow, FORM_CLASS_1):
     def __init__(self, parent=None):
         """Constructor."""
         super(ShowAtts, self).__init__(parent)
@@ -62,8 +62,6 @@ class ShowAtts(QtGui.QMainWindow, FORM_CLASS_1):
             col = -1
             for item in i:
                 col += 1
-                if isinstance(item,QPyNullVariant):
-                    item = ""
                 newitem = QTableWidgetItem(item)
                 where.setItem(row,col,newitem)
         where.setHorizontalHeaderLabels(head)

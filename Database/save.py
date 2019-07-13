@@ -23,13 +23,12 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QTableWidgetItem 
-from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow
 
 FORM_CLASS_2, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'save.ui'))
-class Save_all(QtGui.QMainWindow, FORM_CLASS_2):
+class Save_all(QMainWindow, FORM_CLASS_2):
     def __init__(self, parent=None):
         """Constructor."""
         super(Save_all, self).__init__(parent)

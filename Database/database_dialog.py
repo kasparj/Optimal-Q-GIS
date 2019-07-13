@@ -24,12 +24,13 @@
 data = {'col1':['1','2','3'], 'col2':['4','5','6']}
 import os
 
-from PyQt4 import QtGui, uic
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QDialog
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'database_dialog_base.ui'))
 
-class DatabaseDialog(QtGui.QDialog, FORM_CLASS):
+class DatabaseDialog(QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(DatabaseDialog, self).__init__(parent)

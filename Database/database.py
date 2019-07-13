@@ -22,30 +22,30 @@
 """
 #pyrcc4 -o resources_rc.py resources.qrc
 
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
-    Qt,SIGNAL,QPyNullVariant
-from PyQt4.QtGui import QAction, QIcon, QFileDialog, QMessageBox,\
-        QTableWidgetItem, QProgressBar, QColor
-from PyQt4 import QtGui, QtCore
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
+    Qt
+from PyQt5.QtGui import QIcon, QColor
+from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox, QTableWidgetItem, QProgressBar
+from PyQt5 import QtGui, QtCore
 from qgis.utils import iface
 import qgis
 #from qgis.core import QgsFeatureRequest
-import resources_rc
-from database_dialog import DatabaseDialog
-from show_atts import ShowAtts
-from save import Save_all 
-from add_drv import Add_drv 
-from add_etz import Add_etz 
-from sekvencie import Sekvencie 
-from distance import Distance 
-from set_ranges import Set_ranges 
-from open_all import Open_all 
-from out_xml import OutXml
-from create_processes import CreateProcesses
+from . import resources_rc
+from . database_dialog import DatabaseDialog
+from . show_atts import ShowAtts
+from . save import Save_all 
+from . add_drv import Add_drv 
+from . add_etz import Add_etz 
+from . sekvencie import Sekvencie 
+from . distance import Distance 
+from . set_ranges import Set_ranges 
+from . open_all import Open_all 
+from . out_xml import OutXml
+from . create_processes import CreateProcesses
 import os.path
-from converter import convert_to_shp
+from . converter import convert_to_shp
 import sys 
-import dtutils
+from . import dtutils
 import math
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
@@ -53,7 +53,7 @@ import codecs
 import time
 
 from qgis.core import *
-from names import NAMES_TAZ_TYP
+from . names import NAMES_TAZ_TYP
 
 pretty_name = ""#nazov pre vstupny subor
 pretty_folder = ""#nazov priecinku pre ukladanie
@@ -396,9 +396,7 @@ class Database:
     def fillup_attributes_dict(self, names, ids, attributes):
         dict_ = {}
         for name, id_ in zip(names, ids):
-            if isinstance(attributes[id_], QPyNullVariant):
-                dict_[name] = ""
-            elif isinstance(attributes[id_], (int, long, float)):
+            if isinstance(attributes[id_], (int, long, float)):
                 dict_[name] = str(attributes[id_])
             elif isinstance(attributes[id_], (float)):
                 dict_[name] = repr(attributes[id_])
@@ -1580,7 +1578,6 @@ class Database:
                 expr_str += " AND \"ODSTUP\" IS NULL"
             else:
                 expr_str += " AND \"ODSTUP\" = '{0}'".format(fields[5])
-            print expr_str
             expr = QgsExpression(expr_str)
             found = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
             for found_item in found:
@@ -2057,14 +2054,12 @@ class Database:
 
                 one_list = list(one_list)
                 another_list = [feature.attributes() for feature in one_list]
-                #print another_list
                 for one_ft in another_list:
                     features_list_drv.append(one_ft)
                 for each_item in one_list:
                     list_of_drvs_ids.append(each_item.id())
 
             features_list_drv = self.convert_to_strings(features_list_drv)
-            #print features_list_drv
             fields_drv = []
             if drv_csv:
                 fields_drv = drv_csv.pendingFields()
@@ -2151,7 +2146,7 @@ class Database:
     def select_input_file(self):
         global pretty_name
         pretty_name = QFileDialog.getOpenFileName(self.dlg, "Vyberte vstupny\
-        subor","","*.xml")
+        subor","","*.xml")[0]
         self.dlg.lineEdit.setText(pretty_name)
 
     def select_input_folder(self):

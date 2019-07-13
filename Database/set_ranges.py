@@ -23,12 +23,13 @@
 
 import os
 
-from PyQt4 import QtGui, uic
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow
 
 FORM_CLASS_9, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'ranges.ui'))
 
-class Set_ranges(QtGui.QMainWindow, FORM_CLASS_9):
+class Set_ranges(QMainWindow, FORM_CLASS_9):
     def __init__(self, parent=None):
         """Constructor."""
         super(Set_ranges, self).__init__(parent)

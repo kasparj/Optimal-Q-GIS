@@ -6,12 +6,12 @@ import codecs
 import qgis
 from qgis.core import *
 from qgis.gui import *
-from PyQt4.QtCore import *
-from PyQt4 import QtGui
-from PyQt4.QtGui import QProgressBar
+from PyQt5.QtCore import *
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QProgressBar
 from qgis.utils import iface
-from names import *
-from vychova_strings import vychova_strings
+from . names import *
+from . vychova_strings import vychova_strings
 
 
 POLY = QgsFeature()  # premenna pre jedne geom. objekt
@@ -26,7 +26,7 @@ def open_layer(name, address, type_ft):
     new_ft = QgsVectorLayer(address, name, type_ft)
     if (new_ft.featureCount() < 1):
         return
-    QgsMapLayerRegistry.instance().addMapLayer(new_ft)
+    QgsProject.instance().addMapLayer(new_ft)
     canvas = qgis.utils.iface.mapCanvas()
     canvas.setExtent(new_ft.extent())
 
@@ -38,7 +38,7 @@ def create_points(lines):
         np = point.get('S')
         number1 = np[:np.find("$")]  # odstrihne od zaciatku po $
         number2 = np[np.find("$")+1:]  # odstrihne od $ dokonca
-        points.append(QgsPoint(-1 * float(number2), -1 * float(number1)))
+        points.append(QgsPointXY(-1 * float(number2), -1 * float(number1)))
     return points
 
 
@@ -53,7 +53,7 @@ def create_from_MP(MP, layer, atts):
     for lines in MP.findall('L'):
         points = create_points(lines)  # ziskam zoznam bodov
         finished_list.append(points)
-    POLY.setGeometry(QgsGeometry.fromPolygon(finished_list))  # vytvorim objekt
+    POLY.setGeometry(QgsGeometry.fromPolygonXY(finished_list))  # vytvorim objekt
     POLY.setAttributes(atts)  # nastavenie atributov
     layer.addFeatures([POLY])
 
@@ -62,7 +62,7 @@ def create_from_ML(ML, layer, atts):
     """Obodba pre create_from_MP, ale pracuje s ML objektom."""
     for lines in ML.findall('L'):
         points = create_points(lines)
-        POLY.setGeometry(QgsGeometry.fromPolyline(points))
+        POLY.setGeometry(QgsGeometry.fromPolylineXY(points))
         POLY.setAttributes(atts)
         layer.addFeatures([POLY])
 
@@ -176,8 +176,8 @@ def parse_taz_type(taz_typ, atts, file_to_write):
 #pri chybe vracia 1 inak vracia 0
 def save_layer(layer,address):
     error = QgsVectorFileWriter.writeAsVectorFormat(layer,
-        address, "System", None,"ESRI Shapefile")
-    if error == QgsVectorFileWriter.NoError:
+        address, "System", layer.crs(),"ESRI Shapefile")
+    if error[0] == QgsVectorFileWriter.NoError:
         return 0
     else:
         return 1
@@ -195,7 +195,7 @@ def convert_to_shp(pretty_name,folder_name):
     progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)#zarovnam ho vlavo
     progressMessageBar.layout().addWidget(progress)#a pridam ho do hroenj listy
     iface.messageBar().pushWidget(progressMessageBar,
-                        iface.messageBar().INFO)
+                        Qgis.Info)
     
 
 
@@ -537,7 +537,7 @@ def convert_to_shp(pretty_name,folder_name):
     KBO_layer.updateFields()
 
 
-    #QgsMapLayerRegistry.instance().addMapLayer(KTO_layer)
+    #QgsProject.instance().addMapLayer(KTO_layer)
     global kto_line
     kto_line = KTO_layer.dataProvider()
     kto_line.addAttributes([
@@ -584,7 +584,7 @@ def convert_to_shp(pretty_name,folder_name):
                         np =  point.get('S')
                         number1 = np[:np.find("$")]
                         number2 = np[np.find("$")+1:]
-                        POLY.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
+                        POLY.setGeometry(QgsGeometry.fromPoint(QgsPointXY(float(number1),float(number2))))
                         POLY.setAttributes(atts)
                         kbo_line.addFeatures([POLY])
 
@@ -600,7 +600,7 @@ def convert_to_shp(pretty_name,folder_name):
                     np= B.get('S')
                     number1 = np[:np.find("$")]
                     number2 = np[np.find("$")+1:]
-                    POLY.setGeometry(QgsGeometry.fromPoint(QgsPoint(float(number1),float(number2))))
+                    POLY.setGeometry(QgsGeometry.fromPoint(QgsPointXY(float(number1),float(number2))))
                     POLY.setAttributes(atts)
                     kto_line.addFeatures([POLY])
 
@@ -776,42 +776,42 @@ def convert_to_shp(pretty_name,folder_name):
     etz_csv = QgsVectorLayer("file:///"+folder_name+'/etz_file.csv',"Porast","delimitedtext")
     save_layer(etz_csv,folder_name+'/etz')
     new_etz = QgsVectorLayer(folder_name+'/etz.dbf',"Porast","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_etz)
+    QgsProject.instance().addMapLayer(new_etz)
 
     taz_typ_csv = QgsVectorLayer("file:///"+folder_name+'/taz_typ_file.csv',"Tazobne typy","delimitedtext")
     save_layer(taz_typ_csv,folder_name+'/taz_typ')
     new_taz_typ = QgsVectorLayer(folder_name+'/taz_typ.dbf',"Tazobne typy","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_taz_typ)
+    QgsProject.instance().addMapLayer(new_taz_typ)
 
     drv_csv = QgsVectorLayer("file:///"+folder_name+'/drv_file.csv',"Dreviny","delimitedtext")
     save_layer(drv_csv,folder_name+'/drv')
     new_drv = QgsVectorLayer(folder_name+'/drv.dbf',"Dreviny","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_drv)
+    QgsProject.instance().addMapLayer(new_drv)
 
     kat_csv = QgsVectorLayer("file:///"+folder_name+'/kat_file.csv',"Kategorie","delimitedtext")
     save_layer(kat_csv,folder_name+'/kat')
     new_kat = QgsVectorLayer(folder_name+'/kat.dbf',"Kategorie","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_kat)
+    QgsProject.instance().addMapLayer(new_kat)
 
     zal_csv = QgsVectorLayer("file:///"+folder_name+'/zal_file.csv',"Zalozenie","delimitedtext")
     save_layer(zal_csv,folder_name+'/zal')
     new_zal = QgsVectorLayer(folder_name+'/zal.dbf',"Zalozenie","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_zal)
+    QgsProject.instance().addMapLayer(new_zal)
 
     pos_csv = QgsVectorLayer("file:///"+folder_name+'/pos_file.csv',"Poskodenia","delimitedtext")
     save_layer(pos_csv,folder_name+'/pos')
     new_pos = QgsVectorLayer(folder_name+'/pos.dbf',"Poskodenia","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_pos)
+    QgsProject.instance().addMapLayer(new_pos)
 
     vys_vych_csv = QgsVectorLayer("file:///"+folder_name+'/vys_vych_file.csv',"VysledkyVychova","delimitedtext")
     save_layer(vys_vych_csv,folder_name+'/vys_vych')
     new_vys_vych = QgsVectorLayer(folder_name+'/vys_vych.dbf',"VysledkyVychova","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_vys_vych)
+    QgsProject.instance().addMapLayer(new_vys_vych)
 
     vys_obn_csv = QgsVectorLayer("file:///"+folder_name+'/vys_obn_file.csv',"VysledkyObnova","delimitedtext")
     save_layer(vys_obn_csv,folder_name+'/vys_obn')
     new_vys_obn = QgsVectorLayer(folder_name+'/vys_obn.dbf',"VysledkyObnova","ogr")
-    QgsMapLayerRegistry.instance().addMapLayer(new_vys_obn)
+    QgsProject.instance().addMapLayer(new_vys_obn)
 
     #etz1=qgis.utils.iface.addVectorLayer("file:///"+folder_name+'/etz.dbf',"Porast1","ogr")
     #joinObject = QgsVectorJoinInfo()

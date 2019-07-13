@@ -23,13 +23,13 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QTableWidgetItem 
-from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow
+from PyQt5.QtCore import Qt
 
 FORM_CLASS_11, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'setting_opt.ui'))
-class OutXml(QtGui.QMainWindow, FORM_CLASS_11):
+class OutXml(QMainWindow, FORM_CLASS_11):
     def __init__(self, parent=None):
         """Constructor."""
         super(OutXml, self).__init__(parent)

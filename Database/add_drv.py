@@ -23,13 +23,12 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QTableWidgetItem 
-from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow
 
 FORM_CLASS_5, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'add_drv.ui'))
-class Add_drv(QtGui.QMainWindow, FORM_CLASS_5):
+class Add_drv(QMainWindow, FORM_CLASS_5):
     def __init__(self, parent=None):
         """Constructor."""
         super(Add_drv, self).__init__(parent)
@@ -51,8 +50,6 @@ class Add_drv(QtGui.QMainWindow, FORM_CLASS_5):
             col = -1
             for item in i:
                 col += 1
-                if isinstance(item,QPyNullVariant):
-                    item = ""
                 newitem = QTableWidgetItem(item)
                 where.setItem(row,col,newitem)
         where.setHorizontalHeaderLabels(head)

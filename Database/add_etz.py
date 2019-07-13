@@ -23,13 +23,12 @@
 
 import os
 
-from PyQt4 import QtGui, uic
-from PyQt4.QtGui import QTableWidgetItem 
-from PyQt4.QtCore import SIGNAL,QPyNullVariant,Qt
+from PyQt5 import QtGui, uic
+from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow
 
 FORM_CLASS_6, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'add_etz.ui'))
-class Add_etz(QtGui.QMainWindow, FORM_CLASS_6):
+class Add_etz(QMainWindow, FORM_CLASS_6):
     def __init__(self, parent=None):
         """Constructor."""
         super(Add_etz, self).__init__(parent)
@@ -51,8 +50,6 @@ class Add_etz(QtGui.QMainWindow, FORM_CLASS_6):
             col = -1
             for item in i:
                 col += 1
-                if isinstance(item,QPyNullVariant):
-                    item = ""
                 newitem = QTableWidgetItem(item)
                 where.setItem(row,col,newitem)
         where.setHorizontalHeaderLabels(head)
