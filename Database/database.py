@@ -434,7 +434,7 @@ class Database:
         csv_zal = None
         csv_pos = None
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Lesne porasty":
                 lyr = layer
@@ -601,7 +601,7 @@ class Database:
             ET.SubElement(taz_prv, "Soused", ID=nei)
 
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
@@ -690,7 +690,7 @@ class Database:
         except:
             return
         root = ET.Element("Projekt", params)
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Lesne porasty":
                 lyr = layer
@@ -806,7 +806,7 @@ class Database:
 
     #tu sa nastavuje parameter pre farbenie polygonov
     def get_color(self, obj, min_a, max_a, min_l, max_l):
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, lyr in layerMap.iteritems():
             if lyr.name() == "Lesne porasty":
                 layer = lyr
@@ -978,7 +978,7 @@ class Database:
         csv_drv = None
         csv_etz = None
         csv_zal = None
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, lyr in layerMap.iteritems():
             if lyr.name() == "Dreviny":
                 csv_drv = lyr
@@ -1271,7 +1271,7 @@ class Database:
         global maximum_area
         global minimum_length
         global minimum_area
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, lyr in layerMap.iteritems():
             if lyr.name() == "Lesne porasty":
                 layer = lyr
@@ -1296,7 +1296,7 @@ class Database:
 
     def colorize(self):
         
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, lyr in layerMap.iteritems():
             if lyr.name() == "Lesne porasty":
                 layer = lyr
@@ -1347,7 +1347,7 @@ class Database:
     
     
     def save_new_etz(self):
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 drv_csv = layer
@@ -1366,7 +1366,7 @@ class Database:
 
     def add_etz_f(self):
         self.add_etz.show()
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 drv_csv = layer
@@ -1386,7 +1386,7 @@ class Database:
                 default_list_drv,self.add_etz.etz_table)
 
     def save_new_drv(self):
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Dreviny":
                 drv_csv = layer
@@ -1405,7 +1405,7 @@ class Database:
 
     def add_drv_f(self):
         self.add_drv.show()
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Dreviny":
                 drv_csv = layer
@@ -1446,7 +1446,7 @@ class Database:
         if (new_ft.featureCount() < 1):
             if not empty:
                 return
-        QgsMapLayerRegistry.instance().addMapLayer(new_ft)
+        QgsProject.instance().addMapLayer(new_ft)
         canvas = qgis.utils.iface.mapCanvas()
         canvas.setExtent(new_ft.extent())
 
@@ -1474,7 +1474,7 @@ class Database:
         if fts == []:
             return
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
@@ -1499,7 +1499,7 @@ class Database:
         if fts == []:
             return
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
@@ -1536,7 +1536,7 @@ class Database:
         if fts == []:
             return
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
@@ -1591,7 +1591,7 @@ class Database:
         if fts == []:
             return
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
@@ -1662,7 +1662,7 @@ class Database:
         self.create_processes.podrostne.setEnabled(True)
 
     def update_drv_in_processes(self, nth):
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Dreviny":
                 drv_csv = layer
@@ -1680,7 +1680,7 @@ class Database:
         if fts == []:
             return
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
@@ -1756,7 +1756,7 @@ class Database:
     
     def save_all_1(self):
         global pretty_folder
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 self.save_layer(layer,pretty_folder+'/etz')
@@ -1846,7 +1846,7 @@ class Database:
         global edit_pos
         global list_of_kats_ids
         if not edit_pos:
-            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            layerMap = QgsProject.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Kategorie":
                     lyr = layer
@@ -1856,7 +1856,7 @@ class Database:
         global edit_pos
         global list_of_etzs_ids
         if not edit_pos:
-            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            layerMap = QgsProject.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Porast":
                     lyr = layer
@@ -1866,7 +1866,7 @@ class Database:
         global edit_pos
         global list_of_poss_ids
         if not edit_pos:
-            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            layerMap = QgsProject.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Poskodenia":
                     lyr = layer
@@ -1876,7 +1876,7 @@ class Database:
         global edit_pos
         global list_of_drvs_ids
         if not edit_pos:
-            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            layerMap = QgsProject.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Dreviny":
                     lyr = layer
@@ -1886,7 +1886,7 @@ class Database:
         global edit_pos
         global list_of_zals_ids
         if not edit_pos:
-            layerMap = QgsMapLayerRegistry.instance().mapLayers()
+            layerMap = QgsProject.instance().mapLayers()
             for name, layer in layerMap.iteritems():
                 if layer.name() == "Zalozenie":
                     lyr = layer
@@ -1923,7 +1923,7 @@ class Database:
 
 
         #Vyberieme si potrebne vrsty podla mena - pozor na zmeny!
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
         for name, layer in layerMap.iteritems():
             if layer.name() == "Porast":
                 etz_csv = layer
