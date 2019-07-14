@@ -1747,7 +1747,7 @@ class Database:
     
     def save_layer(self,layer,address):
         error = QgsVectorFileWriter.writeAsVectorFormat(layer,
-            address, "System", None,"ESRI Shapefile")
+            address, "System", layer.crs(),"ESRI Shapefile")
         if error == QgsVectorFileWriter.NoError:
             return 0
         else:
