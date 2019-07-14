@@ -25,7 +25,7 @@
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication,\
     Qt
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox, QTableWidgetItem, QProgressBar
+from PyQt5.QtWidgets import QAction, QFileDialog, QMessageBox, QTableWidgetItem, QProgressBar, QAbstractItemView
 from PyQt5 import QtGui, QtCore
 from qgis.utils import iface
 import qgis
@@ -1114,7 +1114,7 @@ class Database:
     #Funkcia ktora zvyrazni dreviny ak sa klikne na etaz    
     def highlight_drv(self):
         self.shower.drevina.clearSelection()#najskor odznacim vsetky dreviny
-        self.shower.drevina.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)#zvolim
+        self.shower.drevina.setSelectionMode(QAbstractItemView.MultiSelection)#zvolim
             #ze budem vyberat viacero riadkov naraz
         drvs = self.table_to_list(self.shower.etaz)[-1]#ziskam cisla vsetkych
             #drevin
