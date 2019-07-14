@@ -1311,16 +1311,16 @@ class Database:
                 }
         categories = []
         for COLOR, (color, label) in correct.items():
-            sym = QgsSymbolV2.defaultSymbol(layer.geometryType())
+            sym = QgsSymbol.defaultSymbol(layer.geometryType())
             sym.setColor(QColor(color))
-            category = QgsRendererCategoryV2(COLOR, sym, label)
+            category = QgsRendererCategory(COLOR, sym, label)
             categories.append(category)
 
         field = "COLOR"
 
-        renderer = QgsCategorizedSymbolRendererV2(field, categories)
+        renderer = QgsCategorizedSymbolRenderer(field, categories)
 
-        layer.setRendererV2(renderer)
+        layer.setRenderer(renderer)
 
     def edit_list_by_types(self,new_list,lyr_pointer):
         list_of_fields = list(lyr_pointer.pendingFields()) 
