@@ -1029,27 +1029,27 @@ class Database:
             kats[i][-1] = new_psk_num
 
         for kat in kats:
-            new_ft = QgsFeature(csv_kat.pendingFields())
+            new_ft = QgsFeature(csv_kat.fields())
             new_ft.setAttributes(kat)
             csv_kat.dataProvider().addFeatures([new_ft])
 
         for etz in etzs:
-            new_ft = QgsFeature(csv_etz.pendingFields())
+            new_ft = QgsFeature(csv_etz.fields())
             new_ft.setAttributes(etz)
             csv_etz.dataProvider().addFeatures([new_ft])
 
         for drv in drvs:
-            new_ft = QgsFeature(csv_drv.pendingFields())
+            new_ft = QgsFeature(csv_drv.fields())
             new_ft.setAttributes(drv)
             csv_drv.dataProvider().addFeatures([new_ft])
 
         for pos in poss:
-            new_ft = QgsFeature(csv_pos.pendingFields())
+            new_ft = QgsFeature(csv_pos.fields())
             new_ft.setAttributes(pos)
             csv_pos.dataProvider().addFeatures([new_ft])
 
         for zal in zals:
-            new_ft = QgsFeature(csv_zal.pendingFields())
+            new_ft = QgsFeature(csv_zal.fields())
             new_ft.setAttributes(zal)
             csv_zal.dataProvider().addFeatures([new_ft])
 
@@ -1323,7 +1323,7 @@ class Database:
         layer.setRenderer(renderer)
 
     def edit_list_by_types(self,new_list,lyr_pointer):
-        list_of_fields = list(lyr_pointer.pendingFields()) 
+        list_of_fields = list(lyr_pointer.fields()) 
         features = list(lyr_pointer.getFeatures())
         list_of_wrongs = []
         for i in range(len(new_list)):
@@ -1357,7 +1357,7 @@ class Database:
         new_list = [ item[0] for item in all_data]
         new_list = self.edit_list_by_types(new_list, drv_csv)
         
-        new_ft = QgsFeature(drv_csv.pendingFields())
+        new_ft = QgsFeature(drv_csv.fields())
         new_ft.setAttributes(new_list)
         drv_csv.dataProvider().addFeatures([new_ft])
 
@@ -1373,7 +1373,7 @@ class Database:
         
         new_number =  len(list(drv_csv.getFeatures()))
         
-        fields_drv = drv_csv.pendingFields()
+        fields_drv = drv_csv.fields()
         field_names_drv = [field.name() for field in fields_drv]
         
         default_list_drv = self.table_to_list(self.shower.etaz)
@@ -1396,7 +1396,7 @@ class Database:
         new_list = [ item[0] for item in all_data]
         new_list = self.edit_list_by_types(new_list, drv_csv)
         
-        new_ft = QgsFeature(drv_csv.pendingFields())
+        new_ft = QgsFeature(drv_csv.fields())
         new_ft.setAttributes(new_list)
         drv_csv.dataProvider().addFeatures([new_ft])
 
@@ -1413,7 +1413,7 @@ class Database:
         new_number =  len(list(drv_csv.getFeatures()))
         etz_nums =  self.table_to_list(self.shower.etaz)[-1]
         
-        fields_drv = drv_csv.pendingFields()
+        fields_drv = drv_csv.fields()
         field_names_drv = [field.name() for field in fields_drv]
          
         indexes = self.shower.etaz.selectionModel().selectedRows()
@@ -1716,7 +1716,7 @@ class Database:
         new_taz_typ.append(self.create_processes.typ_id.currentText())
         new_taz_typ.append(psk_id)
 
-        new_ft = QgsFeature(taz_typ_csv.pendingFields())
+        new_ft = QgsFeature(taz_typ_csv.fields())
         new_ft.setAttributes(new_taz_typ)
         taz_typ_csv.dataProvider().addFeatures([new_ft])
         self.open_processes()
@@ -1944,7 +1944,7 @@ class Database:
         if not lyr:
             self.Error_message("Ziadna vybrana vrstva")
         else: 
-            fields = lyr.pendingFields()#vyberieme vsetky mena atributov
+            fields = lyr.fields()#vyberieme vsetky mena atributov
             features = lyr.selectedFeatures()#vyberieme vybrate prvky
             if features != []:
 
@@ -1992,7 +1992,7 @@ class Database:
 
             if etz_csv:
                 selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
-                fields_etz = etz_csv.pendingFields()
+                fields_etz = etz_csv.fields()
                 id_etz = etz_csv.fields().lookupField('ETZ_NUM')
 
             selected_kats = []
@@ -2010,7 +2010,7 @@ class Database:
             for fit in selected_etzs:
                 list_of_etzs_ids.append(fit.id())
 
-            fields_vys_vych = vys_vych_csv.pendingFields()
+            fields_vys_vych = vys_vych_csv.fields()
             field_names_vys_vych = [field.name() for field in fields_vys_vych]
             selected_vys_vych = list(selected_vys_vych)
             features_list_vys_vych = [feature.attributes() for feature in selected_vys_vych]
@@ -2032,7 +2032,7 @@ class Database:
 
             fields_kat = []
             if kat_csv:
-                fields_kat = kat_csv.pendingFields()
+                fields_kat = kat_csv.fields()
             field_names_kat = [field.name() for field in fields_kat]
             selected_kats =list(selected_kats)
             features_list_kat = [feature.attributes() for feature in
@@ -2062,7 +2062,7 @@ class Database:
             features_list_drv = self.convert_to_strings(features_list_drv)
             fields_drv = []
             if drv_csv:
-                fields_drv = drv_csv.pendingFields()
+                fields_drv = drv_csv.fields()
             field_names_drv = [field.name() for field in fields_drv]
 
             drv_numbers = []
@@ -2087,7 +2087,7 @@ class Database:
             features_list_pos = self.convert_to_strings(features_list_pos)
             fields_pos = []
             if pos_csv:
-                fields_pos = pos_csv.pendingFields()
+                fields_pos = pos_csv.fields()
             field_names_pos = [field.name() for field in fields_pos]
 
             features_list_zal = []
@@ -2106,7 +2106,7 @@ class Database:
             features_list_zal = self.convert_to_strings(features_list_zal)
             fields_zal = []
             if zal_csv:
-                fields_zal = zal_csv.pendingFields()
+                fields_zal = zal_csv.fields()
             field_names_zal = [field.name() for field in fields_zal]
 
             self.shower.show()
