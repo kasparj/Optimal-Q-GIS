@@ -477,8 +477,8 @@ class Database:
         self.zals = {}
         self.ZAL_ids = []
         if csv_zal:
-            self.ZAL_ids = [csv_zal.fieldNameIndex(x[:10]) for x in self.ZAL_items]
-            self.ETZ_NUM_zal = csv_zal.fieldNameIndex('ETZ_NUM')
+            self.ZAL_ids = [csv_zal.fields().lookupField(x[:10]) for x in self.ZAL_items]
+            self.ETZ_NUM_zal = csv_zal.fields().lookupField('ETZ_NUM')
             zals = self.zals
             for ft in csv_zal.getFeatures():
                 if ft.attributes()[self.ETZ_NUM_zal] in zals.keys():
@@ -489,8 +489,8 @@ class Database:
         self.poss = {}
         self.POS_ids = []
         if csv_pos:
-            self.POS_ids = [csv_pos.fieldNameIndex(x[:10]) for x in self.POS_items]
-            self.DRV_NUM_pos = csv_pos.fieldNameIndex('DRV_NUM')
+            self.POS_ids = [csv_pos.fields().lookupField(x[:10]) for x in self.POS_items]
+            self.DRV_NUM_pos = csv_pos.fields().lookupField('DRV_NUM')
             poss = self.poss
             for ft in csv_pos.getFeatures():
                 if ft.attributes()[self.DRV_NUM_pos] in poss.keys():
@@ -501,9 +501,9 @@ class Database:
         self.drvs = {}
         self.DRV_ids = []
         if csv_drv:
-            self.DRV_ids = [csv_drv.fieldNameIndex(x[:10]) for x in self.DRV_items]
-            self.id_DRV = csv_drv.fieldNameIndex('DRV_NUM')
-            self.ETZ_NUM_drv = csv_drv.fieldNameIndex('ETZ_NUM')
+            self.DRV_ids = [csv_drv.fields().lookupField(x[:10]) for x in self.DRV_items]
+            self.id_DRV = csv_drv.fields().lookupField('DRV_NUM')
+            self.ETZ_NUM_drv = csv_drv.fields().lookupField('ETZ_NUM')
             drvs = self.drvs
             for ft in csv_drv.getFeatures():
                 if ft.attributes()[self.ETZ_NUM_drv] in drvs.keys():
@@ -514,9 +514,9 @@ class Database:
         self.etzs = {}
         self.ETZ_ids = []
         if csv_por:
-            self.ETZ_ids = [csv_por.fieldNameIndex(x[:10]) for x in self.ETZ_items]
-            self.id_ETZ = csv_por.fieldNameIndex('ETZ_NUM')
-            self.PSK_NUM_por = csv_por.fieldNameIndex('PSK_NUM')
+            self.ETZ_ids = [csv_por.fields().lookupField(x[:10]) for x in self.ETZ_items]
+            self.id_ETZ = csv_por.fields().lookupField('ETZ_NUM')
+            self.PSK_NUM_por = csv_por.fields().lookupField('PSK_NUM')
             etzs = self.etzs
             for ft in csv_por.getFeatures():
                 if ft.attributes()[self.PSK_NUM_por] in etzs.keys():
@@ -527,8 +527,8 @@ class Database:
         self.kats = {}
         self.KAT_ids = []
         if csv_kat:
-            self.KAT_ids = [csv_kat.fieldNameIndex(x[:10]) for x in self.KAT_items]
-            self.PSK_id_kat = csv_kat.fieldNameIndex('PSK_NUM')
+            self.KAT_ids = [csv_kat.fields().lookupField(x[:10]) for x in self.KAT_items]
+            self.PSK_id_kat = csv_kat.fields().lookupField('PSK_NUM')
             kats = self.kats
             for ft in csv_kat.getFeatures():
                 if ft.attributes()[self.PSK_id_kat] in kats.keys():
@@ -537,16 +537,16 @@ class Database:
                     kats[ft.attributes()[self.PSK_id_kat]] = [ft]
 
         if lyr:
-            self.PSK_ids = [lyr.fieldNameIndex(x[:10]) for x in self.PSK_items]
-            self.POR_ids = [lyr.fieldNameIndex(x[:10]) for x in self.POR_items]
-            self.id_ODD = lyr.fieldNameIndex('ODD')
-            self.id_DIL = lyr.fieldNameIndex('DIL')
-            self.id_POR = lyr.fieldNameIndex('POR')
-            self.id_PSK = lyr.fieldNameIndex('PSK_NUM')
-            self.sekvence_id = lyr.fieldNameIndex('sekvencia')
-            self.priorita_id = lyr.fieldNameIndex('priorita')
-            self.nei_id = lyr.fieldNameIndex('neighbours')
-            self.id_original = lyr.fieldNameIndex('original')
+            self.PSK_ids = [lyr.fields().lookupField(x[:10]) for x in self.PSK_items]
+            self.POR_ids = [lyr.fields().lookupField(x[:10]) for x in self.POR_items]
+            self.id_ODD = lyr.fields().lookupField('ODD')
+            self.id_DIL = lyr.fields().lookupField('DIL')
+            self.id_POR = lyr.fields().lookupField('POR')
+            self.id_PSK = lyr.fields().lookupField('PSK_NUM')
+            self.sekvence_id = lyr.fields().lookupField('sekvencia')
+            self.priorita_id = lyr.fields().lookupField('priorita')
+            self.nei_id = lyr.fields().lookupField('neighbours')
+            self.id_original = lyr.fields().lookupField('original')
 
     def process_psk(self, lyr, root, fts_list):
         parents = []
@@ -606,11 +606,11 @@ class Database:
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
 
-        id_typ = taz_typ_csv.fieldNameIndex('TYP')
-        id_prirazeni = taz_typ_csv.fieldNameIndex('PRIRAZENI')
-        id_odstup = taz_typ_csv.fieldNameIndex('ODSTUP')
-        id_drevina = taz_typ_csv.fieldNameIndex('DR')
-        id_intenzita = taz_typ_csv.fieldNameIndex('INTENZITA')
+        id_typ = taz_typ_csv.fields().lookupField('TYP')
+        id_prirazeni = taz_typ_csv.fields().lookupField('PRIRAZENI')
+        id_odstup = taz_typ_csv.fields().lookupField('ODSTUP')
+        id_drevina = taz_typ_csv.fields().lookupField('DR')
+        id_intenzita = taz_typ_csv.fields().lookupField('INTENZITA')
         expr = QgsExpression("PSK_NUM ="+ str(ft.id()))
         suitable_taz_typ = taz_typ_csv.getFeatures(QgsFeatureRequest(expr))
 
@@ -751,7 +751,7 @@ class Database:
     def set_distance_to_nei(self):
         new_n = self.distance.number.text()
         lyr = iface.activeLayer()
-        idx = lyr.fieldNameIndex('max_to_nei')
+        idx = lyr.fields().lookupField('max_to_nei')
         fts = lyr.getFeatures()
         lyr.startEditing()
         for ft in fts:
@@ -790,7 +790,7 @@ class Database:
         if fts == []:
             return
 
-        idx = lyr.fieldNameIndex('sekvencia')
+        idx = lyr.fields().lookupField('sekvencia')
         text = fts[0].attributes()[idx]
         if text == ";":
             text = str(self.num_of_sek)+','+str(self.num_of_item)+';'
@@ -818,8 +818,8 @@ class Database:
                 COLOR = 'LW'
         elif self.isWideEnough(obj, min_l) and self.isntWider(obj, max_l):
             COLOR = 'AW'
-        sek = layer.fieldNameIndex('sekvencia')
-        prio = layer.fieldNameIndex('priorita')
+        sek = layer.fields().lookupField('sekvencia')
+        prio = layer.fields().lookupField('priorita')
         if obj.attributes()[sek] != ';' and obj.attributes()[prio] != 0:
             COLOR = '!+-!'
         elif obj.attributes()[sek] != ';':
@@ -905,7 +905,7 @@ class Database:
 
                     if splitterCRSSrsid != projectCRSSrsid:
                         splitterGeom.transform(QgsCoordinateTransform(splitterCRSSrsid,  projectCRSSrsid))
-                    original_id = passiveLayer.fieldNameIndex('original')
+                    original_id = passiveLayer.fields().lookupField('original')
                     
                     if passiveLayer.selectedFeatures()[0].attributes()[original_id] == -1:
                         self.create_copy_of_feature(passiveLayer.selectedFeatures()[0])
@@ -968,12 +968,12 @@ class Database:
                     passiveLayer.destroyEditCommand()
 
     def duplicate_attributes_from_selected(self, lyr, from_item, to_item):
-        id_C = lyr.fieldNameIndex('COLOR')
-        id_A = lyr.fieldNameIndex('max_area')
-        id_L = lyr.fieldNameIndex('max_len')
-        id_MA = lyr.fieldNameIndex('min_area')
-        id_ML = lyr.fieldNameIndex('min_len')
-        id_PSK = lyr.fieldNameIndex('PSK_NUM')
+        id_C = lyr.fields().lookupField('COLOR')
+        id_A = lyr.fields().lookupField('max_area')
+        id_L = lyr.fields().lookupField('max_len')
+        id_MA = lyr.fields().lookupField('min_area')
+        id_ML = lyr.fields().lookupField('min_len')
+        id_PSK = lyr.fields().lookupField('PSK_NUM')
         new_psk_num = len(list(lyr.getFeatures()))
         csv_drv = None
         csv_etz = None
@@ -1075,7 +1075,7 @@ class Database:
         # set all values
         self.duplicate_attributes_from_selected(lyr, oldFeature, new_feature)
         # change the is_original to -2
-        idx = lyr.fieldNameIndex("original")
+        idx = lyr.fields().lookupField("original")
         lyr.startEditing()
         lyr.changeAttributeValue(oldFeature.id(), idx, -2, True)
         lyr.addFeatures([new_feature])
@@ -1087,9 +1087,9 @@ class Database:
         #vsetkych susediacich
     def select_neighbour(self):
         lyr = iface.activeLayer()
-        idx = lyr.fieldNameIndex('max_to_nei')
-        id_N = lyr.fieldNameIndex('neighbours')
-        orig_id = lyr.fieldNameIndex('original')
+        idx = lyr.fields().lookupField('max_to_nei')
+        id_N = lyr.fields().lookupField('neighbours')
+        orig_id = lyr.fields().lookupField('original')
         features = list(lyr.getFeatures())
         c = lyr.getFeatures()
         lyr.startEditing()
@@ -1140,11 +1140,11 @@ class Database:
             self.shower.drevina.selectRow(item)#q vsetky ulozene cisla vyberiem
         
     def set_new_color(self,lyr,ft):
-        id_C = lyr.fieldNameIndex('COLOR')#ziskam indexy v poli atributov
-        id_A = lyr.fieldNameIndex('max_area')
-        id_L = lyr.fieldNameIndex('max_len')
-        id_MA = lyr.fieldNameIndex('min_area')
-        id_ML = lyr.fieldNameIndex('min_len')
+        id_C = lyr.fields().lookupField('COLOR')#ziskam indexy v poli atributov
+        id_A = lyr.fields().lookupField('max_area')
+        id_L = lyr.fields().lookupField('max_len')
+        id_MA = lyr.fields().lookupField('min_area')
+        id_ML = lyr.fields().lookupField('min_len')
 
         
         lyr.startEditing()
@@ -1183,7 +1183,7 @@ class Database:
                 self.Error_message("Je potrebne zadat v nezapornych cislach")
                 return
 
-        idx = layer.fieldNameIndex(name_of_field)
+        idx = layer.fields().lookupField(name_of_field)
         if idx == -1:
             return
         features = layer.selectedFeatures()
@@ -1276,11 +1276,11 @@ class Database:
             if lyr.name() == "Lesne porasty":
                 layer = lyr
 
-        id_C = layer.fieldNameIndex('COLOR')
-        id_A = layer.fieldNameIndex('max_area')
-        id_L = layer.fieldNameIndex('max_len')
-        id_MA = layer.fieldNameIndex('min_area')
-        id_ML = layer.fieldNameIndex('min_len')
+        id_C = layer.fields().lookupField('COLOR')
+        id_A = layer.fields().lookupField('max_area')
+        id_L = layer.fields().lookupField('max_len')
+        id_MA = layer.fields().lookupField('min_area')
+        id_ML = layer.fields().lookupField('min_len')
         
         layer.startEditing()
         for feature in layer.getFeatures():
@@ -1479,8 +1479,8 @@ class Database:
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
 
-        id_psk = lyr.fieldNameIndex('PSK_NUM')
-        id_odstup = taz_typ_csv.fieldNameIndex('ODSTUP')
+        id_psk = lyr.fields().lookupField('PSK_NUM')
+        id_odstup = taz_typ_csv.fields().lookupField('ODSTUP')
         psk_id = fts[0].attributes()[id_psk]
 
         sec_id = self.create_processes.sec_id.currentText()
@@ -1504,9 +1504,9 @@ class Database:
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
 
-        id_psk = lyr.fieldNameIndex('PSK_NUM')
-        id_prirazeni = taz_typ_csv.fieldNameIndex('PRIRAZENI')
-        id_typ = taz_typ_csv.fieldNameIndex('TYP')
+        id_psk = lyr.fields().lookupField('PSK_NUM')
+        id_prirazeni = taz_typ_csv.fields().lookupField('PRIRAZENI')
+        id_typ = taz_typ_csv.fields().lookupField('TYP')
         psk_id = fts[0].attributes()[id_psk]
 
         typ_id = self.create_processes.typ_id.currentText()
@@ -1545,7 +1545,7 @@ class Database:
 
         taz_typ_csv.startEditing()
 
-        idx = lyr.fieldNameIndex('PSK_NUM')
+        idx = lyr.fields().lookupField('PSK_NUM')
         psk_id = fts[0].attributes()[idx]
 
         to_delete = self.create_processes.definovane.selectedItems()
@@ -1598,7 +1598,7 @@ class Database:
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
 
-        idx = lyr.fieldNameIndex('PSK_NUM')
+        idx = lyr.fields().lookupField('PSK_NUM')
         psk_id = fts[0].attributes()[idx]
 
         self.create_processes.etaz.clear()
@@ -1687,7 +1687,7 @@ class Database:
             if layer.name() == "Tazobne typy":
                 taz_typ_csv = layer
 
-        idx = lyr.fieldNameIndex('PSK_NUM')
+        idx = lyr.fields().lookupField('PSK_NUM')
         psk_id = fts[0].attributes()[idx]
 
         expr = QgsExpression("PSK_NUM ="+ str(psk_id))
@@ -1955,11 +1955,11 @@ class Database:
                 features_list = [feature.attributes() for feature in features]
                 features_list = self.convert_to_strings(features_list)
 
-                id_area = lyr.fieldNameIndex("max_area") #index parametru PSK_NUM 
-                id_len = lyr.fieldNameIndex("max_len") #index parametru PSK_NUM 
-                id_Marea = lyr.fieldNameIndex("min_area") #index parametru PSK_NUM 
-                id_Mlen = lyr.fieldNameIndex("min_len") #index parametru PSK_NUM 
-                id_prio = lyr.fieldNameIndex("priorita") #index parametru PSK_NUM 
+                id_area = lyr.fields().lookupField("max_area") #index parametru PSK_NUM 
+                id_len = lyr.fields().lookupField("max_len") #index parametru PSK_NUM 
+                id_Marea = lyr.fields().lookupField("min_area") #index parametru PSK_NUM 
+                id_Mlen = lyr.fields().lookupField("min_len") #index parametru PSK_NUM 
+                id_prio = lyr.fields().lookupField("priorita") #index parametru PSK_NUM 
 
                 try:
                     self.shower.area_max.setText(str("%.2f"%(float(features_list[0][id_area])/10000)))
@@ -1975,7 +1975,7 @@ class Database:
                 self.shower.length_min.setText(features_list[0][id_Mlen])
                 self.shower.priorita.setText(features_list[0][id_prio])
 
-                idx = lyr.fieldNameIndex("PSK_NUM") #index parametru PSK_NUM 
+                idx = lyr.fields().lookupField("PSK_NUM") #index parametru PSK_NUM 
                 if idx == -1:
                     psk_numb = "xX!48p"
                 else:
@@ -1993,7 +1993,7 @@ class Database:
             if etz_csv:
                 selected_etzs = etz_csv.getFeatures(QgsFeatureRequest(expr))
                 fields_etz = etz_csv.pendingFields()
-                id_etz = etz_csv.fieldNameIndex('ETZ_NUM')
+                id_etz = etz_csv.fields().lookupField('ETZ_NUM')
 
             selected_kats = []
             if kat_csv:
@@ -2021,8 +2021,8 @@ class Database:
 
             field_names_vys_obn = NAMES_TAZ_TYP[:-2] + ['ZAHAJENI', 'TEZBA_CELKEM']
             features_list_vys_obn = []
-            id_taz_typ = vys_obn_csv.fieldNameIndex("ID_TAZ_TYP")
-            taz_typ_id = taz_typ_csv.fieldNameIndex("ID")
+            id_taz_typ = vys_obn_csv.fields().lookupField("ID_TAZ_TYP")
+            taz_typ_id = taz_typ_csv.fields().lookupField("ID")
             for feature in selected_vys_obn:
                 for taz_typ in selected_taz_typ:
                     if taz_typ.attributes()[taz_typ_id] == feature.attributes()[id_taz_typ]:
@@ -2067,7 +2067,7 @@ class Database:
 
             drv_numbers = []
             if drv_csv:
-                idx = drv_csv.fieldNameIndex('DRV_NUM')
+                idx = drv_csv.fields().lookupField('DRV_NUM')
             for item in features_list_drv:
                 drv_numbers.append(item[idx])
 
