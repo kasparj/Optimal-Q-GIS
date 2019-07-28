@@ -569,10 +569,11 @@ class Database:
             psk_obraz = ET.SubElement(psk, "PSK_OBRAZ")
             p = ET.SubElement(psk_obraz, "MP")
             ml = ET.SubElement(p, "P")
-            for ring in ft.geometry().asPolygon():
-                l = ET.SubElement(ml, "L")
-                for point in ring:
-                    ET.SubElement(l, "B", S="{0}${1}".format(-1 * point[1], -1 * point[0]))
+            for polygon in ft.geometry().asMultiPolygon():
+                for ring in polygon:
+                    l = ET.SubElement(ml, "L")
+                    for point in ring:
+                        ET.SubElement(l, "B", S="{0}${1}".format(-1 * point.y(), -1 * point.x()))
 
             self.process_etz(psk, self.etzs[ft.attributes()[self.id_PSK]])
             if ft.attributes()[self.id_original] == -2:
@@ -702,7 +703,7 @@ class Database:
         progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)#zarovnam ho vlavo
         prg.layout().addWidget(progress)#a pridam ho do hroenj listy
         iface.messageBar().pushWidget(prg,
-                            iface.messageBar().INFO)
+                            Qgis.Info)
 
         self.generate_globals()
         progress.setValue(self.finished)
